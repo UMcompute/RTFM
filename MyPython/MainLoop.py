@@ -8,7 +8,7 @@ for x in range(3):
 	# os.system("./A")
 	# p = Popen("./A")
 	# p = os.popen("./A")
-	proc = subprocess.Popen('./A', shell=True)
+	proc = subprocess.Popen('./a.out', shell=True)
 	print(proc.pid)
 	'''
 	NOTE: If you really wanted to implement a robust main loop

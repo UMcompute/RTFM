@@ -3,7 +3,7 @@
 
 int main()
 {
-  unsigned int delay = 1000000;
+  unsigned int delay = 100000;
   int i;
   int n = 10;
 
