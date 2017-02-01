@@ -1,0 +1,8 @@
+package fromSensor;
+
+struct sensor
+{
+  double	time;
+  double	temp;
+  double	flux;
+}

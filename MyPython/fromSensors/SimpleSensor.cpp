@@ -16,22 +16,45 @@
 #include <sstream>
 #include <string>
 #include <unistd.h>
+#include <chrono>
+#include <ctime>
+
+#include <lcm/lcm-cpp.hpp>
+#include "fromSensor/sensor.hpp"
 
 using namespace std;
 
-int main () {
+int main(int argc, char* argv[])
+{
+
+  // get input from command line
+  printf("The name of this program is '%s'. \n", argv[0]);
+	printf("This program was invoked with %d argument(s). \n", argc - 1);
+	if (argc == 1) 
+	{
+	  printf("***error: expecting a data file passed from command line");
+	  return 1;
+	}
+	
+  // check if LCM is working
+  lcm::LCM lcm;
+  if(!lcm.good())
+  {
+    return 1;
+  }
+  fromSensor::sensor my_data;	
 
   // initialize the data table
   const int ROWS = 300;
   const int COLS = 3;
   double inData[ROWS][COLS];
-  const int MAX_STEPS = 300;
-
-  // select data file
-  ifstream file("FDS_output.dat");
-  string line;
+  const int MAX_STEPS = 30;
+  double waitUsec = 0.8;
 
   // read in line-by-line of the FDS data
+  string filename = argv[1];
+  ifstream file(filename.c_str());
+  string line;
   double readValue;
   int i, j;
   i = 0;
@@ -49,18 +72,38 @@ int main () {
   file.close();
 
   // generate a data package for each time step
-  for (int iTime = 0; iTime < MAX_STEPS; iTime++) {
+  double outData[COLS];
+  for (int iTime = 0; iTime < MAX_STEPS; iTime++) 
+  {
     string filename = "update";
     filename = filename + ".dat";
     ofstream myfile;
     myfile.open (filename.c_str());
-    for (int jCols = 0; jCols < COLS; jCols++) {
+    for (int jCols = 0; jCols < COLS; jCols++) 
+    {
       myfile << inData[iTime][jCols] << "\t" << "\t";
+      outData[jCols] = inData[iTime][jCols];
     }
     myfile << "\n";
     myfile.close();
     cout << "finished step #" << iTime << " with t = " << inData[iTime][0] << endl;
-    usleep( 1.0 * pow(10.0, 6.0) );
+    
+    //===============================================================
+    // SEND LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA    
+      // define sensor info in LCM data structure
+      my_data.time = outData[0];
+      my_data.flux = outData[1];
+      my_data.temp = outData[2];
+      // print time stamp of message send
+      std::chrono::time_point<std::chrono::system_clock> end;
+      end = std::chrono::system_clock::now();
+      std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+      std::cout << "\nmessage time stamp: " << std::ctime(&end_time) <<"\n";
+      // publish message for the receiver and exit
+      lcm.publish("SENSOR", &my_data);
+    //===============================================================  
+    
+    usleep( waitUsec * pow(10.0, 6.0) );
   }
 
   return 0;
