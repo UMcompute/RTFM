@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   const int COLS = 3;
   double inData[ROWS][COLS];
   const int MAX_STEPS = 30;
-  double waitUsec = 0.8;
+  double waitUsec = 0.2;
 
   // read in line-by-line of the FDS data
   string filename = argv[1];
@@ -98,7 +98,7 @@ int main(int argc, char* argv[])
       std::chrono::time_point<std::chrono::system_clock> end;
       end = std::chrono::system_clock::now();
       std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-      std::cout << "\nmessage time stamp: " << std::ctime(&end_time) <<"\n";
+      std::cout << "message time stamp: " << std::ctime(&end_time) <<"\n";
       // publish message for the receiver and exit
       lcm.publish("SENSOR", &my_data);
     //===============================================================  

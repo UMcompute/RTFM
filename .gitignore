@@ -1,3 +1,4 @@
 *~
 inverse_model
-
+*.pyc
+*.exe
