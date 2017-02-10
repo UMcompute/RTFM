@@ -8,15 +8,28 @@ import select
 import lcm
 from fromSensor import sensor
 
+# used for LCM to establish sender
+from toIFM import ifm
+from toEDM import edm
+
 
 def my_handler(channel, data):
     msg = sensor.decode(data)
-    print("\nMAIN Received message on channel \"%s\"" % channel)
+    print("\nMAIN.py Received message on channel \"%s\"" % channel)
     print("   time = %s" % str(msg.time))
     print("   temp = %s" % str(msg.temp))
     print("   flux = %s" % str(msg.flux))
     print("\n")
+    global currTime
+    global currTemp
+    global currFlux
+    currTime = msg.time
+    currTemp = msg.temp
+    currFlux = msg.flux
 
+
+# ===================================================================
+# START THE MAIN PROGRAM LOOP
 
 print("this is the start of main.py")
 
@@ -24,7 +37,12 @@ print("this is the start of main.py")
 lc = lcm.LCM()
 lc.subscribe("SENSOR", my_handler)
 
+
+# ===================================================================
+# LAUNCH SENSOR WITH FIRE DATA FILE
+
 # launch main menu for user
+# todo: include kill process option in menu for user to kill sensor
 print("\nMain Menu: ")
 answer = '2'
 while answer == '2':
@@ -55,26 +73,59 @@ sensorName = 'sensor.exe' + ' ' + sensorDir + dataName
 fullExePath = sensorDir + sensorName
 
 # start subprocess for the sensor program
-p = subprocess.Popen("exec " + fullExePath, shell=True)
+sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
 
-# try to implement select example from LCM
+
+# start subprocess for IFM
+ifmStart = 'python IFM_main.py'
+ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
+
+
+# ===================================================================
+# START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
+
+# get sensor data using select function and waiting
 try:
     timeout = 0.5  # amount of time to wait, in seconds
     while True:
         rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
         if rfds:
             lc.handle()
+
+            # distribute data to the running subprocess models
+
+            # send to IFM
+            msgForIFM = ifm()
+            msgForIFM.time = currTime
+            msgForIFM.temp = currTemp
+            msgForIFM.flux = currFlux
+            lc.publish("IFM_CHAN", msgForIFM.encode())
+
+            # send to EDM
+            #msgForEDM = edm()
+            #msgForEDM.time = currTime
+            #msgForEDM.temp = currTemp
+            #msgForEDM.flux = currFlux
+            #lc.publish("EDM_CHAN", msgForEDM.encode())
+
+            # send to NEW (py)
+
+            # send to NEW (cpp)
+
         else:
             print("Waiting for messages...")
 except KeyboardInterrupt:
     pass
 
 # assume some calculations take 3 seconds
-print("\nsleep for 3 seconds... then kill proc")
-time.sleep(3)
+#print("\nsleep for 3 seconds... then kill proc")
+#time.sleep(3)
 
-# kill the sensor program
-x = p.kill()
+# kill the sensor program if kill command given by user in main menu
+x = sensorProc.kill()
 print("**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
+
+y = ifmProc.kill()
+print("**TRIED TO KILL the IFM subprocess")
 
 print("this is the end of main.py")

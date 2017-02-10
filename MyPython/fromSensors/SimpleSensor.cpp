@@ -2,8 +2,8 @@
    Takes completed FDS_output.dat and produces small data 
    packages update.dat for each step
 
-   $ g++ SimpleSensor.cpp -o SimpleSensor.exe
-   $ ./SimpleSensor.exe
+   $ g++ SimpleSensor.cpp -o sensor.exe -llcm
+   $ ./sensor.exe
 
    (make sure the FDS_output.dat file is in the same directory)
  
@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 	printf("This program was invoked with %d argument(s). \n", argc - 1);
 	if (argc == 1) 
 	{
-	  printf("***error: expecting a data file passed from command line");
+	  printf("***error: expecting a data file passed from command line \n");
 	  return 1;
 	}
 	
@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   const int COLS = 3;
   double inData[ROWS][COLS];
   const int MAX_STEPS = 30;
-  double waitUsec = 0.2;
+  double waitUsec = 0.5;
 
   // read in line-by-line of the FDS data
   string filename = argv[1];
