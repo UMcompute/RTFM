@@ -81,6 +81,12 @@ ifmStart = 'python IFM_main.py'
 ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
 
 
+# start subprocess for EDM
+print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
+edmStart = './EDM_main.exe'
+edmProc = subprocess.Popen("exec " + edmStart, shell=True)
+
+
 # ===================================================================
 # START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
 
@@ -102,11 +108,11 @@ try:
             lc.publish("IFM_CHAN", msgForIFM.encode())
 
             # send to EDM
-            #msgForEDM = edm()
-            #msgForEDM.time = currTime
-            #msgForEDM.temp = currTemp
-            #msgForEDM.flux = currFlux
-            #lc.publish("EDM_CHAN", msgForEDM.encode())
+            msgForEDM = edm()
+            msgForEDM.time = currTime
+            msgForEDM.temp = currTemp
+            msgForEDM.flux = currFlux
+            lc.publish("EDM_CHAN", msgForEDM.encode())
 
             # send to NEW (py)
 
@@ -123,9 +129,15 @@ except KeyboardInterrupt:
 
 # kill the sensor program if kill command given by user in main menu
 x = sensorProc.kill()
-print("**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
+print("\n**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
 
 y = ifmProc.kill()
-print("**TRIED TO KILL the IFM subprocess")
+print("\n**TRIED TO KILL the IFM subprocess! (but cannot confirm it)")
+
+z = edmProc.kill()
+print("\n**TRIED TO KILL the EDM subprocess! (but cannot confirm it)")
+
+print("\nVisually inspect ps output here to see if subprocess is still running: ")
+os.system("ps")
 
 print("this is the end of main.py")
