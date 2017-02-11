@@ -14,18 +14,18 @@ from toEDM import edm
 
 
 def my_handler(channel, data):
-    msg = sensor.decode(data)
-    print("\nMAIN.py Received message on channel \"%s\"" % channel)
-    print("   time = %s" % str(msg.time))
-    print("   temp = %s" % str(msg.temp))
-    print("   flux = %s" % str(msg.flux))
-    print("\n")
-    global currTime
-    global currTemp
-    global currFlux
-    currTime = msg.time
-    currTemp = msg.temp
-    currFlux = msg.flux
+  msg = sensor.decode(data)
+  print("\nMAIN.py Received message on channel \"%s\"" % channel)
+  print("   time = %s" % str(msg.time))
+  #print("   temp = %s" % str(msg.temp))
+  #print("   flux = %s" % str(msg.flux))
+  print("\n")
+  global currTime
+  global currTemp
+  global currFlux
+  currTime = msg.time
+  currTemp = msg.temp
+  currFlux = msg.flux
 
 
 # ===================================================================
@@ -63,7 +63,7 @@ while answer == '2':
 #sensorDir = '/home/pbeata/Research/FireMonitoring/SENSORS/3_RemoteRepoSSH/'
 
 # requires this application be compiled first
-#sensorName = 'SimpleSensor.exe'   
+#sensorName = 'SimpleSensor.exe'
 
 # start the single sensor for dev mode at beginning of Main program only
 print("\n***warning for testing: ignoring main menu and using 1 pre-defined sensor")
@@ -79,6 +79,7 @@ sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
 # start subprocess for IFM
 ifmStart = 'python IFM_main.py'
 ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
+ifmDT = 5
 
 
 # start subprocess for EDM
@@ -91,37 +92,44 @@ edmProc = subprocess.Popen("exec " + edmStart, shell=True)
 # START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
 
 # get sensor data using select function and waiting
+numMsgRecv = 0
+ifmStep = 1
 try:
-    timeout = 0.5  # amount of time to wait, in seconds
-    while True:
-        rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
-        if rfds:
-            lc.handle()
+  timeout = 0.5  # amount of time to wait, in seconds
+  while True:
+    rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
+    if rfds:
+      lc.handle()
+      numMsgRecv = numMsgRecv + 1
 
-            # distribute data to the running subprocess models
+# ===================================================================
+      # distribute data to the running subprocess models
 
-            # send to IFM
-            msgForIFM = ifm()
-            msgForIFM.time = currTime
-            msgForIFM.temp = currTemp
-            msgForIFM.flux = currFlux
-            lc.publish("IFM_CHAN", msgForIFM.encode())
+      # send to IFM
+      if numMsgRecv == ifmStep:
+        msgForIFM = ifm()
+        msgForIFM.time = currTime
+        msgForIFM.temp = currTemp
+        msgForIFM.flux = currFlux
+        lc.publish("IFM_CHAN", msgForIFM.encode())
+        ifmStep = ifmStep + ifmDT
 
-            # send to EDM
-            msgForEDM = edm()
-            msgForEDM.time = currTime
-            msgForEDM.temp = currTemp
-            msgForEDM.flux = currFlux
-            lc.publish("EDM_CHAN", msgForEDM.encode())
+      # send to EDM
+      msgForEDM = edm()
+      msgForEDM.time = currTime
+      msgForEDM.temp = currTemp
+      msgForEDM.flux = currFlux
+      lc.publish("EDM_CHAN", msgForEDM.encode())
 
-            # send to NEW (py)
+      # send to NEW (py)
 
-            # send to NEW (cpp)
+      # send to NEW (cpp)
 
-        else:
-            print("Waiting for messages...")
+# ===================================================================
+    else:
+      print("Waiting for messages in MAIN program loop...")
 except KeyboardInterrupt:
-    pass
+  pass
 
 # assume some calculations take 3 seconds
 #print("\nsleep for 3 seconds... then kill proc")

@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
   const int COLS = 3;
   double inData[ROWS][COLS];
   const int MAX_STEPS = 30;
-  double waitUsec = 0.5;
+  double waitUsec = 0.8;
 
   // read in line-by-line of the FDS data
   string filename = argv[1];

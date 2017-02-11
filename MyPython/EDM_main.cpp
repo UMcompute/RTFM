@@ -32,7 +32,7 @@ public:
 		     const toEDM::edm* msg)
   {
     //printf("\n");
-    //printf("Received message on channel \"%s\":\n", chan.c_str());
+    printf("~~~~EDM Received message on channel \"%s\":\n", chan.c_str());
     //printf("Current Time: %f\n", msg->time);
     //printf("Net Flux:     %f\n", msg->flux);
     //printf("Temperature:  %f\n", msg->temp);
@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
       0   // microseconds
     };
     int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
-    std::cout << "status = " << status << "\n";
+    //std::cout << "status = " << status << "\n";
 
     // interpret status
     if (0 == status)
@@ -107,9 +107,9 @@ int main(int argc, char** argv) {
       // LCM has events for you to process!
       lcm.handle();
       numMsgRecv += 1;
-      cout << " *** " << endl;
-      cout << "total messages received: " << numMsgRecv << endl;
-      cout << " *** " << endl;
+      //cout << " *** " << endl;
+      //cout << "total messages received: " << numMsgRecv << endl;
+      //cout << " *** " << endl;
     
 
 
@@ -167,8 +167,8 @@ int main(int argc, char** argv) {
       double slopeOfTemp = computeRegressionSlope(timeQueue, tempQueue);
 
       // print the current step results
-      cout << currTime << " " << currFlux << " " << currTemp << " ";
-      cout << slopeOfTemp << " " << endl;
+      //cout << currTime << " " << currFlux << " " << currTemp << " ";
+      //cout << slopeOfTemp << " " << endl;
 
     }
 
