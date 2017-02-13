@@ -11,21 +11,27 @@ from fromSensor import sensor
 # used for LCM to establish sender
 from toIFM import ifm
 from toEDM import edm
+from frEDM import edmOUT
 
 
 def my_handler(channel, data):
   msg = sensor.decode(data)
-  print("\nMAIN.py Received message on channel \"%s\"" % channel)
-  print("   time = %s" % str(msg.time))
+  #print("\nMAIN.py Received message on channel \"%s\"" % channel)
+  #print("   time = %s" % str(msg.time))
   #print("   temp = %s" % str(msg.temp))
   #print("   flux = %s" % str(msg.flux))
-  print("\n")
+  #print("\n")
   global currTime
   global currTemp
   global currFlux
   currTime = msg.time
   currTemp = msg.temp
   currFlux = msg.flux
+
+
+def edm_handler(channel, data):
+  msg = edmOUT.decode(data)
+  print("\n  current temperature slope = " + str(msg.tempSlope))
 
 
 # ===================================================================
@@ -36,6 +42,9 @@ print("this is the start of main.py")
 # initialize the LCM library
 lc = lcm.LCM()
 lc.subscribe("SENSOR", my_handler)
+
+lc2 = lcm.LCM()
+lc2.subscribe("EDM_OUT", edm_handler)
 
 
 # ===================================================================
@@ -75,12 +84,10 @@ fullExePath = sensorDir + sensorName
 # start subprocess for the sensor program
 sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
 
-
 # start subprocess for IFM
 ifmStart = 'python IFM_main.py'
 ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
 ifmDT = 5
-
 
 # start subprocess for EDM
 print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
@@ -126,8 +133,21 @@ try:
       # send to NEW (cpp)
 
 # ===================================================================
+      # get data from other modules
+      #try:
+      timeout2 = 0.2  # amount of time to wait, in seconds
+      #while True:
+      rfds2, wfds2, efds2 = select.select([lc2.fileno()], [], [], timeout2)
+      if rfds2:
+        lc2.handle()
+      else:
+        yy = 14.0
+      #except KeyboardInterrupt:
+      #pass
+# ===================================================================
     else:
-      print("Waiting for messages in MAIN program loop...")
+      zz = 12.0
+      #print("Waiting for messages in MAIN program loop...")
 except KeyboardInterrupt:
   pass
 

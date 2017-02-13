@@ -7,11 +7,11 @@ from toIFM import ifm
 
 def my_handler(channel, data):
   msg = ifm.decode(data)
-  print("~~~~IFM Received message on channel \"%s\"" % channel)
-  print("    time = %s" % str(msg.time))
+  #print("~~~~IFM Received message on channel \"%s\"" % channel)
+  #print("    time = %s" % str(msg.time))
   #print("   temp = %s" % str(msg.temp))
   #print("   flux = %s" % str(msg.flux))
-  print("\n")
+  #print("\n")
   global currTime
   global currTemp
   global currFlux
@@ -39,8 +39,11 @@ try:
       lc.handle()
       time.sleep(4)
     else:
-      print("Waiting for messages in IFM main loop...")
+      zz = 12.0
+      #print("Waiting for messages in IFM main loop...")
 except KeyboardInterrupt:
   pass
+
+print("*todo: change the KeyboardInterrupt exit method for the IFM")
 
 print("exit IFM main")

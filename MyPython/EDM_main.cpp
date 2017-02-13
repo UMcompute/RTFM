@@ -11,6 +11,7 @@
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
 #include "toEDM/edm.hpp"
+#include "frEDM/edmOUT.hpp"
 
 // namespace declarations
 using namespace std;
@@ -32,7 +33,7 @@ public:
 		     const toEDM::edm* msg)
   {
     //printf("\n");
-    printf("~~~~EDM Received message on channel \"%s\":\n", chan.c_str());
+    //printf("~~~~EDM Received message on channel \"%s\":\n", chan.c_str());
     //printf("Current Time: %f\n", msg->time);
     //printf("Net Flux:     %f\n", msg->flux);
     //printf("Temperature:  %f\n", msg->temp);
@@ -74,6 +75,9 @@ int main(int argc, char** argv) {
   double tempSum = 0.0;
   queue<double> timeQueue;
 
+  // data structure to send output back to main program
+  frEDM::edmOUT sendToMain;
+
   // make a blocking hold to wait for messages and process their info
   //while(0 == lcm.handle()) {
 
@@ -100,7 +104,7 @@ int main(int argc, char** argv) {
     if (0 == status)
     {
       // no msg yet!
-      printf("waiting for msg in EDM main loop... \n");
+      //printf("waiting for msg in EDM main loop... \n");
     }
     else if (FD_ISSET(lcm_fd, &fds))
     {
@@ -166,6 +170,10 @@ int main(int argc, char** argv) {
       // linear regression fit of unsmoothed and smoothed data sets
       double slopeOfTemp = computeRegressionSlope(timeQueue, tempQueue);
 
+      // create LCM message to send back to MAIN
+      sendToMain.tempSlope = slopeOfTemp;
+      lcm.publish("EDM_OUT", &sendToMain);
+
       // print the current step results
       //cout << currTime << " " << currFlux << " " << currTemp << " ";
       //cout << slopeOfTemp << " " << endl;
@@ -210,5 +218,15 @@ double computeRegressionSlope(queue<double> inX, queue<double> inY)
 
     // compute the slope of the regression line
     slope = (sumXY - sumX * sumY / N) / (sumXX - sumX * sumX / N);
+    if (slope > 0.0 || slope <= 0.0)
+    {
+      // good!
+    }
+    else
+    {
+      // then slope is NaN
+      slope = 0.0;
+    }
+
     return slope;
 }

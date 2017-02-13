@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
     }
     myfile << "\n";
     myfile.close();
-    cout << "finished step #" << iTime << " with t = " << inData[iTime][0] << endl;
+    //cout << "finished step #" << iTime << " with t = " << inData[iTime][0] << endl;
     
     //===============================================================
     // SEND LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA    
