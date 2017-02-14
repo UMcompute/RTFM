@@ -2,22 +2,29 @@ import subprocess
 import time
 import os
 import signal
+from time import gmtime, strftime
 
 # used for LCM to establish listener
 import select
 import lcm
 from fromSensor import sensor
+from frEDM import edmOUT
+from frIFM import ifmOUT
+from frAAA import aaaOUT
 
 # used for LCM to establish sender
 from toIFM import ifm
 from toEDM import edm
-from frEDM import edmOUT
+from toAAA import aaa
 
 
 def my_handler(channel, data):
+  global pathFlag
+  pathFlag = 0
   msg = sensor.decode(data)
+  #print("   MAIN timestamp = " + strftime("%Y-%m-%d %H:%M:%S", gmtime()))
   #print("\nMAIN.py Received message on channel \"%s\"" % channel)
-  #print("   time = %s" % str(msg.time))
+  print("   MAIN got time = %s" % str(msg.time))
   #print("   temp = %s" % str(msg.temp))
   #print("   flux = %s" % str(msg.flux))
   #print("\n")
@@ -30,8 +37,30 @@ def my_handler(channel, data):
 
 
 def edm_handler(channel, data):
+  global pathFlag
+  pathFlag = 1
+  global busyEDM
+  busyEDM = 0
   msg = edmOUT.decode(data)
-  print("\n  current temperature slope = " + str(msg.tempSlope))
+  print("   current temperature slope = " + str(msg.tempSlope))
+
+
+def ifm_handler(channel, data):
+  global pathFlag
+  pathFlag = 2
+  global busyIFM
+  busyIFM = 0
+  msg = ifmOUT.decode(data)
+  print("   current heat release rate = " + str(msg.currHRR))
+
+
+def aaa_handler(channel, data):
+  global pathFlag
+  pathFlag = 3
+  global busyAAA
+  busyAAA = 0
+  msg = aaaOUT.decode(data)
+  print("   current dummy value = " + str(msg.dumVal))
 
 
 # ===================================================================
@@ -42,10 +71,18 @@ print("this is the start of main.py")
 # initialize the LCM library
 lc = lcm.LCM()
 lc.subscribe("SENSOR", my_handler)
+lc.subscribe("OUT_EDM", edm_handler)
+lc.subscribe("OUT_IFM", ifm_handler)
+lc.subscribe("OUT_AAA", aaa_handler)
 
-lc2 = lcm.LCM()
-lc2.subscribe("EDM_OUT", edm_handler)
+#lc2 = lcm.LCM()
+#lc2.subscribe("EDM_OUT", edm_handler)
 
+# for testing only: turn off 
+launchSENS = 1
+launchEDM = 1
+launchIFM = 0
+launchAAA = 0
 
 # ===================================================================
 # LAUNCH SENSOR WITH FIRE DATA FILE
@@ -75,79 +112,85 @@ while answer == '2':
 #sensorName = 'SimpleSensor.exe'
 
 # start the single sensor for dev mode at beginning of Main program only
-print("\n***warning for testing: ignoring main menu and using 1 pre-defined sensor")
-dataName = 'FDS_FirstMin.dat'
-sensorDir = './fromSensors/'
-sensorName = 'sensor.exe' + ' ' + sensorDir + dataName 
-fullExePath = sensorDir + sensorName
-
-# start subprocess for the sensor program
-sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
-
-# start subprocess for IFM
-ifmStart = 'python IFM_main.py'
-ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
-ifmDT = 5
+if launchSENS == 1:
+  print("\n***warning for testing: ignoring main menu and using 1 pre-defined sensor")
+  dataName = 'FDS_FirstMin.dat'
+  sensorDir = './fromSensors/'
+  sensorName = 'sensor.exe' + ' ' + sensorDir + dataName 
+  fullExePath = sensorDir + sensorName
+  sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
 
 # start subprocess for EDM
-print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
-edmStart = './EDM_main.exe'
-edmProc = subprocess.Popen("exec " + edmStart, shell=True)
+if launchEDM == 1:
+  print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
+  edmStart = './EDM_main.exe'
+  edmProc = subprocess.Popen("exec " + edmStart, shell=True)
 
+# start subprocess for IFM
+if launchIFM == 1:
+  ifmStart = 'python IFM_main.py'
+  ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
+
+# start subprocess for AAA
+if launchAAA == 1:
+  aaaStart = 'python AAA_main.py'
+  aaaProc = subprocess.Popen("exec " + aaaStart, shell=True)
 
 # ===================================================================
 # START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
 
-# get sensor data using select function and waiting
-numMsgRecv = 0
-ifmStep = 1
+# flags to differentiate proper work path
+pathFlag = 0
+
+# busy or ready status of each process
+busyEDM = 0
+busyIFM = 0
+busyAAA = 0
+
 try:
-  timeout = 0.5  # amount of time to wait, in seconds
+  timeout = 0.2  # amount of time to wait, in seconds
   while True:
     rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
     if rfds:
       lc.handle()
-      numMsgRecv = numMsgRecv + 1
-
 # ===================================================================
-      # distribute data to the running subprocess models
+      # distribute data to the ready ("not busy") subprocess models
+      print("pathFlag = " + str(pathFlag) + " and busyEDM = " + str(busyEDM))
+      if pathFlag == 0:
+        # send to EDM
+        if launchEDM == 1 and busyEDM == 0:
+          busyEDM = 1
+          msgForEDM = edm()
+          msgForEDM.time = currTime
+          msgForEDM.temp = currTemp
+          msgForEDM.flux = currFlux
+          lc.publish("EDM_CHAN", msgForEDM.encode())
+        # send to IFM 
+        if launchIFM == 1 and busyIFM == 0:
+          busyIFM = 1
+          msgForIFM = ifm()
+          msgForIFM.time = currTime
+          msgForIFM.temp = currTemp
+          msgForIFM.flux = currFlux
+          lc.publish("IFM_CHAN", msgForIFM.encode())
+        # send to NEW (py) --> named AAA for now
+        if launchAAA == 1 and busyAAA == 0:
+          busyAAA = 1
+          msgForAAA = aaa()
+          msgForAAA.time = currTime
+          msgForAAA.temp = currTemp
+          msgForAAA.flux = currFlux
+          lc.publish("AAA_CHAN", msgForAAA.encode())
+      elif pathFlag == 1:
+        print("   new msg from EDM")
+      elif pathFlag == 2:
+        print("   new msg from IFM")
+      elif pathFlag == 3:
+        print("   new msg from AAA")
 
-      # send to IFM
-      if numMsgRecv == ifmStep:
-        msgForIFM = ifm()
-        msgForIFM.time = currTime
-        msgForIFM.temp = currTemp
-        msgForIFM.flux = currFlux
-        lc.publish("IFM_CHAN", msgForIFM.encode())
-        ifmStep = ifmStep + ifmDT
-
-      # send to EDM
-      msgForEDM = edm()
-      msgForEDM.time = currTime
-      msgForEDM.temp = currTemp
-      msgForEDM.flux = currFlux
-      lc.publish("EDM_CHAN", msgForEDM.encode())
-
-      # send to NEW (py)
-
-      # send to NEW (cpp)
-
-# ===================================================================
-      # get data from other modules
-      #try:
-      timeout2 = 0.2  # amount of time to wait, in seconds
-      #while True:
-      rfds2, wfds2, efds2 = select.select([lc2.fileno()], [], [], timeout2)
-      if rfds2:
-        lc2.handle()
-      else:
-        yy = 14.0
-      #except KeyboardInterrupt:
-      #pass
 # ===================================================================
     else:
-      zz = 12.0
-      #print("Waiting for messages in MAIN program loop...")
+      print("Waiting for new data from sensors in MAIN program loop...")
 except KeyboardInterrupt:
   pass
 
@@ -156,14 +199,21 @@ except KeyboardInterrupt:
 #time.sleep(3)
 
 # kill the sensor program if kill command given by user in main menu
-x = sensorProc.kill()
-print("\n**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
+if launchSENS == 1:
+  sensorProc.kill()
+  print("\n**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
 
-y = ifmProc.kill()
-print("\n**TRIED TO KILL the IFM subprocess! (but cannot confirm it)")
+if launchEDM == 1:
+  edmProc.kill()
+  print("\n**TRIED TO KILL the EDM subprocess! (but cannot confirm it)")
 
-z = edmProc.kill()
-print("\n**TRIED TO KILL the EDM subprocess! (but cannot confirm it)")
+if launchIFM == 1:
+  ifmProc.kill()
+  print("\n**TRIED TO KILL the IFM subprocess! (but cannot confirm it)")
+
+if launchAAA == 1:
+  aaaProc.kill()
+  print("\n**TRIED TO KILL the AAA subprocess! (but cannot confirm it)")  
 
 print("\nVisually inspect ps output here to see if subprocess is still running: ")
 os.system("ps")

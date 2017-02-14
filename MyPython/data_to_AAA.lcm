@@ -1,0 +1,8 @@
+package toAAA;
+
+struct aaa
+{
+  double	time;
+  double	temp;
+  double	flux;
+}

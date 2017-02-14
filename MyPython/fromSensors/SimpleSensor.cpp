@@ -35,6 +35,7 @@ int main(int argc, char* argv[])
 	  printf("***error: expecting a data file passed from command line \n");
 	  return 1;
 	}
+  printf("\n");
 	
   // check if LCM is working
   lcm::LCM lcm;
@@ -48,8 +49,8 @@ int main(int argc, char* argv[])
   const int ROWS = 300;
   const int COLS = 3;
   double inData[ROWS][COLS];
-  const int MAX_STEPS = 30;
-  double waitUsec = 0.8;
+  const int MAX_STEPS = 10;
+  double waitUsec = 1.0;
 
   // read in line-by-line of the FDS data
   string filename = argv[1];
@@ -98,7 +99,7 @@ int main(int argc, char* argv[])
       std::chrono::time_point<std::chrono::system_clock> end;
       end = std::chrono::system_clock::now();
       std::time_t end_time = std::chrono::system_clock::to_time_t(end);
-      std::cout << "message time stamp: " << std::ctime(&end_time) <<"\n";
+      std::cout << "\n   SENSOR sent time " << outData[0] << " with timestamp: " << std::ctime(&end_time) <<"\n";
       // publish message for the receiver and exit
       lcm.publish("SENSOR", &my_data);
     //===============================================================  

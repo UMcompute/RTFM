@@ -7,6 +7,10 @@
 #include <stdio.h>
 #include <queue>
 #include <sys/select.h>
+#include <ctime>
+#include <math.h>
+#include <unistd.h>
+#include <chrono>
 
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
@@ -34,7 +38,7 @@ public:
   {
     //printf("\n");
     //printf("~~~~EDM Received message on channel \"%s\":\n", chan.c_str());
-    //printf("Current Time: %f\n", msg->time);
+    printf("   EDM Current Time: %f\n", msg->time);
     //printf("Net Flux:     %f\n", msg->flux);
     //printf("Temperature:  %f\n", msg->temp);
     //printf("\t %f \t %f \t %f\n", msg->time, msg->flux, msg->temp);
@@ -74,6 +78,7 @@ int main(int argc, char** argv) {
   queue<double> tempMAQ;
   double tempSum = 0.0;
   queue<double> timeQueue;
+  double waitUsec = 0.5;
 
   // data structure to send output back to main program
   frEDM::edmOUT sendToMain;
@@ -110,6 +115,7 @@ int main(int argc, char** argv) {
     {
       // LCM has events for you to process!
       lcm.handle();
+      printf("   new msg in EDM! \n");
       numMsgRecv += 1;
       //cout << " *** " << endl;
       //cout << "total messages received: " << numMsgRecv << endl;
@@ -170,9 +176,13 @@ int main(int argc, char** argv) {
       // linear regression fit of unsmoothed and smoothed data sets
       double slopeOfTemp = computeRegressionSlope(timeQueue, tempQueue);
 
+      printf("wait ...\n");
+      usleep( waitUsec * pow(10.0, 6.0) );
+      printf("... done waiting! \n");
+
       // create LCM message to send back to MAIN
       sendToMain.tempSlope = slopeOfTemp;
-      lcm.publish("EDM_OUT", &sendToMain);
+      lcm.publish("OUT_EDM", &sendToMain);
 
       // print the current step results
       //cout << currTime << " " << currFlux << " " << currTemp << " ";

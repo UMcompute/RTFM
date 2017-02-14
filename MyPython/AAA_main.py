@@ -2,12 +2,12 @@
 import select
 import time
 import lcm
-from toIFM import ifm
+from toAAA import aaa
 
 
 def my_handler(channel, data):
-  msg = ifm.decode(data)
-  #print("~~~~IFM Received message on channel \"%s\"" % channel)
+  msg = aaa.decode(data)
+  #print("~~~~AAA Received message on channel \"%s\"" % channel)
   #print("   time = %s" % str(msg.time))
   #print("   temp = %s" % str(msg.temp))
   #print("   flux = %s" % str(msg.flux))
@@ -20,17 +20,17 @@ def my_handler(channel, data):
   currFlux = msg.flux
 
 
-print("starting IFM main...")
+print("starting AAA main...")
 
 # initialize the LCM library
 lc = lcm.LCM()
-lc.subscribe("IFM_CHAN", my_handler)
+lc.subscribe("AAA_CHAN", my_handler)
 
 currTime = 0.0
 currTemp = 0.0
 currFlux = 0.0
 
-compTime = 5.0
+compTime = 2.5
 
 # get sensor data using select function and waiting
 try:
@@ -41,10 +41,10 @@ try:
       lc.handle()
       time.sleep(compTime)
     else:
-      print("Waiting for messages in IFM main loop...")
+      print("Waiting for messages in AAA main loop...")
 except KeyboardInterrupt:
   pass
 
-print("*todo: change the KeyboardInterrupt exit method for the IFM")
+print("*todo: change the KeyboardInterrupt exit method for the AAA")
 
-print("exit IFM main")
+print("exit AAA main")

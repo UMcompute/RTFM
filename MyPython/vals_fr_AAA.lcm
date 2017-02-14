@@ -1,0 +1,6 @@
+package frAAA;
+
+struct aaaOUT
+{
+  double	dumVal;
+}
