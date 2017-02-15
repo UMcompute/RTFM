@@ -1,4 +1,3 @@
-# used for LCM to establish listener
 import select
 import time
 import lcm
@@ -47,7 +46,7 @@ try:
       print("~~~ done calculating in IFM ~~~")
       lc.publish("OUT_IFM", returnVal.encode())
     else:
-      print("Waiting for messages in IFM main loop...")
+      print("\n   [waiting for msg in IFM main loop]")
 except KeyboardInterrupt:
   pass
 

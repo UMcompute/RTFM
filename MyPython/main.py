@@ -68,21 +68,49 @@ def aaa_handler(channel, data):
 
 print("this is the start of main.py")
 
+TEST_WITH_VIZ_MODULE = 0
+
+if TEST_WITH_VIZ_MODULE == 1:
+  # initialize model start flags
+  launchSENS = 0
+  launchEDM = 0
+  launchIFM = 0
+  launchAAA = 0
+else:
+  # for testing only: turn OFF (0) or ON (1)
+  launchSENS = 1
+  launchEDM = 1
+  launchIFM = 1
+  launchAAA = 1
+
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# WAIT FOR STARTING FLAG FROM VISUALIZATION CONTROL DEVICE
+if TEST_WITH_VIZ_MODULE == 1:
+  IP_VIZ = raw_input('enter IP address of vizualization device: ')
+  check_timeout = 1.0
+  check_count = 0
+  check_limit = 1000
+  while check_count < check_limit:
+    check_count = check_count + 1
+    time.sleep(check_timeout)
+    os.system("wget ")
+# NOW MAIN PROGRAM IS READY TO BEGIN
+# ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
 # initialize the LCM library
 lc = lcm.LCM()
-lc.subscribe("SENSOR", my_handler)
-lc.subscribe("OUT_EDM", edm_handler)
-lc.subscribe("OUT_IFM", ifm_handler)
-lc.subscribe("OUT_AAA", aaa_handler)
+
+if launchSENS == 1:
+  lc.subscribe("SENSOR", my_handler)
+if launchEDM == 1:
+  lc.subscribe("OUT_EDM", edm_handler)
+if launchIFM == 1:  
+  lc.subscribe("OUT_IFM", ifm_handler)
+if launchAAA == 1:
+  lc.subscribe("OUT_AAA", aaa_handler)
 
 #lc2 = lcm.LCM()
 #lc2.subscribe("EDM_OUT", edm_handler)
-
-# for testing only: turn off 
-launchSENS = 1
-launchEDM = 1
-launchIFM = 1
-launchAAA = 0
 
 # start subprocess for EDM
 if launchEDM == 1:
@@ -157,7 +185,7 @@ try:
       lc.handle()
 # ===================================================================
       # distribute data to the ready ("not busy") subprocess models
-      print("   pathFlag = " + str(pathFlag) + " and busyEDM = " + str(busyEDM))
+      print("   pathFlag = " + str(pathFlag) + " and busy signals are " + str(busyEDM) + " " + str(busyIFM) + " " + str(busyAAA))
       # print busyIFM next!
       if pathFlag == 0:
         # send to EDM
@@ -180,12 +208,13 @@ try:
           print("***sent data to IFM ===>")
         # send to NEW (py) --> named AAA for now
         if launchAAA == 1 and busyAAA == 0:
-          busyAAA = 1
           msgForAAA = aaa()
           msgForAAA.time = currTime
           msgForAAA.temp = currTemp
           msgForAAA.flux = currFlux
+          busyAAA = 1
           lc.publish("AAA_CHAN", msgForAAA.encode())
+          print("***sent data to AAA ===>")
 
       # elif pathFlag == 1:
       #   print("   new msg from EDM")

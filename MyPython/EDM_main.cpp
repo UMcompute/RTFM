@@ -63,6 +63,8 @@ double computeRegressionSlope(queue<double> inX, queue<double> inY);
 // MAIN PROGRAM
 int main(int argc, char** argv) {
 
+  printf("starting EDM main...\n");
+
   // construct LCM and check if it is good!
   lcm::LCM lcm;
   if(!lcm.good()) return 1;
@@ -102,7 +104,7 @@ int main(int argc, char** argv) {
 
     // wait a limited amount of time for an incoming msg
     struct timeval timeout = {
-      5,  // seconds
+      1,  // seconds
       0   // microseconds
     };
     int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
@@ -112,7 +114,7 @@ int main(int argc, char** argv) {
     if (0 == status)
     {
       // no msg yet!
-      printf("\n   [waiting for msg in EDM main loop] \n");
+      printf("\n   [waiting for msg in EDM main loop]\n");
     }
     else if (FD_ISSET(lcm_fd, &fds))
     {
@@ -179,9 +181,9 @@ int main(int argc, char** argv) {
       // linear regression fit of unsmoothed and smoothed data sets
       double slopeOfTemp = computeRegressionSlope(timeQueue, tempQueue);
 
-      printf("wait ...\n");
+      printf(">>> calculating value in EDM >>>\n");
       usleep( waitUsec * pow(10.0, 6.0) );
-      printf("... done waiting! \n");
+      printf("<<< done calculating in EDM  <<<\n");
 
       // create LCM message to send back to MAIN
       sendToMain.tempSlope = slopeOfTemp;
@@ -196,6 +198,8 @@ int main(int argc, char** argv) {
     // should provide some exit criteria!
   }
   //}
+
+  printf("exit EDM main\n");
 
   // if successful, main program returns zero
   return 0;
