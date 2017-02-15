@@ -3,12 +3,13 @@ import select
 import time
 import lcm
 from toIFM import ifm
+from frIFM import ifmOUT
 
 
 def my_handler(channel, data):
   msg = ifm.decode(data)
   #print("~~~~IFM Received message on channel \"%s\"" % channel)
-  #print("   time = %s" % str(msg.time))
+  print("   IFM Current Time = %s" % str(msg.time))
   #print("   temp = %s" % str(msg.temp))
   #print("   flux = %s" % str(msg.flux))
   #print("\n")
@@ -39,7 +40,12 @@ try:
     rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
     if rfds:
       lc.handle()
+      print("~~~ calculating value in IFM~~~")
       time.sleep(compTime)
+      returnVal = ifmOUT()
+      returnVal.currHRR = currTime ** 2
+      print("~~~ done calculating in IFM ~~~")
+      lc.publish("OUT_IFM", returnVal.encode())
     else:
       print("Waiting for messages in IFM main loop...")
 except KeyboardInterrupt:

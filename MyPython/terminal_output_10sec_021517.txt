@@ -1,0 +1,117 @@
+pbeata MyPython $ clear; python main.py 
+
+this is the start of main.py
+
+***warning for testing: make sure EDM_main.cpp has been compiled
+
+Main Menu: 
+Start new sensor? (1/0) waiting for msg in EDM main loop... 
+waiting for msg in EDM main loop... 
+waiting for msg in EDM main loop... 
+0
+no sensor will be used!
+
+***warning for testing: ignoring main menu and using 1 pre-defined sensor
+The name of this program is './fromSensors/sensor.exe'. 
+This program was invoked with 1 argument(s). 
+
+
+   SENSOR sent time 1.00114 with timestamp: Wed Feb 15 11:40:24 2017
+
+   MAIN got time = 1.0011424
+   pathFlag = 0 and busyEDM = 0
+~~~sent data to EDM~~~
+   EDM Current Time: 1.001142
+   new msg in EDM! 
+wait ...
+
+   SENSOR sent time 2.00037 with timestamp: Wed Feb 15 11:40:25 2017
+
+   MAIN got time = 2.0003704
+   pathFlag = 0 and busyEDM = 1
+
+   SENSOR sent time 3.00618 with timestamp: Wed Feb 15 11:40:26 2017
+
+   MAIN got time = 3.0061841
+   pathFlag = 0 and busyEDM = 1
+... done waiting! 
+   current temperature slope = 0.0
+   pathFlag = 1 and busyEDM = 0
+
+   SENSOR sent time 4.00422 with timestamp: Wed Feb 15 11:40:27 2017
+
+   MAIN got time = 4.0042221
+   pathFlag = 0 and busyEDM = 0
+~~~sent data to EDM~~~
+   EDM Current Time: 4.004222
+   new msg in EDM! 
+wait ...
+
+   SENSOR sent time 5.00193 with timestamp: Wed Feb 15 11:40:28 2017
+
+   MAIN got time = 5.0019256
+   pathFlag = 0 and busyEDM = 1
+
+   SENSOR sent time 6.00082 with timestamp: Wed Feb 15 11:40:29 2017
+
+   MAIN got time = 6.0008199
+   pathFlag = 0 and busyEDM = 1
+... done waiting! 
+   current temperature slope = 87.8209482752
+   pathFlag = 1 and busyEDM = 0
+
+   SENSOR sent time 7.00267 with timestamp: Wed Feb 15 11:40:30 2017
+
+   MAIN got time = 7.0026689
+   pathFlag = 0 and busyEDM = 0
+~~~sent data to EDM~~~
+   EDM Current Time: 7.002669
+   new msg in EDM! 
+wait ...
+
+   SENSOR sent time 8.00618 with timestamp: Wed Feb 15 11:40:31 2017
+
+   MAIN got time = 8.0061835
+   pathFlag = 0 and busyEDM = 1
+
+   SENSOR sent time 9.00565 with timestamp: Wed Feb 15 11:40:32 2017
+
+   MAIN got time = 9.0056547
+   pathFlag = 0 and busyEDM = 1
+... done waiting! 
+   current temperature slope = 53.1972309804
+   pathFlag = 1 and busyEDM = 0
+
+   SENSOR sent time 10.0014 with timestamp: Wed Feb 15 11:40:33 2017
+
+   MAIN got time = 10.001366
+   pathFlag = 0 and busyEDM = 0
+~~~sent data to EDM~~~
+   EDM Current Time: 10.001366
+   new msg in EDM! 
+wait ...
+... done waiting! 
+   current temperature slope = 39.1105359006
+   pathFlag = 1 and busyEDM = 0
+waiting for msg in EDM main loop... 
+waiting for msg in EDM main loop... 
+^C
+**TRIED TO KILL the sensor subprocess! (but cannot confirm it)
+
+**TRIED TO KILL the EDM subprocess! (but cannot confirm it)
+
+Visually inspect ps output here to see if subprocess is still running: 
+  PID TTY          TIME CMD
+15245 pts/3    00:00:00 bash
+18094 pts/3    00:00:00 python
+18096 pts/3    00:00:00 EDM_main.exe <defunct>
+18098 pts/3    00:00:00 sensor.exe <defunct>
+18099 pts/3    00:00:00 sh
+18100 pts/3    00:00:00 ps
+this is the end of main.py
+pbeata MyPython $ ps
+  PID TTY          TIME CMD
+15245 pts/3    00:00:00 bash
+18101 pts/3    00:00:00 ps
+pbeata MyPython $ 
+

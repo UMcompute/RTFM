@@ -81,8 +81,26 @@ lc.subscribe("OUT_AAA", aaa_handler)
 # for testing only: turn off 
 launchSENS = 1
 launchEDM = 1
-launchIFM = 0
+launchIFM = 1
 launchAAA = 0
+
+# start subprocess for EDM
+if launchEDM == 1:
+  print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
+  edmStart = './EDM_main.exe'
+  edmProc = subprocess.Popen("exec " + edmStart, shell=True)
+
+# start subprocess for IFM
+if launchIFM == 1:
+  ifmStart = 'python IFM_main.py'
+  ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
+
+# start subprocess for AAA
+if launchAAA == 1:
+  aaaStart = 'python AAA_main.py'
+  aaaProc = subprocess.Popen("exec " + aaaStart, shell=True)
+
+# time.sleep(1.0)
 
 # ===================================================================
 # LAUNCH SENSOR WITH FIRE DATA FILE
@@ -120,22 +138,6 @@ if launchSENS == 1:
   fullExePath = sensorDir + sensorName
   sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
 
-# start subprocess for EDM
-if launchEDM == 1:
-  print("\n***warning for testing: make sure EDM_main.cpp has been compiled")
-  edmStart = './EDM_main.exe'
-  edmProc = subprocess.Popen("exec " + edmStart, shell=True)
-
-# start subprocess for IFM
-if launchIFM == 1:
-  ifmStart = 'python IFM_main.py'
-  ifmProc = subprocess.Popen("exec " + ifmStart, shell=True)
-
-# start subprocess for AAA
-if launchAAA == 1:
-  aaaStart = 'python AAA_main.py'
-  aaaProc = subprocess.Popen("exec " + aaaStart, shell=True)
-
 # ===================================================================
 # START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
 
@@ -155,24 +157,27 @@ try:
       lc.handle()
 # ===================================================================
       # distribute data to the ready ("not busy") subprocess models
-      print("pathFlag = " + str(pathFlag) + " and busyEDM = " + str(busyEDM))
+      print("   pathFlag = " + str(pathFlag) + " and busyEDM = " + str(busyEDM))
+      # print busyIFM next!
       if pathFlag == 0:
         # send to EDM
         if launchEDM == 1 and busyEDM == 0:
-          busyEDM = 1
           msgForEDM = edm()
           msgForEDM.time = currTime
           msgForEDM.temp = currTemp
           msgForEDM.flux = currFlux
+          busyEDM = 1
           lc.publish("EDM_CHAN", msgForEDM.encode())
+          print("***sent data to EDM ===>")
         # send to IFM 
         if launchIFM == 1 and busyIFM == 0:
-          busyIFM = 1
           msgForIFM = ifm()
           msgForIFM.time = currTime
           msgForIFM.temp = currTemp
           msgForIFM.flux = currFlux
+          busyIFM = 1
           lc.publish("IFM_CHAN", msgForIFM.encode())
+          print("***sent data to IFM ===>")
         # send to NEW (py) --> named AAA for now
         if launchAAA == 1 and busyAAA == 0:
           busyAAA = 1
@@ -181,16 +186,18 @@ try:
           msgForAAA.temp = currTemp
           msgForAAA.flux = currFlux
           lc.publish("AAA_CHAN", msgForAAA.encode())
-      elif pathFlag == 1:
-        print("   new msg from EDM")
-      elif pathFlag == 2:
-        print("   new msg from IFM")
-      elif pathFlag == 3:
-        print("   new msg from AAA")
+
+      # elif pathFlag == 1:
+      #   print("   new msg from EDM")
+      # elif pathFlag == 2:
+      #   print("   new msg from IFM")
+      # elif pathFlag == 3:
+      #   print("   new msg from AAA")
 
 # ===================================================================
     else:
-      print("Waiting for new data from sensors in MAIN program loop...")
+      zzz = 12.0
+      #print("Waiting for new data from sensors in MAIN program loop...")
 except KeyboardInterrupt:
   pass
 

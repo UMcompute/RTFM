@@ -57,6 +57,9 @@ public:
 // global function heading
 double computeRegressionSlope(queue<double> inX, queue<double> inY);
 
+
+
+
 // MAIN PROGRAM
 int main(int argc, char** argv) {
 
@@ -69,7 +72,7 @@ int main(int argc, char** argv) {
   lcm.subscribe("EDM_CHAN", &Handler::handleMessage, &handlerObject);
 
   // generate new queues to hold incoming data
-  const int MAX_MSG_LIMIT = 20;
+  const int MAX_MSG_LIMIT = 1000;
   const int MAX_QUEUE_SIZE = 5;
   queue<double> fluxQueue;
   queue<double> fluxMAQ;
@@ -78,7 +81,7 @@ int main(int argc, char** argv) {
   queue<double> tempMAQ;
   double tempSum = 0.0;
   queue<double> timeQueue;
-  double waitUsec = 0.5;
+  double waitUsec = 2.5;
 
   // data structure to send output back to main program
   frEDM::edmOUT sendToMain;
@@ -99,7 +102,7 @@ int main(int argc, char** argv) {
 
     // wait a limited amount of time for an incoming msg
     struct timeval timeout = {
-      1,  // seconds
+      5,  // seconds
       0   // microseconds
     };
     int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
@@ -109,14 +112,14 @@ int main(int argc, char** argv) {
     if (0 == status)
     {
       // no msg yet!
-      //printf("waiting for msg in EDM main loop... \n");
+      printf("\n   [waiting for msg in EDM main loop] \n");
     }
     else if (FD_ISSET(lcm_fd, &fds))
     {
       // LCM has events for you to process!
       lcm.handle();
-      printf("   new msg in EDM! \n");
-      numMsgRecv += 1;
+      //printf("   new msg in EDM! \n");
+      //numMsgRecv += 1;
       //cout << " *** " << endl;
       //cout << "total messages received: " << numMsgRecv << endl;
       //cout << " *** " << endl;
