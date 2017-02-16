@@ -30,8 +30,8 @@ currTime = 0.0
 currTemp = 0.0
 currFlux = 0.0
 
-compTime = 1.0
-x = 1.0
+#compTime = 0.0
+x = 2.0
 # get sensor data using select function and waiting
 try:
   timeout = 1.0  # amount of time to wait, in seconds
@@ -40,8 +40,8 @@ try:
     if rfds: 
       lc.handle()
       print("+++ calculating value in AAA+++")
-      time.sleep(compTime)
-      x = x + x
+      #time.sleep(compTime)
+      x = x + 2.0
       returnVal = aaaOUT()
       returnVal.dumVal = x  
       print("+++ done calculating in AAA +++")

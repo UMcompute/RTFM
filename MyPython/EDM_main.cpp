@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
   queue<double> tempMAQ;
   double tempSum = 0.0;
   queue<double> timeQueue;
-  double waitUsec = 2.5;
+  double waitUsec = 2.0;
 
   // data structure to send output back to main program
   frEDM::edmOUT sendToMain;
@@ -125,11 +125,6 @@ int main(int argc, char** argv) {
       //cout << " *** " << endl;
       //cout << "total messages received: " << numMsgRecv << endl;
       //cout << " *** " << endl;
-    
-
-
-      // do some work using the new data ...
-      //   (compute x)
 
       // store the current values obtained from the message
       double currTime = handlerObject.getTime();

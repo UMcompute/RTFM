@@ -1,3 +1,4 @@
+# general packages to include
 import subprocess
 import time
 import os
@@ -16,6 +17,10 @@ from frAAA import aaaOUT
 from toIFM import ifm
 from toEDM import edm
 from toAAA import aaa
+
+# used for communication with visualization devices
+import urllib
+import re
 
 
 def my_handler(channel, data):
@@ -42,7 +47,9 @@ def edm_handler(channel, data):
   global busyEDM
   busyEDM = 0
   msg = edmOUT.decode(data)
-  print("   current temperature slope = " + str(msg.tempSlope))
+  global currSlope
+  currSlope = msg.tempSlope
+  print("   current temperature slope = " + str(currSlope))
 
 
 def ifm_handler(channel, data):
@@ -51,7 +58,9 @@ def ifm_handler(channel, data):
   global busyIFM
   busyIFM = 0
   msg = ifmOUT.decode(data)
-  print("   current heat release rate = " + str(msg.currHRR))
+  global currHRR
+  currHRR = msg.currHRR
+  print("   current heat release rate = " + str(currHRR))
 
 
 def aaa_handler(channel, data):
@@ -60,7 +69,9 @@ def aaa_handler(channel, data):
   global busyAAA
   busyAAA = 0
   msg = aaaOUT.decode(data)
-  print("   current dummy value = " + str(msg.dumVal))
+  global currDummy
+  currDummy = msg.dumVal
+  print("   current dummy value = " + str(currDummy))
 
 
 # ===================================================================
@@ -68,7 +79,8 @@ def aaa_handler(channel, data):
 
 print("this is the start of main.py")
 
-TEST_WITH_VIZ_MODULE = 0
+TEST_WITH_VIZ_MODULE = 1
+testing_input = 1
 
 if TEST_WITH_VIZ_MODULE == 1:
   # initialize model start flags
@@ -79,27 +91,72 @@ if TEST_WITH_VIZ_MODULE == 1:
 else:
   # for testing only: turn OFF (0) or ON (1)
   launchSENS = 1
-  launchEDM = 1
-  launchIFM = 1
-  launchAAA = 1
+  launchEDM = 0
+  launchIFM = 0
+  launchAAA = 0
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # WAIT FOR STARTING FLAG FROM VISUALIZATION CONTROL DEVICE
 if TEST_WITH_VIZ_MODULE == 1:
-  IP_VIZ = raw_input('enter IP address of vizualization device: ')
+  if testing_input == 1:
+    IP_VIZ = raw_input('enter IP address of vizualization device: ')
+    PORT_VIZ = raw_input('enter port # of vizualization device: ')
+    # example: enter 141.213.169.232 for IP address
+    # example: enter 8080 for port #
+  else:
+    IP_VIZ = "141.212.44.241"
+    PORT_VIZ = "8080"
+  FILENAME = "status.txt"
   check_timeout = 1.0
   check_count = 0
   check_limit = 1000
-  while check_count < check_limit:
+
+  # use urllib package to get file from server
+  full_download_name = "http://" + IP_VIZ + ":" + PORT_VIZ + "/" + FILENAME
+  full_save_name = "./" + FILENAME
+  start_main = 0
+  print("\nwaiting for signal from remote device to begin ...")
+  while check_count < check_limit and start_main == 0:
     check_count = check_count + 1
     time.sleep(check_timeout)
-    os.system("wget ")
+    # check if the status file contains the start key
+    retResult = urllib.urlretrieve(full_download_name, full_save_name)
+    #print(retResult)
+    file = open(full_save_name, "r")
+    for line in file:
+      if re.search("start", line):
+        print("time to start main program")
+        start_main = 1
+      elif start_main == 1:
+        input_list = line.split(',')
+        print("user input these values for models: " + str(input_list))
+        for inp in range(len(input_list)):
+          modelFlag = int(input_list[inp])
+          if modelFlag == 1:
+            if inp == 0:
+              launchSENS = 1
+            elif inp == 1:
+              launchEDM = 1
+            elif inp == 2:
+              launchIFM = 1
+            elif inp == 3:
+              launchAAA = 1
+      #else:
+      #  print line
+      # elif start_main == 1:
+      #   input_list = line.split(',')
+      #   for inp in len(input_list):
+      #     print("start subprocess #", str(inp)
+    file.close()
+  if check_count == check_limit:
+    print("***warning: possible error due to timeout waiting for starting signal")
 # NOW MAIN PROGRAM IS READY TO BEGIN
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # initialize the LCM library
 lc = lcm.LCM()
 
+# subscribe to any active channels from models
 if launchSENS == 1:
   lc.subscribe("SENSOR", my_handler)
 if launchEDM == 1:
@@ -108,9 +165,6 @@ if launchIFM == 1:
   lc.subscribe("OUT_IFM", ifm_handler)
 if launchAAA == 1:
   lc.subscribe("OUT_AAA", aaa_handler)
-
-#lc2 = lcm.LCM()
-#lc2.subscribe("EDM_OUT", edm_handler)
 
 # start subprocess for EDM
 if launchEDM == 1:
@@ -128,13 +182,12 @@ if launchAAA == 1:
   aaaStart = 'python AAA_main.py'
   aaaProc = subprocess.Popen("exec " + aaaStart, shell=True)
 
-# time.sleep(1.0)
-
 # ===================================================================
 # LAUNCH SENSOR WITH FIRE DATA FILE
 
 # launch main menu for user
 # todo: include kill process option in menu for user to kill sensor
+'''
 print("\nMain Menu: ")
 answer = '2'
 while answer == '2':
@@ -147,15 +200,7 @@ while answer == '2':
   else:
     print("***error: please enter only 1 (yes) or 0 (no)");
     answer = '2'
-
-# can python run the Makefile of a c++ app for us too?
-# (or maybe do this in a bash script instead)
-
-# requires that we know where the sensor is located
-#sensorDir = '/home/pbeata/Research/FireMonitoring/SENSORS/3_RemoteRepoSSH/'
-
-# requires this application be compiled first
-#sensorName = 'SimpleSensor.exe'
+'''
 
 # start the single sensor for dev mode at beginning of Main program only
 if launchSENS == 1:
@@ -164,10 +209,34 @@ if launchSENS == 1:
   sensorDir = './fromSensors/'
   sensorName = 'sensor.exe' + ' ' + sensorDir + dataName 
   fullExePath = sensorDir + sensorName
+  time.sleep(2.0)  
+  # this sleep step was used to ensure that the other subprocesses have started first
+  # TODO: we can find a better "BARRIER" function for this purpose instead of sleep
   sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
+  '''
+  notStarted = 1
+  while notStarted == 1:
+    if launchEDM == 1:
+      edmRet = edmProc.returncode
+    else:
+      edmRet = None
+    if launchIFM == 1:
+      ifmRet = ifmProc.returncode
+    else:
+      ifmRet = None
+    if launchAAA == 1:
+      aaaRet = aaaProc.returncode
+    else:
+      aaaRet = None
+    if edmRet == None and ifmRet == None and aaaRet == None:
+      sensorProc = subprocess.Popen("exec " + fullExePath, shell=True)
+      notStarted = 0
+    else:
+      print("(waiting for all subprocesses to start)")
+  '''
 
 # ===================================================================
-# START RECEIVER TO GET SENSOR DATA INTO MAIN LOOP
+# START RECEIVERS TO GET SENSOR DATA AND MODEL UPDATES IN MAIN LOOP
 
 # flags to differentiate proper work path
 pathFlag = 0
@@ -177,6 +246,19 @@ busyEDM = 0
 busyIFM = 0
 busyAAA = 0
 
+# first version of output file
+outFile = open('update.csv', 'w')
+outFile.write('SENSOR, SENSOR, SENSOR, EDM, IFM, AAA\n')
+
+# initialize output values
+currTime = 0.0
+currTemp = 0.0
+currFlux = 0.0
+currSlope = 0.0
+currHRR = 0.0
+currDummy = 0.0
+
+# MAIN LOOP
 try:
   timeout = 0.2  # amount of time to wait, in seconds
   while True:
@@ -216,42 +298,42 @@ try:
           lc.publish("AAA_CHAN", msgForAAA.encode())
           print("***sent data to AAA ===>")
 
-      # elif pathFlag == 1:
-      #   print("   new msg from EDM")
-      # elif pathFlag == 2:
-      #   print("   new msg from IFM")
-      # elif pathFlag == 3:
-      #   print("   new msg from AAA")
-
+        # write most recent data to output file
+        outFile.write(str(currTime) + ', ' + str(currTemp) + ', ' + str(currFlux) + ', ')
+        outFile.write(str(currSlope)+ ', ' + str(currHRR)  + ', ' + str(currDummy) + '\n')
 # ===================================================================
+      '''
+      elif pathFlag == 1:
+        print("   new msg from EDM")
+      elif pathFlag == 2:
+        print("   new msg from IFM")
+      elif pathFlag == 3:
+        print("   new msg from AAA")
+      '''
     else:
-      zzz = 12.0
-      #print("Waiting for new data from sensors in MAIN program loop...")
+      loopStatus = 1
+      #print("\n   [waiting for new messages in MAIN program loop]")
 except KeyboardInterrupt:
   pass
 
-# assume some calculations take 3 seconds
-#print("\nsleep for 3 seconds... then kill proc")
-#time.sleep(3)
-
-# kill the sensor program if kill command given by user in main menu
+# kill the subprocess programs if still active waiting for work
 if launchSENS == 1:
   sensorProc.kill()
   print("\n**TRIED TO KILL the sensor subprocess! (but cannot confirm it)")
-
 if launchEDM == 1:
   edmProc.kill()
   print("\n**TRIED TO KILL the EDM subprocess! (but cannot confirm it)")
-
 if launchIFM == 1:
   ifmProc.kill()
   print("\n**TRIED TO KILL the IFM subprocess! (but cannot confirm it)")
-
 if launchAAA == 1:
   aaaProc.kill()
   print("\n**TRIED TO KILL the AAA subprocess! (but cannot confirm it)")  
 
-print("\nVisually inspect ps output here to see if subprocess is still running: ")
-os.system("ps")
+# close the output file
+outFile.close()
 
-print("this is the end of main.py")
+# end the main program and return to the terminal
+#print("\nVisually inspect ps output here to see if subprocess is still running: ")
+#os.system("ps")
+print("\nthis is the end of main.py\n")

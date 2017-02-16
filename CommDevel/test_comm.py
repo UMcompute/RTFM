@@ -1,8 +1,26 @@
 import urllib
 import re
+import httplib
+import requests
 
+a="http://141.212.44.241:8080"
+try:    
+    print urllib.urlopen(a)
+except:
+    print a+"  site does not exist"
+
+
+# check if a website exists!
+# request = requests.get('http://www.aflkasdlknadlkndlcexample.com')
+# if request.status_code == 200:
+#     print('web site exists')
+# else:
+#     print('web site does not exist') 
+
+
+'''
 # update the IP address, port, and file name to get from the visualization module
-WIN_OS_IP = "141.213.169.232"
+WIN_OS_IP = "141.212.44.241"
 PORT = "8080"
 FILENAME = "status.txt"
 
@@ -23,5 +41,5 @@ for line in file:
 file.close()
 
 # [ insert while loop end ]
-
+'''
 print("move on to main time loop...")

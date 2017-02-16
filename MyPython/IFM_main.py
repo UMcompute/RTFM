@@ -30,7 +30,7 @@ currTime = 0.0
 currTemp = 0.0
 currFlux = 0.0
 
-compTime = 5.0
+compTime = 4.0
 
 # get sensor data using select function and waiting
 try:
