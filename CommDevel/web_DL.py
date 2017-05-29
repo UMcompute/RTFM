@@ -21,7 +21,7 @@ def download_stock_data(csv_url):
     fx .close()
 
     
-print("example of downloading files from the web")
+#print("example of downloading files from the web")
 goog_url = 'http://chart.finance.yahoo.com/table.csv?s=GOOG&a=10&b=29&c=2016&d=11&e=29&f=2016&g=d&ignore=.csv'
 
     
