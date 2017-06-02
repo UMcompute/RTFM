@@ -3,7 +3,7 @@ import re
 import httplib
 import requests
 
-a="http://141.212.44.241:8080"
+a="http://141.212.44.188:8080"
 try:    
     print urllib.urlopen(a)
 except:

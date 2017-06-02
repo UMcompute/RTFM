@@ -2,3 +2,6 @@
 inverse_model
 *.pyc
 *.exe
+InverseModel/original_IFM
+InverseModel/converted_IFM/output/*
+

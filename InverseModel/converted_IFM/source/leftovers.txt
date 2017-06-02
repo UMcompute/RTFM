@@ -1,0 +1,89 @@
+
+      # DO NOTHING
+      #print('this is row number ' + str(rownum))
+      #print row
+      #else:
+      '''
+      elif rownum == 5:
+        for v in row:
+          print(str(v) + '  ' + str(float(v)/2.0))
+      '''
+      
+      
+      # do nothing (these are header rows only)
+      # print row
+      x = 1
+    elif rownum == 4:
+      print row
+      '''
+      for v in row:
+        print(str(float(v)))
+        print type(v)
+        print v * 20.0
+      '''
+      
+      
+      print(str(mrows) + ' by ' + str(ncols))
+      
+      
+      
+      
+      
+      readcsvh leftovers
+      
+      
+#import csv
+      
+
+  '''
+  ifile = open(filename, 'rb')
+  reader = csv.reader(ifile)
+  
+  #data = list(reader)
+  #print type(data)
+  #row_count = len(data)
+  #print row_count
+
+  rownum = 0
+  for row in reader:
+    if rownum < 4:
+      print len(row)
+      print type(row)
+    rownum += 1
+  print(rownum)
+  print('done!')
+  '''
+
+
+
+  '''
+  # Validate input args
+  if nargin == 0:
+      error(nargchk(1, 1, nargin, mstring('struct')))
+
+  # Get Filename
+  if not ischar(filename):
+      error(mstring('csvreadh:FileNameMustBeString'), mstring('Filename must be a string.'))
+
+  # Make sure file exists
+  if exist(filename, mstring('file')) != 2:
+      error(mstring('csvreadh:FileNotFound'), mstring('File not found.'))
+
+  if nargin == 1:
+      delim = mstring(',')
+
+  # open input file
+  file = fopen(filename)
+  line = fgetl(file)
+  h = regexp(line, delim, mstring('split'))
+
+  m = mcat([])
+  # this is not quick for sure, but works
+  while 1:
+      line = fgetl(file)
+      if not ischar(line):
+          break
+      m = mcat([m, OMPCSEMI, str2double(regexp(line, mstring(','), mstring('split')))])
+
+  fclose(file)
+  '''
