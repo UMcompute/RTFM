@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # import other source files
-import create_exp_signal_xc
+import create_signal_xc
 import read_exp_signal_xc
 
 #GLOBAL VALUES FOR CONFIG
@@ -65,7 +65,7 @@ create_exp_signal_xc(timein, hrrin, numcomp, numfire)#function that creates the 
 # 05-31-17 DISABLED FUNCTION CALLS FOR NOW
 
 
-create_exp_signal_xc.create_exp_signal_xc_func(timein, hrrin, numcomp, numfire)
+create_signal_xc.create_signal_xc_func(timein, hrrin, numcomp, numfire, 'exp_signal_xc')
 SIGNAL_exp = read_exp_signal_xc.read_exp_signal_xc_func(numcomp)
 TIME_exp = SIGNAL_exp[:, 0]
 
@@ -102,12 +102,15 @@ HRR_temp = np.zeros((1, numfire)) + 1000.0
 SIGNAL_lowfire = [0, 0, 0, 0]
 
 
-for i in range(1, n):
+# CHANGE 3 TO n FOR FINAL
+for i in range(1, 3):
+  print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
 
-  create_pred_signal_xc(time, HRR_pred, numcomp, numfire)
+  create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
+  '''
   read_pred_signal_xc(numcomp)
-  
+
   SIGNAL_diff = SIGNAL_pred(i, mslice[1:4]) - SIGNAL_exp(i, mslice[1:4])
   [max_SIGNAL_diff, max_fire] = max(abs(SIGNAL_diff))
   least_error(i).lvalue = max_SIGNAL_diff
@@ -115,7 +118,7 @@ for i in range(1, n):
   HRR_new = 1000
   lag = 0
   factor = 1
-
+  '''
 
 '''
     while max_SIGNAL_diff > error_tol:

@@ -11,7 +11,7 @@ from shutil import copyfile
 from os import system
 
 
-def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
+def create_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None, inFile=None):
   N = len(time)
 
   #For current purpose, we can just say the following data are all consistant
@@ -22,8 +22,13 @@ def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
   HEIGH = np.zeros(N)
 
   #Creating the .in input file for CFAST:
-  copyfile('../input/Dalmarnocksetup.in', '../output/exp_signal_xc.in')
-  fileNew = open('../output/exp_signal_xc.in', 'a') #NAME OF THE FILE
+  inpDir = '../input/'
+  outDir = '../output/'
+  baseFile = 'Dalmarnocksetup'
+  file1 = inpDir + baseFile + '.in'
+  file2 = outDir + inFile + '.in'
+  copyfile(file1, file2)
+  fileNew = open(file2, 'a') #NAME OF THE FILE
   # (appending to the end of the copied Dalmarnocksetup file)
 
   #This part will be modified with the num of fires
@@ -43,7 +48,7 @@ def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
     for v in time:
       fileNew.write(',' + str(v))
     # VECTOR HRR
-    fileNew.write('\nHRR') 
+    fileNew.write('\nHRR')
     for v in hrr[:, counter]:
       fileNew.write(',' + str(v))
     # VECTOR SOOT  
@@ -70,4 +75,6 @@ def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
 
   #Run the file created and generate the excel spreadsheet that will be used
   #to read the predicted temperatures from:
-  system('$CFAST ../output/exp_signal_xc')
+  runFile = outDir + inFile
+  sysText = '$CFAST ' + outDir + inFile
+  system(sysText)

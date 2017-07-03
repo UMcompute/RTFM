@@ -22,7 +22,8 @@ def read_exp_signal_xc_func(numcomp=None):
   #If use Mass flow rate, use 1, else, 0
   usedsignal = [1, 1, 0, 0]
 
-  #According to Guo's paper, temperature turns out to be the best fire temperature. (?)
+  #According to Guo's paper, temperature turns out to be the best fire temperature.
+  # Paul: What does this mean? Temp is the best predictor maybe? 
 
   #if other fire signal is used, this part has to change
   #numsignal = usedsignal[0] * numcomp + usedsignal[1] * numcomp + usedsignal[2] * numcomp 
@@ -31,7 +32,6 @@ def read_exp_signal_xc_func(numcomp=None):
   numsignal = 0
   for i in range(0, len(usedsignal)):
     numsignal += usedsignal[i] * numcomp
-  print("numsignal = " + str(numsignal))
 
   # starting column of signalData matrix
   column = 0
