@@ -77,7 +77,7 @@ def aaa_handler(channel, data):
 # ===================================================================
 # START THE MAIN PROGRAM LOOP
 
-print("this is the start of main.py")
+#print("this is the start of main.py")
 
 TEST_WITH_VIZ_MODULE = 1
 testing_input = 1
@@ -186,7 +186,7 @@ if launchAAA == 1:
 # LAUNCH SENSOR WITH FIRE DATA FILE
 
 # launch main menu for user
-# todo: include kill process option in menu for user to kill sensor
+# TODO: include kill process option in menu for user to kill sensor
 '''
 print("\nMain Menu: ")
 answer = '2'

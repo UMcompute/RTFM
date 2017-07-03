@@ -34,7 +34,8 @@ plt.show()
 x = np.linspace(0, 2 * np.pi, 400)
 y = np.sin(x ** 2)
 
-plt.close('all')
+#plt.close('all')
+
 '''
 # Just a figure and one subplot
 f, ax = plt.subplots()
