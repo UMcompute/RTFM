@@ -17,7 +17,7 @@ def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
   SOOT = 0.01 + np.zeros(N)
   CO = 0.01 + np.zeros(N)
   TRACE = np.zeros(N)
-  AREA = 1 + np.zeros(N)
+  AREA = 1.0 + np.zeros(N)
   HEIGH = np.zeros(N)
 
   #Creating the .in input file for CFAST:
