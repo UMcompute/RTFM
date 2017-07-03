@@ -80,7 +80,7 @@ error_max = 0.1
 n = len(TIME_exp)
 HRR_pred = np.zeros((n, numfire)) + 1000.0
 least_error = np.zeros((n, 1)) + 100.0
-SIGNAL_pred = mp.zeros((n, numsignal)) + 20.0  #For now signal is temperature
+SIGNAL_pred = np.zeros((n, numsignal)) + 20.0  #For now signal is temperature
 SIGNAL_turb = SIGNAL_pred
 num_fail = 0
 #error_extra = 0
@@ -101,11 +101,13 @@ k_avg = 0.0
 HRR_temp = np.zeros((1, numfire)) + 1000.0
 SIGNAL_lowfire = [0, 0, 0, 0]
 
-'''
+
 for i in range(1, n):
-  HRR_pred(i, mslice[:]).lvalue = HRR_temp
+  HRR_pred[i,:] = HRR_temp
+
   create_pred_signal_xc(time, HRR_pred, numcomp, numfire)
   read_pred_signal_xc(numcomp)
+  
   SIGNAL_diff = SIGNAL_pred(i, mslice[1:4]) - SIGNAL_exp(i, mslice[1:4])
   [max_SIGNAL_diff, max_fire] = max(abs(SIGNAL_diff))
   least_error(i).lvalue = max_SIGNAL_diff
@@ -113,7 +115,7 @@ for i in range(1, n):
   HRR_new = 1000
   lag = 0
   factor = 1
-'''
+
 
 '''
     while max_SIGNAL_diff > error_tol:

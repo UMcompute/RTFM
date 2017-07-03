@@ -1,7 +1,7 @@
 """
 hrr is is a matrix assigned as [hrr1,hrr2....]
 numcomp is the number of compartment in use in the building, for now all
-compartment is lined up as 6.1*4.9*2.4
+compartment is lined up as 6.1*4.9*2.4 
 numfire is the number of fires
 all fire is burning at 3.05,2.45 of each building (fire 1 at the left 1st comp)
 """
@@ -9,6 +9,7 @@ all fire is burning at 3.05,2.45 of each building (fire 1 at the left 1st comp)
 import numpy as np
 from shutil import copyfile
 from os import system
+
 
 def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
   N = len(time)
@@ -29,7 +30,6 @@ def create_exp_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None):
   #Current setting is fire 1 in comp 1, fire 2 in comp2, etc
   #And all fire are at (3.05,2.45) of the corresponding comp
 
-    
   for counter in range(0, numfire):
     fileNew.write('!!\n')
     # FIRE NAME
