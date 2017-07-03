@@ -71,8 +71,8 @@ TIME_exp = SIGNAL_exp[:, 0]
 
 
 num_fail_allowed = 5
-iter_max = 20
-#iter_turn=20;
+iteration_max = 20
+#iteration_turn=20;
 error_tol = 0.001
 error_max = 0.1
 
@@ -93,13 +93,14 @@ k = 1.0
 factor = 1.0
 HRR_max = 6.0 * 10.0 ** 5
 HRR_min = 0.0
-total_iter = 0
+total_iteration = 0
 low_tol = 0.001
 extra_tol = 0.0
 jump_tol = 1.0
 k_avg = 0.0
 HRR_temp = np.zeros((1, numfire)) + 1000.0
 SIGNAL_lowfire = [0, 0, 0, 0]
+least_error = np.zeros(n)
 
 
 # CHANGE 3 TO n FOR FINAL
@@ -110,24 +111,33 @@ for i in range(1, 3):
   create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
   SIGNAL_pred = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
     
-  '''
-  SIGNAL_diff = SIGNAL_pred(i, mslice[1:4]) - SIGNAL_exp(i, mslice[1:4])
-  [max_SIGNAL_diff, max_fire] = max(abs(SIGNAL_diff))
-  least_error(i).lvalue = max_SIGNAL_diff
-  iter = 1
-  HRR_new = 1000
-  lag = 0
-  factor = 1
-  '''
+  #SIGNAL_diff = np.zeros((1, numsignal+1))
+  #for j in range(0, numfire):
+
+  # Paul: FOUND USE OF MAGIC NUMBERS == CHECK THIS SEGMENT
+  SIGNAL_diff = SIGNAL_pred[i,1:5] - SIGNAL_exp[i,1:5]
+  #SIGNAL_diff[0,1:5] = SIGNAL_pred[i,1:5] - SIGNAL_exp[i,1:5]
+  max_SIGNAL_diff = max(SIGNAL_diff)
+  max_fire = np.argmax(SIGNAL_diff)
+  # Paul: (magic numbers above are 1:5)
+
+  #print(SIGNAL_diff)
+  print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
+
+  least_error[i] = max_SIGNAL_diff
+  iteration = 1
+  HRR_new = 1000.0
+  #lag = 0
+  factor = 1.0
 
 '''
     while max_SIGNAL_diff > error_tol:
 
 
-        total_iter += 1
-        iter = iter + 1; print iter
+        total_iteration += 1
+        iteration = iteration + 1; print iteration
         HRR_turb = HRR_pred
-        HRR_delta = HRR_delta_base * HRR_pred(i, max_fire) * 25.0 / (25.0 + iter)
+        HRR_delta = HRR_delta_base * HRR_pred(i, max_fire) * 25.0 / (25.0 + iteration)
         HRR_turb(i, max_fire).lvalue = HRR_turb(i, max_fire) + HRR_delta
 
         create_pred_signal_xc(time, HRR_turb, numcomp, numfire)
@@ -179,7 +189,7 @@ for i in range(1, 3):
             HRR_temp = HRR_pred(i, mslice[:])
         end
 
-        if iter > 0.5 * iter_max:
+        if iteration > 0.5 * iteration_max:
             if (HRR_new < HRR_low) and (least_error(i) < low_tol):
                 break
             elif (HRR_new > HRR_low) and (least_error(i) < extra_tol):
@@ -187,7 +197,7 @@ for i in range(1, 3):
             end
         end
 
-        if iter > iter_max:
+        if iteration > iteration_max:
             if min(HRR_temp) < HRR_low:
                 low_tol = min(least_error(i), error_max); print low_tol
             else:
@@ -217,7 +227,7 @@ print("total of " + str(tim) + " seconds elapsed")
 
 
 '''
-save(mstring('result.mat'), mstring('tim'), mstring('HRR_pred'), mstring('time'), mstring('total_iter'), mstring('low_tol'), mstring('extra_tol'))
+save(mstring('result.mat'), mstring('tim'), mstring('HRR_pred'), mstring('time'), mstring('total_iteration'), mstring('low_tol'), mstring('extra_tol'))
 
 for counter in mslice[1:numfire]:
     #subplot(numfire+numsignal,2,counter*2)
