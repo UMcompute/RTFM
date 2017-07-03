@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # import other source files
 import create_signal_xc
-import read_exp_signal_xc
+import read_signal_xc
 
 #GLOBAL VALUES FOR CONFIG
 numcomp = 4
@@ -66,7 +66,7 @@ create_exp_signal_xc(timein, hrrin, numcomp, numfire)#function that creates the 
 
 
 create_signal_xc.create_signal_xc_func(timein, hrrin, numcomp, numfire, 'exp_signal_xc')
-SIGNAL_exp = read_exp_signal_xc.read_exp_signal_xc_func(numcomp)
+SIGNAL_exp = read_signal_xc.read_signal_xc_func(numcomp, 'exp_signal_xc')
 TIME_exp = SIGNAL_exp[:, 0]
 
 
@@ -108,9 +108,9 @@ for i in range(1, 3):
   HRR_pred[i,:] = HRR_temp
 
   create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
+  SIGNAL_pred = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
+    
   '''
-  read_pred_signal_xc(numcomp)
-
   SIGNAL_diff = SIGNAL_pred(i, mslice[1:4]) - SIGNAL_exp(i, mslice[1:4])
   [max_SIGNAL_diff, max_fire] = max(abs(SIGNAL_diff))
   least_error(i).lvalue = max_SIGNAL_diff

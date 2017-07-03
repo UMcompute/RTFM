@@ -14,7 +14,7 @@ import numpy as np
 import csvreadh
 
 
-def read_exp_signal_xc_func(numcomp=None):
+def read_signal_xc_func(numcomp=None, inFile=None):
   # setting config
   #If use upper layer temperature, use 1, else, 0
   #If use O2 concentration, use 1, else, 0
@@ -37,7 +37,8 @@ def read_exp_signal_xc_func(numcomp=None):
   column = 0
 
   #Read the time vector and length
-  filename = '../output/exp_signal_xc_n.csv'
+  outDir = '../output/'
+  filename = outDir + inFile + '_n.csv'
   csvData = csvreadh.csvreadh_func(filename)
   time = csvData[:, 0]
   numDataRows = len(time)
@@ -57,7 +58,7 @@ def read_exp_signal_xc_func(numcomp=None):
 
   # signal for O2 concentration
   if usedsignal[1] == 1:
-    filename = '../output/exp_signal_xc_s.csv'
+    filename = outDir + inFile + '_s.csv'
     csvData = csvreadh.csvreadh_func(filename)    
     for i in range(0, numcomp):
       # get column id
@@ -68,7 +69,7 @@ def read_exp_signal_xc_func(numcomp=None):
   # signal for CO2 concentration
   if usedsignal[2] == 1:
     if usedsignal[1] == 0:
-      filename = '../output/exp_signal_xc_s.csv'
+      filename = outDir + inFile + '_s.csv'
       csvData = csvreadh.csvreadh_func(filename)
     for i in range(0, numcomp):
       # get column id
@@ -78,7 +79,7 @@ def read_exp_signal_xc_func(numcomp=None):
 
   # signal for mass flow rate
   if usedsignal[3] == 1:
-    filename = '../output/exp_signal_xc_f.csv'
+    filename = outDir + inFile + '_f.csv'
     csvData = csvreadh.csvreadh_func(filename)
     for i in range(0, numcomp):
       # get column id
