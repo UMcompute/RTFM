@@ -143,68 +143,60 @@ for i in range(1, 4):
     max_fire = np.argmax(abs(SIGNAL_diff))
     print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
 
-    # terminate while loop early for testing
-    max_SIGNAL_diff = 0.0
+    # Paul: FOUND MAGIC NUMBERS 0.2, 0.1, 0.5
+    check1 = HRR_pred[i, max_fire]   <  0.2 * HRR_pred[i-1, max_fire]
+    check2 = HRR_pred[i-1, max_fire] <  0.1 * max(HRR_pred[i-1, :])
+    check3 = HRR_pred[i, max_fire]   <  0.5 * max(HRR_pred[i-1, :])
 
-    '''
-        #         if (HRR_pred(i-1,max_fire)<max(HRR_pred(i-1,:))/10.0 &&
-        #         HRR_pred(i,max_fire)<0.6*max(HRR_pred(i-1,:)))
-        if HRR_pred(i, max_fire) < 0.2 * (HRR_pred(i - 1, max_fire)) or (HRR_pred(i - 1, max_fire) < max(HRR_pred(i - 1, mslice[:])) * 0.1 and HRR_pred(i, max_fire) < 0.5 * max(HRR_pred(i - 1, mslice[:]))):
-            SIGNAL_lowfire(max_fire).lvalue = 1
-            HRR_low = max(0.2 * (HRR_pred(i - 1, max_fire)), max(HRR_pred(i - 1, mslice[:])) * 0.1)
-            [tempmax_SIGNAL_diff, tempmax_fire] = max(abs(SIGNAL_diff) *elmul* (abs(HRR_pred(i, mslice[:])) > HRR_low))
-            if tempmax_SIGNAL_diff > low_tol and SIGNAL_lowfire(max_fire) == 1 and max_SIGNAL_diff < jump_tol:
-                max_SIGNAL_diff = tempmax_SIGNAL_diff
-                max_fire = tempmax_fire
+    if check1 or (check2 and check3):
+      SIGNAL_lowfire[max_fire] = 1
+      # Paul: magic numbers 0.2, 0.1
+      HRR_low = max(0.2 * HRR_pred[i-1, max_fire], 0.1 * max(HRR_pred[i-1, :]))
+      check_HRR = np.zeros(numfire)
+      for j in range(0, numfire):
+        if abs(HRR_pred[i, j]) > HRR_low:
+          check_HRR[j] = 1.0
+      tempmax_SIGNAL_diff = max(abs(SIGNAL_diff) * check_HRR)
+      tempmax_fire = np.argmax(abs(SIGNAL_diff) * check_HRR)
+      if (tempmax_SIGNAL_diff > low_tol) and (SIGNAL_lowfire[max_fire] == 1) and (max_SIGNAL_diff < jump_tol):
+        max_SIGNAL_diff = tempmax_SIGNAL_diff
+        max_fire = tempmax_fire
+    else:
+      SIGNAL_lowfire[max_fire] = 0
 
+    if (max_SIGNAL_diff < least_error[i]):
+      least_error[i] = max_SIGNAL_diff
+      HRR_temp = HRR_pred[i, :]
 
-            end
-        else:
-            SIGNAL_lowfire(max_fire).lvalue = 0
-        end
-
-        max_SIGNAL_diff()
-        if max_SIGNAL_diff < least_error(i):
-            least_error(i).lvalue = max_SIGNAL_diff
-            HRR_temp = HRR_pred(i, mslice[:])
-        end
-
-        if iteration > 0.5 * iteration_max:
-            if (HRR_new < HRR_low) and (least_error(i) < low_tol):
-                break
-            elif (HRR_new > HRR_low) and (least_error(i) < extra_tol):
-                break
-            end
-        end
-
-        if iteration > iteration_max:
-            if min(HRR_temp) < HRR_low:
-                low_tol = min(least_error(i), error_max); print low_tol
-            else:
-                extra_tol = min(least_error(i), error_max); print extra_tol
-            end
-
-            if least_error(i) > error_max:
-                num_fail = num_fail + 1; print num_fail
-            end
-            break
-        end
-        HRR_new = HRR_pred(i, max_fire)
-
-    HRR_pred(i, mslice[:]).lvalue = HRR_temp
-    if num_fail >= num_fail_allowed:
+    # Paul: MAGIC NUMBER 0.5
+    if iteration > 0.5 * iteration_max:
+      if (HRR_new < HRR_low) and (least_error[i] < low_tol):
         break
-    '''
+      elif (HRR_new > HRR_low) and (least_error[i] < extra_tol):
+        break
+
+    if iteration > iteration_max:
+      if min(HRR_temp) < HRR_low:
+        low_tol = min(least_error[i], error_max)
+      else:
+        extra_tol = min(least_error[i], error_max)
+
+      if least_error[i] > error_max:
+        num_fail += 1
+      break
+    HRR_new = HRR_pred[i, max_fire]
+
+  # end while loop
+  HRR_pred[i, :] = HRR_temp
+  if num_fail >= num_fail_allowed:
+    break
 
 # call timer function to finish main loop
 toc = time.time()
 tim = toc - tic;
 print("total of " + str(tim) + " seconds elapsed")
 
-
 '''
-save(mstring('result.mat'), mstring('tim'), mstring('HRR_pred'), mstring('time'), mstring('total_iteration'), mstring('low_tol'), mstring('extra_tol'))
-
 for counter in mslice[1:numfire]:
     #subplot(numfire+numsignal,2,counter*2)
     #     subplot(numfire+numsignal,2,counter*2-1)
