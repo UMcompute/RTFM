@@ -30,13 +30,13 @@ timein = inData[:,0]
 plt.close('all')
 f, axarr = plt.subplots(numfire, sharex=True)
 for counter in range(0, numfire):
-  print("create plot for fire #" + str(counter + 1))
-  axarr[counter].plot(timein, hrrin[:, counter])
+  #print("create plot for fire #" + str(counter + 1))
+  axarr[counter].plot(timein, hrrin[:, counter], 'k-')
   if counter == numfire - 1:
     plt.xlabel('time')
-  elif counter == 0:
-    axarr[counter].set_title('hrr for forward model')
-print("To show the initial HRR plots, uncomment #plt.show()")    
+  #elif counter == 0:
+  #  axarr[counter].set_title('hrr for forward model')
+#print("To show the initial HRR plots, uncomment #plt.show()")    
 #plt.show()
 
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
@@ -77,8 +77,7 @@ SIGNAL_turb = SIGNAL_pred
 HRR_temp = 1000.0 * np.ones((1, numfire))
 SIGNAL_lowfire = [0, 0, 0, 0]
 
-# CHANGE 4 TO numTime FOR FINAL
-for i in range(1, 4):
+for i in range(1, numTime):
   print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
 
@@ -91,7 +90,7 @@ for i in range(1, 4):
   SIGNAL_diff = SIGNAL_pred[i,0:4] - SIGNAL_exp[i,0:4]
   max_SIGNAL_diff = max(abs(SIGNAL_diff))
   max_fire = np.argmax(abs(SIGNAL_diff))
-  print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
+  #print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
 
   least_error[i] = max_SIGNAL_diff
   iteration = 1
@@ -141,7 +140,7 @@ for i in range(1, 4):
     SIGNAL_diff = SIGNAL_pred[i,0:4] - SIGNAL_exp[i,0:4]
     max_SIGNAL_diff = max(abs(SIGNAL_diff))
     max_fire = np.argmax(abs(SIGNAL_diff))
-    print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
+    #print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
 
     # Paul: FOUND MAGIC NUMBERS 0.2, 0.1, 0.5
     check1 = HRR_pred[i, max_fire]   <  0.2 * HRR_pred[i-1, max_fire]
@@ -187,6 +186,7 @@ for i in range(1, 4):
     HRR_new = HRR_pred[i, max_fire]
 
   # end while loop
+  print("  required iterations: " + str(iteration))
   HRR_pred[i, :] = HRR_temp
   if num_fail >= num_fail_allowed:
     break
@@ -196,18 +196,8 @@ toc = time.time()
 tim = toc - tic;
 print("total of " + str(tim) + " seconds elapsed")
 
-'''
-for counter in mslice[1:numfire]:
-    #subplot(numfire+numsignal,2,counter*2)
-    #     subplot(numfire+numsignal,2,counter*2-1)
-    subplot(numfire, 1, counter)
-    hold(mstring('on'))
-    plot(time, HRR_pred(mslice[:], counter), mstring('r'))
-    #     titlestr=sprintf('hrr for inverse model for fire %d',counter);
-    #     title(titlestr)
-    #     xlabel('time')
-    #     ylabel('hrr')
-end
-hold(mstring('off'))
-end
-'''
+# plot the results for the predicted HRR curve
+for counter in range(0, numfire):
+  #print("create plot for fire #" + str(counter + 1))
+  axarr[counter].plot(TIME_exp, HRR_pred[:, counter], 'r-')
+plt.show()
