@@ -41,8 +41,8 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   filename = outDir + inFile + '_n.csv'
   csvData = csvreadh.csvreadh_func(filename)
   time = csvData[:, 0]
-  numDataRows = len(time)
-  signalData = np.zeros((numDataRows, numsignal + 1))
+  N = len(time)
+  signalData = np.zeros((N, numsignal + 1))
 
   # store time in first column of signalData output
   signalData[:, column] = time

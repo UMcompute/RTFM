@@ -14,13 +14,11 @@ numsignal = 8
 
 #SCRIPT TO RUN WHOLE CODE
 tic = time.time()
-#----------------------------------------------------------------------%
+#----------------------------------------------------------------------------------------%
 
 #INPUT VARIABLES
 #the format of data should be a matrix with [time1, hrr1, time2, hrr2...]
 inputPath = '../input/data4.mat'
-#str = strcat(mstring('data4.mat'))
-#str=strcat('C:\Users\Xiaolin Cai\Desktop\research1\multiroom_multifire\data.mat');
 
 #a = load(inputPath)
 data = np.loadtxt("../input/data4.txt")
@@ -30,20 +28,11 @@ ndata = data.shape[1]
 
 #hrrin = a.hrr
 hrrin = data[:, 1:ndata]
-print("size of hrrin is " + str(hrrin.shape[0]) + " by " + str(hrrin.shape[1]))
+#print("size of hrrin is " + str(hrrin.shape[0]) + " by " + str(hrrin.shape[1]))
 
 #timein = a.t
 timein = data[:,0]
-print("length of timein is " + str(len(timein)))
-
-#plot forward model
-# for counter = 1:numfire
-#     subplot(numfire+numsignal,2,counter*2-1)   %Only plot for temperature and hrr for now
-#     plot(timein,hrrin(:,counter))
-#     titlestr=sprintf('hrr for forward model for fire %d',counter);
-#     title(titlestr)
-#     xlabel('time')
-#     ylabel('hrr')
+#print("length of timein is " + str(len(timein)))
 
 plt.close('all')
 f, axarr = plt.subplots(numfire, sharex=True)
@@ -54,28 +43,18 @@ for counter in range(0, numfire):
     plt.xlabel('time')
   elif counter == 0:
     axarr[counter].set_title('hrr for forward model')
+print("To show the initial HRR plots, uncomment #plt.show()")    
 #plt.show()
-
-
-# 05-31-17 DISABLED FUNCTION CALLS FOR NOW
-'''
-create_exp_signal_xc(timein, hrrin, numcomp, numfire)#function that creates the 'real concentrations and flows'
-[time, SIGNAL_exp] = read_exp_signal_xc(numcomp)#function that reads the 'real concentrations'
-'''
-# 05-31-17 DISABLED FUNCTION CALLS FOR NOW
-
 
 create_signal_xc.create_signal_xc_func(timein, hrrin, numcomp, numfire, 'exp_signal_xc')
 SIGNAL_exp = read_signal_xc.read_signal_xc_func(numcomp, 'exp_signal_xc')
 TIME_exp = SIGNAL_exp[:, 0]
-
 
 num_fail_allowed = 5
 iteration_max = 20
 #iteration_turn=20;
 error_tol = 0.001
 error_max = 0.1
-
 
 n = len(TIME_exp)
 HRR_pred = np.zeros((n, numfire)) + 1000.0
@@ -87,7 +66,6 @@ num_fail = 0
 HRR_delta_base = 0.01
 HRR_low = 5000.0
 #HRR_delta_lowhrr = 50000
-
 
 k = 1.0
 factor = 1.0
@@ -102,9 +80,8 @@ HRR_temp = np.zeros((1, numfire)) + 1000.0
 SIGNAL_lowfire = [0, 0, 0, 0]
 least_error = np.zeros(n)
 
-
-# CHANGE 3 TO n FOR FINAL
-for i in range(1, 3):
+# CHANGE 4 TO n FOR FINAL
+for i in range(1, 4):
   print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
 
@@ -117,8 +94,8 @@ for i in range(1, 3):
   # Paul: FOUND USE OF MAGIC NUMBERS == CHECK THIS SEGMENT
   SIGNAL_diff = SIGNAL_pred[i,1:5] - SIGNAL_exp[i,1:5]
   #SIGNAL_diff[0,1:5] = SIGNAL_pred[i,1:5] - SIGNAL_exp[i,1:5]
-  max_SIGNAL_diff = max(SIGNAL_diff)
-  max_fire = np.argmax(SIGNAL_diff)
+  max_SIGNAL_diff = max(abs(SIGNAL_diff))
+  max_fire = np.argmax(abs(SIGNAL_diff))
   # Paul: (magic numbers above are 1:5)
 
   #print(SIGNAL_diff)
@@ -130,25 +107,28 @@ for i in range(1, 3):
   #lag = 0
   factor = 1.0
 
-'''
-    while max_SIGNAL_diff > error_tol:
+  while (max_SIGNAL_diff > error_tol):
+    total_iteration += 1
+    iteration += 1
+    HRR_turb = HRR_pred
 
+    # Paul: FOUND USE OF MAGIC NUMBER == CHECK THIS SEGMENT (25.0)
+    # Paul: why is "iteration" in the denominator?
+    HRR_delta = HRR_delta_base * HRR_pred[i, max_fire] * 25.0 / (25.0 + float(iteration))
+    HRR_turb[i, max_fire] += HRR_delta
 
-        total_iteration += 1
-        iteration = iteration + 1; print iteration
-        HRR_turb = HRR_pred
-        HRR_delta = HRR_delta_base * HRR_pred(i, max_fire) * 25.0 / (25.0 + iteration)
-        HRR_turb(i, max_fire).lvalue = HRR_turb(i, max_fire) + HRR_delta
+    create_signal_xc.create_signal_xc_func(TIME_exp, HRR_turb, numcomp, numfire, 'pred_signal_xc')
+    SIGNAL_turb = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
 
-        create_pred_signal_xc(time, HRR_turb, numcomp, numfire)
-        read_pred_signal_xc(numcomp)
-        k = (SIGNAL_turb(i, max_fire + SIGNAL_lowfire(max_fire) * 4) - SIGNAL_pred(i, max_fire + SIGNAL_lowfire(max_fire) * 4)) / HRR_delta
-        #         if k>0
-        #             k_avg=(k_avg*(i-1)/i+k/i);
-        #         elseif HRR_new<HRR_low && k<0
-        #             k=k_avg;
-        #         end
+    # Paul: FOUND MAGIC NUMBER (4)
+    k1 = SIGNAL_turb[i, max_fire + int(SIGNAL_lowfire[max_fire] * 4)]
+    k2 = SIGNAL_pred[i, max_fire + int(SIGNAL_lowfire[max_fire] * 4)]
+    k = (k1 - k2) / HRR_delta
 
+    # terminate while loop early for testing
+    max_SIGNAL_diff = 0.0
+
+    '''
         HRR_new = HRR_pred(i, max_fire) - SIGNAL_diff(max_fire) / k * factor    #get new hrr
 
         if (HRR_new > HRR_max):
@@ -211,16 +191,12 @@ for i in range(1, 3):
         end
         HRR_new = HRR_pred(i, max_fire)
 
-
-
-    end
     HRR_pred(i, mslice[:]).lvalue = HRR_temp
     if num_fail >= num_fail_allowed:
         break
-    end
-'''
+    '''
 
-
+# call timer function to finish main loop
 toc = time.time()
 tim = toc - tic;
 print("total of " + str(tim) + " seconds elapsed")

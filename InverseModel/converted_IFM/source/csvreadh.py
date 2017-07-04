@@ -6,7 +6,6 @@ def csvreadh_func(filename=None):
   numRowsHeader = 4
   mrows = np.shape(my_data)[0] 
   ncols = np.shape(my_data)[1]
-  print('size of csv data: ' + str(mrows) + ' by ' + str(ncols))
   dataMat = np.zeros((mrows - numRowsHeader, ncols))
   rownum = 0
   for row in my_data:
@@ -16,4 +15,5 @@ def csvreadh_func(filename=None):
         dataMat[rownum - numRowsHeader][colnum] = v
         colnum += 1
     rownum += 1
+  #print('size of csv data: ' + str(mrows) + ' by ' + str(ncols))
   return dataMat
