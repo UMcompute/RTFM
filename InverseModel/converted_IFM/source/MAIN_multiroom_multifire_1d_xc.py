@@ -53,7 +53,7 @@ SIGNAL_exp = np.delete(SIGNAL_exp, [0], axis=1)
 #INIALIZE VARIABLES
 num_fail_allowed = 5
 iteration_max = 20
-error_tol = 0.001
+error_tol = 0.05
 error_max = 0.1
 num_fail = 0
 HRR_delta_base = 0.01
@@ -77,8 +77,11 @@ SIGNAL_turb = SIGNAL_pred
 HRR_temp = 1000.0 * np.ones((1, numfire))
 SIGNAL_lowfire = [0, 0, 0, 0]
 
+#MAIN TIME LOOP
+testTime = 2    # ***REPLACE testTime with numTime in the main for loop
 for i in range(1, numTime):
-  print("Current Time = " + str(TIME_exp[i]))
+  #print("Current Time = " + str(TIME_exp[i]))
+  print("time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
 
   create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
@@ -97,6 +100,9 @@ for i in range(1, numTime):
   HRR_new = 1000.0
   # Paul: we should rename factor with something more descriptive
   factor = 1.0
+
+  #print("k = %.8f" % k)
+  print("iteration:  %2d   %.6f   %2d" % (iteration, max_SIGNAL_diff, max_fire+1))
 
   while (max_SIGNAL_diff > error_tol):
     total_iteration += 1
@@ -120,6 +126,9 @@ for i in range(1, numTime):
     # Paul: WE NEED TO RENAME k TO SOMETHING MORE DESCRIPTIVE
     k = (k1 - k2) / HRR_delta
 
+    #print("%.6f" % HRR_delta)
+    #print("k1, k2, k = %.8f %.8f %.8f" % (k1, k2, k))
+
     # Get new HRR
     HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
     if (HRR_new > HRR_max):
@@ -140,6 +149,8 @@ for i in range(1, numTime):
     SIGNAL_diff = SIGNAL_pred[i,0:4] - SIGNAL_exp[i,0:4]
     max_SIGNAL_diff = max(abs(SIGNAL_diff))
     max_fire = np.argmax(abs(SIGNAL_diff))
+
+    #print("iteration:  %2d   %.6f   %2d" % (iteration, max_SIGNAL_diff, max_fire+1))
     #print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
 
     # Paul: FOUND MAGIC NUMBERS 0.2, 0.1, 0.5
@@ -162,6 +173,9 @@ for i in range(1, numTime):
         max_fire = tempmax_fire
     else:
       SIGNAL_lowfire[max_fire] = 0
+
+    #print("iteration:  " + str(iteration) + '  ' + str(max_SIGNAL_diff) + '  ' + str(max_fire+1))
+    print("iteration:  %2d   %.6f   %2d" % (iteration, max_SIGNAL_diff, max_fire+1))
 
     if (max_SIGNAL_diff < least_error[i]):
       least_error[i] = max_SIGNAL_diff
@@ -186,7 +200,7 @@ for i in range(1, numTime):
     HRR_new = HRR_pred[i, max_fire]
 
   # end while loop
-  print("  required iterations: " + str(iteration))
+  print("iterations required = " + str(iteration))
   HRR_pred[i, :] = HRR_temp
   if num_fail >= num_fail_allowed:
     break

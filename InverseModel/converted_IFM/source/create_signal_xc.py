@@ -43,34 +43,43 @@ def create_signal_xc_func(time=None, hrr=None, numcomp=None, numfire=None, inFil
     fileNew.write('FIRE,' + str(counter + 1) + ',1.5,2,0,1,TIME,0,0,0,0,Fire' + str(counter + 1) + '\n')
     #FIRE TYPE
     fileNew.write('CHEMI,1,4,0,0,0,0.33,4.5E+07,METHANE\n')
+    
     # VECTOR TIME
     fileNew.write('TIME')
     for v in time:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR HRR
     fileNew.write('\nHRR')
     for v in hrr[:, counter]:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR SOOT  
     fileNew.write('\nSOOT')
     for v in SOOT:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR CO
     fileNew.write('\nCO')
     for v in CO:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR TRACE
     fileNew.write('\nTRACE')
     for v in TRACE:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR AREA
     fileNew.write('\nAREA')
     for v in AREA:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+    
     # VECTOR HEIGH
     fileNew.write('\nHEIGH')
     for v in HEIGH:
-      fileNew.write(',' + str(v))
+      fileNew.write(", %.6f" % v)
+
+  #close the new input file
   fileNew.close()
 
   #Run the file created and generate the excel spreadsheet that will be used
