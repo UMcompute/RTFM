@@ -37,7 +37,7 @@ tic = time.time()
 
 #the format of data should be a matrix with [timein, hrr1, hrr2, hrr3, hrr4]
 inData = np.loadtxt(dataFile)
-numSteps = inData.shape[0]
+numStep = inData.shape[0]
 numCols = inData.shape[1]
 hrrin = inData[:, 1:numCols]
 timein = inData[:,0]
@@ -65,45 +65,26 @@ for counter in range(0, NUMFIRE):
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
 create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
 SIGNAL_exp = read_signal_xc.read_signal_xc_func(NUMCOMP, 'exp_signal_xc')
-
-'''   LINE-BY-LINE UPDATE IN PROGRESS
-#GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
-TIME_exp = SIGNAL_exp[:, 0]
-numTime = len(TIME_exp)
-#print("size of SIGNAL_exp is " + str(SIGNAL_exp.shape[0]) + " by " + str(SIGNAL_exp.shape[1]))
+TIME_exp = SIGNAL_exp[:, 0]  #GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
 SIGNAL_exp = np.delete(SIGNAL_exp, [0], axis=1)
-#print("(post-delete) size of SIGNAL_exp is " + str(SIGNAL_exp.shape[0]) + " by " + str(SIGNAL_exp.shape[1]))
 
 #INIALIZE VARIABLES
-num_fail_allowed = 5
-iteration_max = 20
-error_tol = 0.05
-error_max = 0.1
 num_fail = 0
-HRR_delta_base = 0.01
-HRR_low = 5000.0
-# Paul: we should rename k with something more descriptive
-k = 1.0
-k_avg = 0.0
-HRR_max = 6.0 * 10.0 ** 5
-HRR_min = 0.0
 total_iteration = 0
-low_tol = 0.001
-extra_tol = 0.0
-jump_tol = 1.0
+error_low_tol = 0.01
+error_extra_tol = 0.0
 
 #INITIALIZE ARRAYS
-HRR_pred = 1000.0 * np.ones((numTime, NUMFIRE))
-least_error = 100.0 * np.ones((numTime, 1))
-#(for now signal is temperature)
-SIGNAL_pred = 20.0 * np.ones((numTime, NUMSIGNAL))
-SIGNAL_turb = SIGNAL_pred
+HRR_pred = 1000.0 * np.ones((numStep, NUMFIRE))
+error_least = 100.0 * np.ones(numStep)
+SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
 HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
-SIGNAL_lowfire = [0, 0, 0, 0]
+
+'''   LINE-BY-LINE UPDATE IN PROGRESS
 
 #MAIN TIME LOOP
-testTime = 2    # ***REPLACE testTime with numTime in the main for loop
-for i in range(1, numTime):
+testTime = 2    # ***REPLACE testTime with numStep in the main for loop
+for i in range(1, numStep):
   #print("Current Time = " + str(TIME_exp[i]))
   print("time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
