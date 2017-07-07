@@ -80,35 +80,23 @@ error_least = 100.0 * np.ones(numStep)
 SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
 HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 
-'''   LINE-BY-LINE UPDATE IN PROGRESS
-
 #MAIN TIME LOOP
-testTime = 2    # ***REPLACE testTime with numStep in the main for loop
-for i in range(1, numStep):
-  #print("Current Time = " + str(TIME_exp[i]))
-  print("time = " + str(TIME_exp[i]))
+testTime = 3    # ***REPLACE testTime with numStep in the main for loop
+for i in range(1, testTime):
+  print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
-
-  create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMCOMP, NUMFIRE, 'pred_signal_xc')
+  create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMFIRE, 'pred_signal_xc')
   SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
   SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
-  #print("size of SIGNAL_pred is " + str(SIGNAL_pred.shape[0]) + " by " + str(SIGNAL_pred.shape[1]))
-
-  # Paul: FOUND USE OF MAGIC NUMBERS == CHECK THIS SEGMENT (0:4)
-  SIGNAL_diff = SIGNAL_pred[i,0:4] - SIGNAL_exp[i,0:4]
+  SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
   max_SIGNAL_diff = max(abs(SIGNAL_diff))
   max_fire = np.argmax(abs(SIGNAL_diff))
-  #print("Max signal diff and max fire: " + str(max_SIGNAL_diff) + "  " + str(max_fire))
-
-  least_error[i] = max_SIGNAL_diff
+  error_least[i] = max_SIGNAL_diff
   iteration = 1
-  HRR_new = 1000.0
-  # Paul: we should rename factor with something more descriptive
-  factor = 1.0
-
-  #print("k = %.8f" % k)
+  factor = 1.0  # Paul: we should rename factor with something more descriptive
   print("iteration:  %2d   %.6f   %2d" % (iteration, max_SIGNAL_diff, max_fire+1))
 
+  '''   LINE-BY-LINE UPDATE IN PROGRESS
   while (max_SIGNAL_diff > error_tol):
     total_iteration += 1
     iteration += 1
