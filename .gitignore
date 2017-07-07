@@ -1,7 +1,5 @@
 *~
-inverse_model
 *.pyc
 *.exe
-InverseModel/original_IFM
 InverseModel/converted_IFM/output/*
-
+InverseModel/method1_IFM/out/*

@@ -1,16 +1,19 @@
 # import major modules 
-#import time
-#import numpy as np
+import time
+import numpy as np
 #import matplotlib.pyplot as plt
 
 # import custom modules
-#import create_signal_xc
-#import read_signal_xc
+import create_signal_xc
+import read_signal_xc
 
 #GLOBAL VALUES FOR CONFIG
-numcomp = 4
-numfire = 4    #numfire have to be smaller than numcomp, fire1 in comp1, fire2 in comp2, etc
-numsignal = 4
+NUMCOMP = 4
+NUMFIRE = 4    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
+NUMSIGNAL = 4
+
+#DEFINE PATHS TO INPUT
+dataFile = "../inp/data4.txt"
 
 #CONSTANTS (in all CAPS)
 NUM_FAILS_ALLOWED       = 20;
@@ -26,39 +29,44 @@ HRR_JUMP_TOL            = 3.0;
 FACTOR_LOW              = 0.7;
 FACTOR_HI               = 1.2;
 
-# LINE-BY-LINE UPDATE IN PROGRESS
-'''
 #SCRIPT TO RUN WHOLE CODE
 tic = time.time()
 #----------------------------------------------------------------------------------------%
 
 #INPUT DATA
-#the format of data should be a matrix with [time1, hrr1, time2, hrr2...]
-inData = np.loadtxt("../input/data4.txt")
-mdata = inData.shape[0]
-ndata = inData.shape[1]
-hrrin = inData[:, 1:ndata]
-timein = inData[:,0]
-#print("size of hrrin is " + str(hrrin.shape[0]) + " by " + str(hrrin.shape[1]))
-#print("length of timein is " + str(len(timein)))
 
+#the format of data should be a matrix with [timein, hrr1, hrr2, hrr3, hrr4]
+inData = np.loadtxt(dataFile)
+numSteps = inData.shape[0]
+numCols = inData.shape[1]
+hrrin = inData[:, 1:numCols]
+timein = inData[:,0]
+
+#error handling: number of fires expected
+if (numCols - 1 != NUMFIRE):
+  print("\n***Input Error: check the data file " + dataFile + " to make sure it has one time column and then " + str(NUMFIRE) + " HRR columns.")
+  exit()
+
+'''
 #PLOT INITIAL HRR CURVES
 plt.close('all')
-f, axarr = plt.subplots(numfire, sharex=True)
-for counter in range(0, numfire):
+f, axarr = plt.subplots(NUMFIRE, sharex=True)
+for counter in range(0, NUMFIRE):
   #print("create plot for fire #" + str(counter + 1))
   axarr[counter].plot(timein, hrrin[:, counter], 'k-')
-  if counter == numfire - 1:
+  if counter == NUMFIRE - 1:
     plt.xlabel('time')
   #elif counter == 0:
   #  axarr[counter].set_title('hrr for forward model')
 #print("To show the initial HRR plots, uncomment #plt.show()")    
 #plt.show()
+'''
 
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
-create_signal_xc.create_signal_xc_func(timein, hrrin, numcomp, numfire, 'exp_signal_xc')
-SIGNAL_exp = read_signal_xc.read_signal_xc_func(numcomp, 'exp_signal_xc')
+create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
+SIGNAL_exp = read_signal_xc.read_signal_xc_func(NUMCOMP, 'exp_signal_xc')
 
+'''   LINE-BY-LINE UPDATE IN PROGRESS
 #GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
 TIME_exp = SIGNAL_exp[:, 0]
 numTime = len(TIME_exp)
@@ -85,12 +93,12 @@ extra_tol = 0.0
 jump_tol = 1.0
 
 #INITIALIZE ARRAYS
-HRR_pred = 1000.0 * np.ones((numTime, numfire))
+HRR_pred = 1000.0 * np.ones((numTime, NUMFIRE))
 least_error = 100.0 * np.ones((numTime, 1))
 #(for now signal is temperature)
-SIGNAL_pred = 20.0 * np.ones((numTime, numsignal))
+SIGNAL_pred = 20.0 * np.ones((numTime, NUMSIGNAL))
 SIGNAL_turb = SIGNAL_pred
-HRR_temp = 1000.0 * np.ones((1, numfire))
+HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 SIGNAL_lowfire = [0, 0, 0, 0]
 
 #MAIN TIME LOOP
@@ -100,8 +108,8 @@ for i in range(1, numTime):
   print("time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
 
-  create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
-  SIGNAL_pred = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
+  create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMCOMP, NUMFIRE, 'pred_signal_xc')
+  SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
   SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
   #print("size of SIGNAL_pred is " + str(SIGNAL_pred.shape[0]) + " by " + str(SIGNAL_pred.shape[1]))
 
@@ -130,8 +138,8 @@ for i in range(1, numTime):
     HRR_delta = HRR_delta_base * HRR_pred[i, max_fire] * 25.0 / (25.0 + float(iteration))
     HRR_turb[i, max_fire] += HRR_delta
 
-    create_signal_xc.create_signal_xc_func(TIME_exp, HRR_turb, numcomp, numfire, 'pred_signal_xc')
-    SIGNAL_turb = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
+    create_signal_xc.create_signal_xc_func(TIME_exp, HRR_turb, NUMCOMP, NUMFIRE, 'pred_signal_xc')
+    SIGNAL_turb = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
     SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
 
     # Paul: FOUND MAGIC NUMBER (4)
@@ -157,8 +165,8 @@ for i in range(1, numTime):
       factor = min(1.0, factor * 1.5)         # magic numbers
 
     HRR_pred[i, max_fire] = HRR_new
-    create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, numcomp, numfire, 'pred_signal_xc')
-    SIGNAL_pred = read_signal_xc.read_signal_xc_func(numcomp, 'pred_signal_xc')
+    create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMCOMP, NUMFIRE, 'pred_signal_xc')
+    SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
     SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
 
     # Paul: FOUND USE OF MAGIC NUMBERS == CHECK THIS SEGMENT (0:4)
@@ -178,8 +186,8 @@ for i in range(1, numTime):
       SIGNAL_lowfire[max_fire] = 1
       # Paul: magic numbers 0.2, 0.1
       HRR_low = max(0.2 * HRR_pred[i-1, max_fire], 0.1 * max(HRR_pred[i-1, :]))
-      check_HRR = np.zeros(numfire)
-      for j in range(0, numfire):
+      check_HRR = np.zeros(NUMFIRE)
+      for j in range(0, NUMFIRE):
         if abs(HRR_pred[i, j]) > HRR_low:
           check_HRR[j] = 1.0
       tempmax_SIGNAL_diff = max(abs(SIGNAL_diff) * check_HRR)
@@ -221,14 +229,14 @@ for i in range(1, numTime):
   if num_fail >= num_fail_allowed:
     break
 
-# call timer function to finish main loop
-toc = time.time()
-tim = toc - tic;
-print("total of " + str(tim) + " seconds elapsed")
-
 # plot the results for the predicted HRR curve
-for counter in range(0, numfire):
+for counter in range(0, NUMFIRE):
   #print("create plot for fire #" + str(counter + 1))
   axarr[counter].plot(TIME_exp, HRR_pred[:, counter], 'r-')
 plt.show()
 '''
+
+# call timer function to finish main loop
+toc = time.time()
+tim = toc - tic;
+print("\ntotal of " + str(tim) + " seconds elapsed")
