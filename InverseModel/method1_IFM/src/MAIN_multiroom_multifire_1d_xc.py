@@ -1,20 +1,30 @@
-# import statements
+# import major modules 
 #import time
 #import numpy as np
 #import matplotlib.pyplot as plt
 
-# import other source files
+# import custom modules
 #import create_signal_xc
 #import read_signal_xc
-
-# import contstants (note: constants in all CAPS)
-import constants.py
 
 #GLOBAL VALUES FOR CONFIG
 numcomp = 4
 numfire = 4    #numfire have to be smaller than numcomp, fire1 in comp1, fire2 in comp2, etc
 numsignal = 4
 
+#CONSTANTS (in all CAPS)
+NUM_FAILS_ALLOWED       = 20;
+ITER_MAX                = 30;
+ERROR_TOL               = 0.10;
+ERROR_MAX               = 1.00;
+HRR_DELTA_BASE          = 0.01;
+HRR_LOW                 = 5000.0;
+HRR_DELTA_LOW           = 50000.0;
+HRR_MAX                 = 6.0 * (10.0**5);
+HRR_MIN                 = -300000.0;
+HRR_JUMP_TOL            = 3.0;
+FACTOR_LOW              = 0.7;
+FACTOR_HI               = 1.2;
 
 # LINE-BY-LINE UPDATE IN PROGRESS
 '''
