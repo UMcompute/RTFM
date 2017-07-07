@@ -23,6 +23,9 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   #If use upper layer volume, use 1, else, 0
   usedsignal = [0, 0, 0, 0, 1]
 
+  # (replaces magic number)
+  HT_DIMENSION = 2.45
+
   #According to Guo's paper, temperature turns out to be the best fire temperature.
   # Paul: What does this mean? Temp is the best predictor maybe? 
 
@@ -48,7 +51,7 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   # store time in first column of signalData output
   signalData[:, column] = time
   column += 1
-  '''
+  
   # signal for temperature
   if usedsignal[0] == 1:
     for i in range(0, numcomp):
@@ -87,5 +90,29 @@ def read_signal_xc_func(numcomp=None, inFile=None):
       j = (2 * i + 3)
       signalData[:, column] = csvData[:, j]
       column += 1
-  '''
+
+  # signal for upper layer volume
+  if usedsignal[4] == 1:
+    filename = outDir + inFile + '_n.csv'
+    csvData = csvreadh.csvreadh_func(filename)
+    layerHeight = np.zeros((numSteps, numcomp))
+    tempUpper = np.zeros((numSteps, numcomp))
+    tempLower = np.zeros((numSteps, numcomp))
+    for i in range(0, numcomp):
+      # locate upper layer volume in csv
+      j1 = (5 * i + 3)
+      layerHeight[:, i] = csvData[:, j1]
+      # locate upper layer temp in csv
+      j2 = (5 * i + 1)
+      tempUpper[:, i] = csvData[:, j2]
+      # locate lower layer temp in csv
+      j3 = (5 * i + 2)
+      tempLower[:, i] = csvData[:, j3]
+    # USES ELEMENT-WISE ARRAY MULTIPLICATION HERE:
+    tempSignal = (HT_DIMENSION - layerHeight) * tempUpper 
+    tempSignal += layerHeight * tempLower
+    for i in range(0, numcomp):
+      signalData[:, column] = tempSignal[:, i]
+      column += 1
+
   return signalData
