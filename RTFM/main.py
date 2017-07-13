@@ -304,6 +304,7 @@ try:
         outFile.write(str(currSlope)+ ', ' + str(currHRR)  + ', ' + str(currDummy) + '\n')
 
         # new output file to replace update.dat from SimpleSensor.cpp
+        currO2 = currO2 - 1.0
         dataFile = open('new_data.txt', 'w')
         dataFile.write('%f, %f, %f, %f, %f \n' % (currTime, currTemp, currO2, currHRR, currFlux))
         dataFile.close()
