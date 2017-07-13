@@ -257,6 +257,7 @@ currFlux = 0.0
 currSlope = 0.0
 currHRR = 0.0
 currDummy = 0.0
+currO2 = 90.0
 
 # MAIN LOOP
 try:
@@ -301,6 +302,11 @@ try:
         # write most recent data to output file
         outFile.write(str(currTime) + ', ' + str(currTemp) + ', ' + str(currFlux) + ', ')
         outFile.write(str(currSlope)+ ', ' + str(currHRR)  + ', ' + str(currDummy) + '\n')
+
+        # new output file to replace update.dat from SimpleSensor.cpp
+        dataFile = open('new_data.txt', 'w')
+        dataFile.write('%f, %f, %f, %f, %f \n' % (currTime, currTemp, currO2, currHRR, currFlux))
+        dataFile.close()
 # ===================================================================
       '''
       elif pathFlag == 1:

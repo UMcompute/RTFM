@@ -68,7 +68,7 @@ SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
 HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 
 #MAIN TIME LOOP
-for i in range(1, numStep):
+for i in range(1, numStep - 10):
   print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
   create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMFIRE, 'pred_signal_xc')
