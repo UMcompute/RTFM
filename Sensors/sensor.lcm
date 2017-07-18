@@ -1,0 +1,11 @@
+package sensor;
+
+struct sensor_data
+{
+  double	sendTime;
+  double	temperature;
+  double	O2conc;
+  double	COconc;
+  double	CO2conc;
+  double	heatFlux;
+}
