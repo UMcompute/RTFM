@@ -21,7 +21,7 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   #If use CO2 concentration, use 1, else, 0
   #If use Mass flow rate, use 1, else, 0
   #If use upper layer volume, use 1, else, 0
-  usedsignal = [0, 0, 0, 0, 1]
+  usedsignal = [1, 1, 0, 0, 0]
 
   # (replaces magic number)
   HT_DIMENSION = 2.45

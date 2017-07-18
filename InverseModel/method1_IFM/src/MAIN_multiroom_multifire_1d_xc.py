@@ -9,8 +9,8 @@ import read_signal_xc
 
 #GLOBAL VALUES FOR CONFIG
 NUMCOMP = 4
-NUMFIRE = 4    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
-NUMSIGNAL = 4
+NUMFIRE = 1    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
+NUMSIGNAL = 8
 
 #DEFINE PATHS TO INPUT
 dataFile = "../inp/data4.txt"
@@ -36,18 +36,34 @@ numCols = inData.shape[1]
 hrrin = inData[:, 1:numCols]
 timein = inData[:,0]
 
+# CHANGE DATA4 TO REDUCE FIRES IN 1, 2, 3 TO 1.0
+hrrin[:, 1] = 1.0
+hrrin[:, 2] = 1.0
+hrrin[:, 3] = 1.0
+
+'''
 #error handling: number of fires expected
 if (numCols - 1 != NUMFIRE):
   print("\n***Input Error: check the data file " + dataFile + " to make sure it has one time column and then " + str(NUMFIRE) + " HRR columns.")
   exit()
+'''
 
 #PLOT INITIAL HRR CURVES
 plt.close('all')
-f, axarr = plt.subplots(NUMFIRE, sharex=True)
-for counter in range(0, NUMFIRE):
-  axarr[counter].plot(timein, hrrin[:, counter], 'k-')
-  if counter == NUMFIRE - 1:
-    plt.xlabel('time')
+'''
+if (NUMFIRE == 1):
+  f, ax = plt.subplots()
+  ax.plot(timein, hrrin[:,0])
+  ax.set_title('simple plot')
+  plt.show()
+  exit()
+else:
+  f, axarr = plt.subplots(NUMFIRE, sharex=True)
+  for counter in range(0, NUMFIRE):
+    axarr[counter].plot(timein, hrrin[:, counter], 'k-')
+    if counter == NUMFIRE - 1:
+      plt.xlabel('time')
+'''
 
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
 create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
@@ -68,12 +84,14 @@ SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
 HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 
 #MAIN TIME LOOP
-for i in range(1, numStep - 10):
+for i in range(1, numStep):
   print("Current Time = " + str(TIME_exp[i]))
   HRR_pred[i,:] = HRR_temp
+  
   create_signal_xc.create_signal_xc_func(TIME_exp, HRR_pred, NUMFIRE, 'pred_signal_xc')
   SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
   SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
+  
   SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
   max_SIGNAL_diff = max(abs(SIGNAL_diff))
   max_fire = np.argmax(abs(SIGNAL_diff))
@@ -101,7 +119,10 @@ for i in range(1, numStep - 10):
     k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta
     HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
 
-    # ***NOTE: k and HRR_new give different results than in MATLAB because of round-off errors
+    # ***NOTE: k could be zero! Handle this error here
+
+    # ***NOTE: k and HRR_new give different results than in MATLAB
+    #       presumably because of round-off errors (check this)
 
     if (HRR_new > HRR_MAX):
       HRR_new = HRR_MAX
@@ -159,7 +180,14 @@ tim = toc - tic;
 print("\ntotal of " + str(tim) + " seconds elapsed")
 
 # plot the results for the predicted HRR curve
-for counter in range(0, NUMFIRE):
-  #print("create plot for fire #" + str(counter + 1))
-  axarr[counter].plot(TIME_exp, HRR_pred[:, counter], 'r-')
+if (NUMFIRE == 1):
+  f, ax = plt.subplots()
+  ax.plot(timein, hrrin[:,0])
+  ax.plot(timein, HRR_pred[:,0])
+  ax.set_title('simple plot')
+  plt.show()  
+else:
+  for counter in range(0, NUMFIRE):
+    #print("create plot for fire #" + str(counter + 1))
+    axarr[counter].plot(TIME_exp, HRR_pred[:, counter], 'r-')
 plt.show()
