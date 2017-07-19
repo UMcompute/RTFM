@@ -1,9 +1,0 @@
-[33mStarting up http-server, serving [39m[36m.[39m[33m
-Available on:[39m
-[32m  http://127.0.0.1:8080[39m
-[32m  http://192.168.0.6:8080[39m
-Hit CTRL-C to stop the server
-[Sat Feb 11 2017 04:30:54 GMT+0000 (UTC)] "[36mGET[39m [36m/[39m" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0"
-[Sat Feb 11 2017 04:30:57 GMT+0000 (UTC)] "[36mGET[39m [36m/[39m" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0"
-[Sat Feb 11 2017 04:30:59 GMT+0000 (UTC)] "[36mGET[39m [36m/[39m" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:47.0) Gecko/20100101 Firefox/47.0"
-[Sat Feb 11 2017 04:32:07 GMT+0000 (UTC)] "[36mGET[39m [36m/access_log.txt[39m" "Wget/1.15 (linux-gnu)"
