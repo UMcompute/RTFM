@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <ctime>
+#include <cstdlib>
 
 // LCM include directives
 #include <lcm/lcm-cpp.hpp>
@@ -29,23 +30,16 @@
 int main(int argc, char* argv[])
 {
 
-  // input values
-  double waitUsec = 1.0;
+  // initialize constants
+  const int NUM_ROOMS = 4;    // number of rooms in simulation
+  const int NUM_DATA = 5;     // number of columns in data files
+  double nominalFreq = 1.00;  // [Hz]
+  double noise = 0.05;        // [%]
+  int convFact = 1000000;     // [s] to [us]
+  float roundup = 0.5;        // [us]
+  srand(10);                  // seed for random numbers
 
   // ================================================================
-
-  // initialize constants and check for number of threads to match
-  const int NUM_ROOMS = 4;
-  const int NUM_STEPS = 4;
-
-  // declare variables
-  int i, j;
-  int pid;
-  int num_threads;
-  double readValue;
-  std::string my_file;
-  std::string my_line;
-  //std::ifstream if_file;
 
   // check if LCM is working
   lcm::LCM lcm;
@@ -53,38 +47,34 @@ int main(int argc, char* argv[])
   {
     return 1;
   }
-  
-  /*
-  // simple parallel loop to test for case threads = rooms
-  #pragma omp parallel private(pid)
-  {
-    pid = omp_get_thread_num();
-    //std::cout << "  This is process #" << pid << "\n";
-    
-    sensor::sensor_data my_data;
-    my_data.sendTime = pid * 10.0;
-    printf("object %d time = %f \n", pid, my_data.sendTime);
-    
-    usleep( pid * pow(10.0, 6.0) );
-    my_data.sendTime = pid * 100.0;
-    printf("\nobject %d time = %f \n", pid, my_data.sendTime);
-    
-  }
 
-  // potentially unnecessary barrier (check this)
-  #pragma omp barrier
-  */
+  // declare variables
+  int num_threads = 0;
+  double my_row[NUM_DATA];
+  std::string file_prefix = "./data/file";
+  std::string file_suffix = ".csv";
 
-  // simple parallel test for when num_threads != num_rooms
-  #pragma omp parallel private(pid)
+  // sensor variables
+  float period = 1.0 / nominalFreq;
+  float min_per = (1.0 - noise) * period;
+  float max_per = (1.0 + noise) * period;
+  min_per = convFact * min_per + roundup;
+  max_per = convFact * max_per + roundup; 
+  int min_time = (int)min_per;
+  int max_time = (int)max_per;
+  int rand_range = max_time - min_time;
+
+  // distribute one room to each thread
+  #pragma omp parallel private(my_row)
   {
-    pid = omp_get_thread_num();
+    // get unique thread number
+    int pid = omp_get_thread_num();
     printf("this is process #%d \n", pid);
 
+    // check to make sure #threads = #rooms
     if (pid == 0)
     {
       num_threads = omp_get_num_threads();
-      printf("num_threads = %d\n", num_threads);
       if (num_threads != NUM_ROOMS)
       {
         printf("***warning: must set proper number of threads (%d) for %d rooms; use \n", num_threads, NUM_ROOMS);
@@ -92,43 +82,73 @@ int main(int argc, char* argv[])
       }
     }
 
-    #pragma omp for private(i, j, my_file, my_line, readValue)
-    for (i = 0; i < NUM_ROOMS; i++)
+    // declare unique LCM data packet
+    sensor::sensor_data my_data;
+
+    // open "my" data file
+    std::string my_file;
+    my_file = file_prefix + std::to_string(pid) + file_suffix;
+    std::ifstream if_file(my_file.c_str());
+
+    // read in data from file and publish to LCM network
+    std::string my_line;
+    int col = 0;
+    double readValue;
+    int rand_int;
+    double rand_val;
+    double my_time = 0.0;
+    while (getline(if_file, my_line, ','))
     {
-
-      my_file = "./data/file" + std::to_string(i) + ".txt";
-      printf("%s\n", my_file.c_str());
-      std::ifstream if_file(my_file.c_str());
-
-      while (getline(if_file, my_line, ','))
+      std::istringstream iss(my_line);
+      while (iss >> readValue)
       {
-        std::istringstream iss(my_line);
-        while (iss >> readValue)
+        my_row[col] = readValue;
+        if (col < NUM_DATA - 1)
         {
-          usleep( 0.5 * pow(10.0, 6.0) );
-          printf("thread #%d got value %f in room #%d \n", pid, readValue, i);  
+          col += 1;  
+        }
+        else
+        {
+          col = 0;
+        }
+
+        // if finished with current row of data
+        if (col == NUM_DATA - 1)
+        {
+
+          // package the data from the file
+          my_data.temperature = my_row[0];
+          my_data.O2conc = my_row[1];
+          my_data.COconc = my_row[2];
+          my_data.CO2conc = my_row[3];
+          my_data.heatFlux = my_row[4];
+
+          // compute random noise for delay time
+          rand_int = rand()%rand_range + min_time;
+          rand_val = ((double)rand_int) / convFact;
+
+          // wait random time and then send
+          usleep( rand_val * pow(10.0, 6.0) );
+          my_time += rand_val;
+          my_data.sendTime = my_time;
+
+          //=============================================================================
+          // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
+          // time stamp
+          std::chrono::time_point<std::chrono::system_clock> tend;
+          tend = std::chrono::system_clock::now();
+          std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
+          std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
+          //=============================================================================
+
         }
       }
-
-      if_file.close();
-
-      /*
-
-      sensor::sensor_data my_data;
-      my_data.sendTime = pid * 10.0;
-
-      for (j = 0; j < NUM_STEPS; j++)
-      {
-        usleep( pid * pow(10.0, 6.0) );
-
-        //printf("  process #%d got room #%d with time %f [%d] \n", pid, i, my_data.sendTime, j);
-      }
-
-      */
-
     }
-
-  }
-
+    // close "my" data file
+    if_file.close();
+  
+  }   // exit parallel loop  
+  
+  printf("num_threads = %d \n", num_threads);
   return 0;
 }
