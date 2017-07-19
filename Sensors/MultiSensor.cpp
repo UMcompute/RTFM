@@ -33,7 +33,7 @@ int main(int argc, char* argv[])
   // initialize constants
   const int NUM_ROOMS = 4;    // number of rooms in simulation
   const int NUM_DATA = 5;     // number of columns in data files
-  double nominalFreq = 1.00;  // [Hz]
+  double nominalFreq = 0.50;  // [Hz]
   double noise = 0.05;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
@@ -53,6 +53,7 @@ int main(int argc, char* argv[])
   double my_row[NUM_DATA];
   std::string file_prefix = "./data/file";
   std::string file_suffix = ".csv";
+  std::string channel_pre = "ROOM";
 
   // sensor variables
   float period = 1.0 / nominalFreq;
@@ -82,8 +83,9 @@ int main(int argc, char* argv[])
       }
     }
 
-    // declare unique LCM data packet
+    // declare unique LCM data packet and channel name
     sensor::sensor_data my_data;
+    std::string my_chan = channel_pre + std::to_string(pid);
 
     // open "my" data file
     std::string my_file;
@@ -132,14 +134,15 @@ int main(int argc, char* argv[])
           my_time += rand_val;
           my_data.sendTime = my_time;
 
-          //=============================================================================
+          //=====================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
           // time stamp
           std::chrono::time_point<std::chrono::system_clock> tend;
           tend = std::chrono::system_clock::now();
           std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
           std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
-          //=============================================================================
+          lcm.publish(my_chan, &my_data);
+          //=====================================================
 
         }
       }
@@ -149,6 +152,6 @@ int main(int argc, char* argv[])
   
   }   // exit parallel loop  
   
-  printf("num_threads = %d \n", num_threads);
+  //printf("num_threads = %d \n", num_threads);
   return 0;
 }
