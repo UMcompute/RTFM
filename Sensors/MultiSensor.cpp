@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-          // start new row
+          // start on new row
           col = 0;
 
           // package the data from the file
@@ -141,48 +141,11 @@ int main(int argc, char* argv[])
           lcm.publish(my_chan, &my_data);
           //=====================================================
         }
-        /*
-        // if finished with current row of data
-        if (col == NUM_DATA - 1)
-        {
-
-          // package the data from the file
-          my_data.roomNum = pid;
-          my_data.temperature = my_row[0];
-          my_data.O2conc = my_row[1];
-          my_data.COconc = my_row[2];
-          my_data.CO2conc = my_row[3];
-          my_data.heatFlux = my_row[4];
-
-          std::cout << my_row[4] << "   " << my_data.heatFlux << "\n";
-
-          // compute random noise for delay time
-          rand_int = rand()%rand_range + min_time;
-          rand_val = ((double)rand_int) / convFact;
-
-          // wait random time and then send
-          usleep( rand_val * pow(10.0, 6.0) );
-          my_time += rand_val;
-          my_data.sendTime = my_time;
-
-          //=====================================================
-          // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
-          // time stamp
-          std::chrono::time_point<std::chrono::system_clock> tend;
-          tend = std::chrono::system_clock::now();
-          std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
-          std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
-          lcm.publish(my_chan, &my_data);
-          //=====================================================
-        }
-        */
       }
     }
     // close "my" data file
     if_file.close();
-  
-  }   // exit parallel loop  
-  
-  //printf("num_threads = %d \n", num_threads);
+  // exit parallel loop
+  }
   return 0;
 }
