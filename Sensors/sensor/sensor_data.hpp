@@ -16,6 +16,8 @@ namespace sensor
 class sensor_data
 {
     public:
+        int16_t    roomNum;
+
         double     sendTime;
 
         double     temperature;
@@ -124,6 +126,9 @@ int sensor_data::_encodeNoHash(void *buf, int offset, int maxlen) const
 {
     int pos = 0, tlen;
 
+    tlen = __int16_t_encode_array(buf, offset + pos, maxlen - pos, &this->roomNum, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->sendTime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -149,6 +154,9 @@ int sensor_data::_decodeNoHash(const void *buf, int offset, int maxlen)
 {
     int pos = 0, tlen;
 
+    tlen = __int16_t_decode_array(buf, offset + pos, maxlen - pos, &this->roomNum, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->sendTime, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -173,6 +181,7 @@ int sensor_data::_decodeNoHash(const void *buf, int offset, int maxlen)
 int sensor_data::_getEncodedSizeNoHash() const
 {
     int enc_size = 0;
+    enc_size += __int16_t_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
@@ -184,7 +193,7 @@ int sensor_data::_getEncodedSizeNoHash() const
 
 uint64_t sensor_data::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x0a00efc2856d7b56LL;
+    uint64_t hash = 0x3ec9ad124b9ecbf6LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

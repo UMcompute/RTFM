@@ -10,9 +10,10 @@ except ImportError:
 import struct
 
 class sensor_data(object):
-    __slots__ = ["sendTime", "temperature", "O2conc", "COconc", "CO2conc", "heatFlux"]
+    __slots__ = ["roomNum", "sendTime", "temperature", "O2conc", "COconc", "CO2conc", "heatFlux"]
 
     def __init__(self):
+        self.roomNum = 0
         self.sendTime = 0.0
         self.temperature = 0.0
         self.O2conc = 0.0
@@ -27,7 +28,7 @@ class sensor_data(object):
         return buf.getvalue()
 
     def _encode_one(self, buf):
-        buf.write(struct.pack(">dddddd", self.sendTime, self.temperature, self.O2conc, self.COconc, self.CO2conc, self.heatFlux))
+        buf.write(struct.pack(">hdddddd", self.roomNum, self.sendTime, self.temperature, self.O2conc, self.COconc, self.CO2conc, self.heatFlux))
 
     def decode(data):
         if hasattr(data, 'read'):
@@ -41,14 +42,14 @@ class sensor_data(object):
 
     def _decode_one(buf):
         self = sensor_data()
-        self.sendTime, self.temperature, self.O2conc, self.COconc, self.CO2conc, self.heatFlux = struct.unpack(">dddddd", buf.read(48))
+        self.roomNum, self.sendTime, self.temperature, self.O2conc, self.COconc, self.CO2conc, self.heatFlux = struct.unpack(">hdddddd", buf.read(50))
         return self
     _decode_one = staticmethod(_decode_one)
 
     _hash = None
     def _get_hash_recursive(parents):
         if sensor_data in parents: return 0
-        tmphash = (0xa00efc2856d7b56) & 0xffffffffffffffff
+        tmphash = (0x3ec9ad124b9ecbf6) & 0xffffffffffffffff
         tmphash  = (((tmphash<<1)&0xffffffffffffffff)  + (tmphash>>63)) & 0xffffffffffffffff
         return tmphash
     _get_hash_recursive = staticmethod(_get_hash_recursive)

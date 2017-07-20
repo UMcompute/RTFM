@@ -33,11 +33,11 @@ int main(int argc, char* argv[])
   // initialize constants
   const int NUM_ROOMS = 4;    // number of rooms in simulation
   const int NUM_DATA = 5;     // number of columns in data files
-  double nominalFreq = 0.50;  // [Hz]
+  double nominalFreq = 1.00;  // [Hz]
   double noise = 0.05;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
-  srand(10);                  // seed for random numbers
+  srand(22);                  // seed for random numbers
 
   // ================================================================
 
@@ -70,7 +70,7 @@ int main(int argc, char* argv[])
   {
     // get unique thread number
     int pid = omp_get_thread_num();
-    printf("this is process #%d \n", pid);
+    //printf("this is process #%d \n", pid);
 
     // check to make sure #threads = #rooms
     if (pid == 0)
@@ -107,23 +107,54 @@ int main(int argc, char* argv[])
         my_row[col] = readValue;
         if (col < NUM_DATA - 1)
         {
+          // continue reading on row
           col += 1;  
         }
         else
         {
+          // start new row
           col = 0;
-        }
-
-        // if finished with current row of data
-        if (col == NUM_DATA - 1)
-        {
 
           // package the data from the file
+          my_data.roomNum = pid;
           my_data.temperature = my_row[0];
           my_data.O2conc = my_row[1];
           my_data.COconc = my_row[2];
           my_data.CO2conc = my_row[3];
           my_data.heatFlux = my_row[4];
+
+          // compute random noise for delay time
+          rand_int = rand()%rand_range + min_time;
+          rand_val = ((double)rand_int) / convFact;          
+
+          // wait random time and then send
+          my_time += rand_val;
+          my_data.sendTime = my_time;
+ 
+          //=====================================================
+          // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
+          usleep( rand_val * pow(10.0, 6.0) );
+          std::chrono::time_point<std::chrono::system_clock> tend;
+          tend = std::chrono::system_clock::now();
+          std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
+          std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
+          lcm.publish(my_chan, &my_data);
+          //=====================================================
+        }
+        /*
+        // if finished with current row of data
+        if (col == NUM_DATA - 1)
+        {
+
+          // package the data from the file
+          my_data.roomNum = pid;
+          my_data.temperature = my_row[0];
+          my_data.O2conc = my_row[1];
+          my_data.COconc = my_row[2];
+          my_data.CO2conc = my_row[3];
+          my_data.heatFlux = my_row[4];
+
+          std::cout << my_row[4] << "   " << my_data.heatFlux << "\n";
 
           // compute random noise for delay time
           rand_int = rand()%rand_range + min_time;
@@ -143,8 +174,8 @@ int main(int argc, char* argv[])
           std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
           lcm.publish(my_chan, &my_data);
           //=====================================================
-
         }
+        */
       }
     }
     // close "my" data file

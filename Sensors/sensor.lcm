@@ -2,6 +2,7 @@ package sensor;
 
 struct sensor_data
 {
+  int16_t roomNum;
   double	sendTime;
   double	temperature;
   double	O2conc;
