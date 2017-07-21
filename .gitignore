@@ -1,10 +1,8 @@
 *~
 *.pyc
 *.exe
-InverseModel/converted_IFM/output/*
-InverseModel/method1_IFM/out/*
+*/a.out
 RTFM/update.csv
 RTFM/new_data.txt
-*/a.out
 Sensors/temp/*
-InverseModel/method1_IFM/test/
+InverseModel/out/*
