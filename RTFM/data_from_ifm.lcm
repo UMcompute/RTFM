@@ -1,0 +1,7 @@
+package sent_by_ifm;
+
+struct data_from_ifm
+{
+  int32_t num_fires;
+  double current_HRR;
+}

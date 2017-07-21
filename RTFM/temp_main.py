@@ -8,13 +8,18 @@ from sensor import sensor_data
 # LCM send data to sub-models
 from send_to_ifm import data_to_ifm
 
+# LCM receive data from sub-models
+from sent_by_ifm import data_from_ifm
+
 # global variable for the number of rooms
 global NUM_ROOMS
 NUM_ROOMS = 4
 
+
 ifm_time_step = 10.0
 
-# handle new data by assigning it to each Sensor class object
+
+# handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
   msg = sensor_data.decode(data)
   room = msg.roomNum
@@ -30,6 +35,12 @@ def msg_handler(channel, data):
 
   # check if IFM data is ready to send based on IFM time step
   ifm_manager.check_time(sensorList[room].get_value(0), NUM_ROOMS)
+
+
+def model_handler(channel, data):
+  msg = data_from_ifm.decode(data)
+  print(channel)
+  print(msg.current_HRR)
 
 
 # currently assuming one sensor per room
@@ -97,6 +108,7 @@ ifm_data.num_rooms = NUM_ROOMS
 for i in range(0, NUM_ROOMS):
   ifm_data.temperature.append(0.0)
   ifm_data.oxygen_conc.append(0.0)
+lc.subscribe("IFM_OUT_CHANNEL", model_handler)
 
 # MAIN LOOP
 try:

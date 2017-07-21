@@ -11,8 +11,10 @@ import read_signal_xc
 import lcm
 import select
 from send_to_ifm import data_to_ifm
+from sent_by_ifm import data_from_ifm
 
 global NUMCOMP
+
 
 def my_handler(channel, data):
   msg = data_to_ifm.decode(data)
@@ -123,6 +125,13 @@ else:
   SIGNAL_exp = np.zeros((numStep,NUMSIGNAL))
   data_temperature = Signal()
   data_oxygen_conc = Signal()
+
+# initialize LCM data structure for sending back to MAIN
+ifm_output = data_from_ifm()
+ifm_output.num_fires = NUMFIRE
+ifm_output.current_HRR = 0.0
+#for i in range(0, NUMFIRE):
+#  ifm_output.current_HRR.append(0.0)
 
 '''
 # function defining the significant digits to be printed
@@ -255,8 +264,14 @@ try:
       HRR_pred[i, :] = HRR_temp
       if num_fail >= NUM_FAILS_ALLOWED:
         break
-      # end main time loop
 
+      # send HRR back to MAIN
+      #for ifire in range(0, NUMFIRE):
+      #  ifm_output.current_HRR[ifire] = HRR_pred[i,ifire]
+      ifm_output.current_HRR = HRR_pred[i,0]
+      lc.publish("IFM_OUT_CHANNEL", ifm_output.encode())
+
+      # end main time loop
     else:
       print("\n   [waiting for msg in IFM main loop]")
 except KeyboardInterrupt:
@@ -272,8 +287,8 @@ if (NUMFIRE == 1):
   f, ax = plt.subplots()
   ax.plot(timein, hrrin[:,0])
   ax.plot(timein, HRR_pred[:,0])
-  ax.set_title('simple plot')
-  plt.show()  
+  ax.set_title('Heat Release Rate')
+  plt.show()
 else:
   for counter in range(0, NUMFIRE):
     #print("create plot for fire #" + str(counter + 1))
