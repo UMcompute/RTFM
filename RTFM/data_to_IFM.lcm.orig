@@ -1,0 +1,8 @@
+package toIFM;
+
+struct ifm
+{
+  double	time;
+  double	temp;
+  double	flux;
+}

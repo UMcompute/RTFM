@@ -5,6 +5,9 @@ import select
 # LCM data structures
 from sensor import sensor_data
 
+# LCM send data to sub-models
+from send_to_ifm import data_to_ifm
+
 # global variable for the number of rooms
 global NUM_ROOMS
 NUM_ROOMS = 4
@@ -89,6 +92,11 @@ for i in range(0, NUM_ROOMS):
 # initialize the IFM time step manager
 ifm_time_step = 5.0
 ifm_manager = TimeManager(ifm_time_step)
+ifm_data = data_to_ifm()
+ifm_data.num_rooms = NUM_ROOMS
+for i in range(0, NUM_ROOMS):
+  ifm_data.temperature.append(0.0)
+  ifm_data.oxygen_conc.append(0.0)
 
 # MAIN LOOP
 try:
@@ -97,10 +105,18 @@ try:
     rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
     if rfds:
       lc.handle()
-      # =============================================================
+      # =======================================================================
       if (ifm_manager.sendFlag == 1):
         print("READY TO SEND DATA TO IFM")
-      # =============================================================
+        ifm_data.time_stamp = ifm_manager.sim_time - ifm_manager.sim_dt
+        for i in range(0, NUM_ROOMS):
+          # index 1 is the temperature in the Sensor class object
+          ifm_data.temperature[i] = sensorList[i].get_value(1)
+          # index 2 is the oxygen concentration in the Sensor class object
+          ifm_data.oxygen_conc[i] = sensorList[i].get_value(2)
+        # send complete message to IFM main loop
+        lc.publish("IFM_CHANNEL", ifm_data.encode())
+      # =======================================================================
     else:
       loopStatus = 1
 except KeyboardInterrupt:
