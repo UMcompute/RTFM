@@ -59,7 +59,8 @@ try:
       lc.publish("OUT_IFM", returnVal.encode())
       '''
     else:
-      print("\n   [waiting for msg in IFM main loop]")
+      x = 1.0
+      #print("\n   [waiting for msg in IFM main loop]")
 except KeyboardInterrupt:
   pass
 

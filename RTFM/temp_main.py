@@ -12,6 +12,7 @@ from send_to_ifm import data_to_ifm
 global NUM_ROOMS
 NUM_ROOMS = 4
 
+ifm_time_step = 10.0
 
 # handle new data by assigning it to each Sensor class object
 def msg_handler(channel, data):
@@ -90,7 +91,6 @@ for i in range(0, NUM_ROOMS):
   sensorList.append(Sensor(i))
 
 # initialize the IFM time step manager
-ifm_time_step = 5.0
 ifm_manager = TimeManager(ifm_time_step)
 ifm_data = data_to_ifm()
 ifm_data.num_rooms = NUM_ROOMS

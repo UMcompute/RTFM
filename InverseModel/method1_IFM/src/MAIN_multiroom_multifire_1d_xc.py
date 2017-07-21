@@ -27,8 +27,6 @@ HRR_MAX                 = 6.0 * (10.0**5);
 tic = time.time()
 #----------------------------------------------------------------------------------------%
 
-#INPUT DATA
-
 #the format of data should be a matrix with [timein, hrr1, hrr2, hrr3, hrr4]
 inData = np.loadtxt(dataFile)
 numStep = inData.shape[0]
@@ -70,6 +68,21 @@ create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
 SIGNAL_exp = read_signal_xc.read_signal_xc_func(NUMCOMP, 'exp_signal_xc')
 TIME_exp = SIGNAL_exp[:, 0]  #GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
 SIGNAL_exp = np.delete(SIGNAL_exp, [0], axis=1)
+
+'''
+# function defining the significant digits to be printed
+def my_format(value):
+  return "%.6f" % value
+
+fw = open('signal_exp.csv', 'w')
+for i in range(0, numStep):
+  for v in SIGNAL_exp[i, :]:
+    fw.write(str(my_format(v)) + ',')
+  fw.write('0.0 \n')
+fw.close()
+
+exit()
+'''
 
 #INIALIZE VARIABLES
 num_fail = 0

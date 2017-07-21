@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
   const int NUM_ROOMS = 4;    // number of rooms in simulation
   const int NUM_DATA = 5;     // number of columns in data files
   double nominalFreq = 1.00;  // [Hz]
-  double noise = 0.05;        // [%]
+  double noise = 0.01;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
@@ -128,8 +128,8 @@ int main(int argc, char* argv[])
           rand_val = ((double)rand_int) / convFact;          
 
           // wait random time and then send
-          my_time += rand_val;
           my_data.sendTime = my_time;
+          my_time += rand_val;
  
           //=====================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
