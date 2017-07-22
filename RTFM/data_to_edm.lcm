@@ -1,0 +1,13 @@
+package send_to_edm;
+
+struct data_to_edm
+{
+  double time_stamp;
+  int32_t num_rooms;
+  double temperature[num_rooms];
+  double O2_conc[num_rooms];
+  double CO_conc[num_rooms];
+  double CO2_conc[num_rooms];
+  double HCN_conc[num_rooms];
+  double heat_flux[num_rooms];
+}

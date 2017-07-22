@@ -7,6 +7,7 @@ from sensor import sensor_data
 
 # LCM send data to sub-models
 from send_to_ifm import data_to_ifm
+from send_to_edm import data_to_edm
 
 # LCM receive data from sub-models
 from sent_by_ifm import data_from_ifm
@@ -17,6 +18,7 @@ NUM_ROOMS = 4
 
 
 ifm_time_step = 10.0
+edm_time_step = 2.0
 
 
 # handle new sensor data by assigning it to each Sensor class object
@@ -36,7 +38,11 @@ def msg_handler(channel, data):
   # check if IFM data is ready to send based on IFM time step
   ifm_manager.check_time(sensorList[room].get_value(0), NUM_ROOMS)
 
+  # check if EDM data is ready to send based on EDM time step
+  edm_manager.check_time(sensorList[room].get_value(0), NUM_ROOMS)
 
+
+# model_handler is currently only for the IFM
 def model_handler(channel, data):
   msg = data_from_ifm.decode(data)
   print(channel)
@@ -101,6 +107,7 @@ for i in range(0, NUM_ROOMS):
   lc.subscribe(channel, msg_handler)
   sensorList.append(Sensor(i))
 
+
 # initialize the IFM time step manager
 ifm_manager = TimeManager(ifm_time_step)
 ifm_data = data_to_ifm()
@@ -109,6 +116,20 @@ for i in range(0, NUM_ROOMS):
   ifm_data.temperature.append(0.0)
   ifm_data.oxygen_conc.append(0.0)
 lc.subscribe("IFM_OUT_CHANNEL", model_handler)
+
+
+# initialize the EDM time step manager
+edm_manager = TimeManager(edm_time_step)
+edm_data = data_to_edm()
+edm_data.num_rooms = NUM_ROOMS
+for i in range(0, NUM_ROOMS):
+  edm_data.temperature.append(0.0)
+  edm_data.O2_conc.append(0.0)
+  edm_data.CO_conc.append(0.0)
+  edm_data.CO2_conc.append(0.0)
+  edm_data.HCN_conc.append(0.0)
+  edm_data.heat_flux.append(0.0)
+
 
 # MAIN LOOP
 try:
@@ -128,6 +149,17 @@ try:
           ifm_data.oxygen_conc[i] = sensorList[i].get_value(2)
         # send complete message to IFM main loop
         lc.publish("IFM_CHANNEL", ifm_data.encode())
+      # =======================================================================
+      if (edm_manager.sendFlag == 1):
+        print("READY TO SEND DATA TO EDM")
+        edm_data.time_stamp = edm_manager.sim_time - edm_manager.sim_dt
+        for i in range(0, NUM_ROOMS):
+          # index 1 is the temperature in the Sensor class object
+          edm_data.temperature[i] = sensorList[i].get_value(1)
+          # index 2 is the oxygen concentration in the Sensor class object
+          edm_data.O2_conc[i] = sensorList[i].get_value(2)
+        # send complete message to EDM main loop
+        lc.publish("EDM_CHANNEL", edm_data.encode())          
       # =======================================================================
     else:
       loopStatus = 1
