@@ -1,4 +1,5 @@
 #include <iostream>
+#include <queue>
 
 double computeRegressionSlope(queue<double> inX, queue<double> inY)
 {
