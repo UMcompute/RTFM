@@ -53,6 +53,10 @@ class Signal:
     return self.curr_time_stamp
 
 
+def my_format(value):
+  return "%24.16f" % value
+
+
 #GLOBAL VALUES FOR CONFIG
 NUMCOMP = 4
 NUMFIRE = 1    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
@@ -91,30 +95,6 @@ hrrin[:, 1] = 1.0
 hrrin[:, 2] = 1.0
 hrrin[:, 3] = 1.0
 
-'''
-#error handling: number of fires expected
-if (numCols - 1 != NUMFIRE):
-  print("\n***Input Error: check the data file " + dataFile + " to make sure it has one time column and then " + str(NUMFIRE) + " HRR columns.")
-  exit()
-'''
-
-#PLOT INITIAL HRR CURVES
-plt.close('all')
-'''
-if (NUMFIRE == 1):
-  f, ax = plt.subplots()
-  ax.plot(timein, hrrin[:,0])
-  ax.set_title('simple plot')
-  plt.show()
-  exit()
-else:
-  f, axarr = plt.subplots(NUMFIRE, sharex=True)
-  for counter in range(0, NUMFIRE):
-    axarr[counter].plot(timein, hrrin[:, counter], 'k-')
-    if counter == NUMFIRE - 1:
-      plt.xlabel('time')
-'''
-
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
 if (TESTING == 1):
   create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
@@ -130,23 +110,6 @@ else:
 ifm_output = data_from_ifm()
 ifm_output.num_fires = NUMFIRE
 ifm_output.current_HRR = 0.0
-#for i in range(0, NUMFIRE):
-#  ifm_output.current_HRR.append(0.0)
-
-'''
-# function defining the significant digits to be printed
-def my_format(value):
-  return "%.6f" % value
-
-fw = open('signal_exp.csv', 'w')
-for i in range(0, numStep):
-  for v in SIGNAL_exp[i, :]:
-    fw.write(str(my_format(v)) + ',')
-  fw.write('0.0 \n')
-fw.close()
-
-exit()
-'''
 
 #INIALIZE VARIABLES
 num_fail = 0
@@ -164,13 +127,15 @@ HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 i = 0
 try:
   timeout = POLL_TIME  # amount of time to wait, in seconds
-  while True:
+  #while True:
+  while (data_temperature.get_time() < 20.0):
     rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
     if rfds:
       lc.handle()
 
+      # increment the time step
       i += 1
-      print("Current Time = " + str(timein[i]))
+      print("Current Time = %f" % data_temperature.get_time())
 
       # update SIGNAL_exp with LCM data
       for icomp in range(0, NUMCOMP):
@@ -182,10 +147,24 @@ try:
       SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
       SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
       
+      for j in range(0, NUMSIGNAL):
+        print(my_format(SIGNAL_pred[i,j]))
+      print("====")
+      for j in range(0, NUMSIGNAL):
+        print(my_format(SIGNAL_exp[i,j]))
+      print("====")
+
       SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
-      #SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp
+
+      for j in range(0, NUMSIGNAL):
+        print(my_format(SIGNAL_diff[j]))
+      print("====")
+
       max_SIGNAL_diff = max(abs(SIGNAL_diff))
+
+      # Paul: we need to fix max_fire for the single-fire case
       max_fire = np.argmax(abs(SIGNAL_diff))
+
       error_least[i] = max_SIGNAL_diff
       iteration = 1
       factor = 1.0  # Paul: we should rename factor with something more descriptive
@@ -200,15 +179,28 @@ try:
         HRR_turb = HRR_pred
 
         # Paul: FOUND USE OF MAGIC NUMBERS 0.001, 1000.0
-        HRR_delta = min(HRR_pred[i, max_fire] * 0.001, 1000.0)
-        HRR_turb[i, max_fire] += HRR_delta
+        # Paul: adding this if statement because the single-fire case goes out of bounds
+        #       when max_fire is not 0 sometimes (for some reason)
+        if (NUMFIRE == 1):
+          HRR_delta = max(HRR_pred[i, 0] * 0.001, 1000.0)
+          HRR_turb[i, 0] += HRR_delta
+        else:
+          HRR_delta = max(HRR_pred[i, max_fire] * 0.001, 1000.0)
+          HRR_turb[i, max_fire] += HRR_delta
         
         create_signal_xc.create_signal_xc_func(timein, HRR_turb, NUMFIRE, 'pred_signal_xc')
         SIGNAL_turb = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
 
         k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta
-        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
+        print("k = " + str(my_format(k)) )
+
+        if (NUMFIRE == 1):
+          HRR_new = HRR_pred[i, 0] - SIGNAL_diff[max_fire] / k * factor
+        else:
+          HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
+
+        print("HRR_new = " + str(my_format(HRR_new)))
 
         # ***NOTE: k could be zero! Handle this error here
 
@@ -221,13 +213,16 @@ try:
         else:
           factor = min(1.0, factor * 1.5)         # magic numbers
 
-        HRR_pred[i, max_fire] = HRR_new
+        if (NUMFIRE == 1):
+          HRR_pred[i, 0] = HRR_new
+        else:
+          HRR_pred[i, max_fire] = HRR_new
+
         create_signal_xc.create_signal_xc_func(timein, HRR_pred, NUMFIRE, 'pred_signal_xc')
         SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
 
         SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
-        #SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp
         max_SIGNAL_diff = max(abs(SIGNAL_diff))
         max_fire = np.argmax(abs(SIGNAL_diff))
 
