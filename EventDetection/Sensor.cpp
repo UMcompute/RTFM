@@ -21,3 +21,8 @@ void Sensor::setID(int myID)
   roomID = myID;
   std::cout << "my room id is " << roomID << std::endl;
 }
+
+void Sensor::setData(int index, double newData)
+{
+  sensorData[index] = newData;
+}

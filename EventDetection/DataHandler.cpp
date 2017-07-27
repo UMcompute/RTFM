@@ -1,3 +1,4 @@
+#include <iostream>
 #include "DataHandler.h"
 #include <lcm/lcm-cpp.hpp>
 #include "send_to_edm/data_to_edm.hpp"
@@ -12,6 +13,7 @@ void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
        const std::string& chan,
        const send_to_edm::data_to_edm* msg)
 {
+  std::cout << "got a message in EDM at time " << msg->time_stamp << std::endl;
   // update all incoming data in local memory
   int i;
   my_num_rooms = msg->num_rooms;

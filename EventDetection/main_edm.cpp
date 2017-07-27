@@ -31,6 +31,17 @@ using namespace std;
 //const int NUM_DATA = 7;
 #define NUM_DATA 7
 
+/* ==========================
+    DATA KEY
+    0 = time
+    1 = upper layer gas temperature
+    2 = O2
+    3 = CO
+    4 = CO2
+    5 = HCN
+    6 = heat flux
+   ========================== */
+
 
 // MAIN PROGRAM
 int main(int argc, char** argv) {
@@ -38,7 +49,7 @@ int main(int argc, char** argv) {
   printf("starting EDM main...\n");
 
   // input
-  const int MAX_MSG_LIMIT = 1000;
+  const int MAX_MSG_LIMIT = 5;
 
   //===========================================================================
 
@@ -90,14 +101,17 @@ int main(int argc, char** argv) {
       lcm.handle();
       numMsgRecv += 1;
 
-      // check the getter functions
-      cout << currentData.getTime() << endl;
-      cout << currentData.getTemp(room) << endl;
-      cout << currentData.getO2(room) << endl;
-      cout << currentData.getCO(room) << endl;
-      cout << currentData.getCO2(room) << endl;
-      cout << currentData.getHCN(room) << endl;
-      cout << currentData.getFlux(room) << endl;
+      // distribute new data to each sensor
+      for (i = 0; i < NUM_ROOMS; i++)
+      {
+        sensorArray[i].setData(0, currentData.getTime());
+        sensorArray[i].setData(1, currentData.getTemp(i));
+        sensorArray[i].setData(2, currentData.getO2(i));
+        sensorArray[i].setData(3, currentData.getCO(i));
+        sensorArray[i].setData(4, currentData.getCO2(i));
+        sensorArray[i].setData(5, currentData.getHCN(i));
+        sensorArray[i].setData(6, currentData.getFlux(i));
+      }
 
       // FLASHOVER
 

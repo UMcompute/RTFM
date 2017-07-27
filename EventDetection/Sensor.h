@@ -14,6 +14,7 @@ class Sensor
     Sensor();
     ~Sensor();
     void setID(int myID);
+    void setData(int index, double newData);
 };
 
 #endif // SENSOR_H_INCLUDED
