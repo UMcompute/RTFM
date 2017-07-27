@@ -51,3 +51,18 @@ int Sensor::checkFlashover()
   }
   return warning;
 }
+
+int Sensor::checkSmokeTox()
+{
+  return 1;
+}
+
+int Sensor::checkBurnThreat()
+{
+  return 1;
+}
+
+int Sensor::checkFireSpread()
+{
+  return 1;
+}

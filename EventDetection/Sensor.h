@@ -18,6 +18,9 @@ class Sensor
     void setID(int myID);
     void setData(int index, double newData);
     int checkFlashover();
+    int checkSmokeTox();
+    int checkBurnThreat();
+    int checkFireSpread();
 };
 
 #endif // SENSOR_H_INCLUDED

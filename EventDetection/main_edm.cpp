@@ -25,14 +25,19 @@
 // namespace declarations
 using namespace std;
 
-// global constants
+
 //const int NUM_ROOMS = 4;
 #define NUM_ROOMS 4
+/* ====================================
+    ASSUMPTION: one sensor per room
+==================================== */
+
+
 //const int NUM_DATA = 7;
 #define NUM_DATA 7
-
-/* ==========================
-    DATA KEY
+/* ====================================
+    DATA KEY: sensorData[i]
+    i | parameter
     0 = time
     1 = upper layer gas temperature
     2 = O2
@@ -40,7 +45,7 @@ using namespace std;
     4 = CO2
     5 = HCN
     6 = heat flux
-   ========================== */
+==================================== */
 
 
 // MAIN PROGRAM
@@ -121,12 +126,18 @@ int main(int argc, char** argv) {
       {
 
         // FLASHOVER
+        // Fire Signatures: temperature, heat flux
         flashover[i] = sensorArray[i].checkFlashover();
         std::cout << "room #" << i << " flashover check = " << flashover[i] << std::endl;
 
         // BURN THREATS
+        // Fire Signatures: heat flux, O2
 
         // SMOKE TOXICITY
+        // Fire Signatures: O2, CO, HCN, temperature
+
+        // FIRE SPREAD
+        // Fire Signatures: temperature, O2, CO, CO2, 
 
       }
 
