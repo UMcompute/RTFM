@@ -9,12 +9,15 @@ class Sensor
   private:
     int roomID;
     double sensorData[NUM_DATA];
+    int itemp;
+    int iflux;
     
   public:
     Sensor();
     ~Sensor();
     void setID(int myID);
     void setData(int index, double newData);
+    int checkFlashover();
 };
 
 #endif // SENSOR_H_INCLUDED

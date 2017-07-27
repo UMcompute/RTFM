@@ -58,6 +58,9 @@ int main(int argc, char** argv) {
   int room = 0;
   int numMsgRecv = 0;
 
+  // warning arrays
+  int flashover[NUM_ROOMS];
+
   // construct LCM and check if it is good!
   lcm::LCM lcm;
   if(!lcm.good()) return 1;
@@ -113,11 +116,19 @@ int main(int argc, char** argv) {
         sensorArray[i].setData(6, currentData.getFlux(i));
       }
 
-      // FLASHOVER
+      // check the hazards at each sensor location
+      for (i = 0; i < NUM_ROOMS; i++)
+      {
 
-      // BURN THREATS
+        // FLASHOVER
+        flashover[i] = sensorArray[i].checkFlashover();
+        std::cout << "room #" << i << " flashover check = " << flashover[i] << std::endl;
 
-      // SMOKE TOXICITY
+        // BURN THREATS
+
+        // SMOKE TOXICITY
+
+      }
 
     }
   }
