@@ -66,6 +66,8 @@ int main(int argc, char** argv) {
   // warning arrays
   int flashover[NUM_ROOMS];
   int burnThreat[NUM_ROOMS];
+  int smokeToxicity[NUM_ROOMS];
+  int fireSpread[NUM_ROOMS];
 
   // construct LCM and check if it is good!
   lcm::LCM lcm;
@@ -127,18 +129,19 @@ int main(int argc, char** argv) {
       {
 
         // FLASHOVER
-        // Fire Signatures: temperature, heat flux
         flashover[i] = sensorArray[i].checkFlashover();
 
         // SMOKE TOXICITY
-        // Fire Signatures: O2, CO, HCN, temperature
+        smokeToxicity[i] = sensorArray[i].checkSmokeTox();
 
         // BURN THREATS
-        // Fire Signatures: heat flux, O2, temperature
         burnThreat[i] = sensorArray[i].checkBurnThreat();
 
         // FIRE SPREAD
-        // Fire Signatures: temperature, O2, CO, CO2, 
+        fireSpread[i] = sensorArray[i].checkFireSpread();
+
+        // TIME UPDATE
+        sensorArray[i].updateTime();
 
       }
 

@@ -2,6 +2,7 @@
 #include <math.h>
 #include "Sensor.h"
 
+
 Sensor::Sensor()
 {
   int i;
@@ -13,19 +14,26 @@ Sensor::Sensor()
   // define mapping from sensorData to physical values
   itime = 0;
   itemp = 1;
+  iO2 = 2;
+  iCO = 3;
+  iCO2 = 4;
+  iHCN = 5;
   iflux = 6;
 
   lastTime = 0.0;
   sumFEDheat1 = 0.0;
   sumFEDheat2 = 0.0;
+  sumFEDsmoke = 0.0;
 
   std::cout << "new sensor created" << std::endl;
 }
+
 
 Sensor::~Sensor()
 {
   std::cout << "deleted a sensor" << std::endl;
 }
+
 
 void Sensor::setID(int myID)
 {
@@ -33,10 +41,18 @@ void Sensor::setID(int myID)
   std::cout << "my room id is " << roomID << std::endl;
 }
 
+
 void Sensor::setData(int index, double newData)
 {
   sensorData[index] = newData;
 }
+
+
+void Sensor::updateTime()
+{
+  lastTime = sensorData[itime];
+}
+
 
 int Sensor::checkFlashover()
 {
@@ -58,11 +74,66 @@ int Sensor::checkFlashover()
   return warning;
 }
 
+
 int Sensor::checkSmokeTox()
 {
 
-  return 1;
+  /* *** CHECK UNITS OF ALL DATA USED IN THIS FUNCTION! ***
+
+    CO [ppm]
+    HCN [ppm]
+    CO2 [%]
+    O2 [%]
+
+    For example, in the case of [%], use the "number":
+
+    (20.9 - [O2])
+    if [O2] = 6.5%, then use "6.5" in the equation:
+    (20.9 - 6.5)
+
+  */
+
+  int warning = 0;
+  double FED_CO, FED_CN, FED_NOx, FLD_irr, HV_CO2, FED_O2;
+  double O2_limit = 7.0; // [%]
+
+  // update time step
+  double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
+
+  FED_CO = 2.764 * pow(10.0, -5) * pow(sensorData[iCO], 1.036) * dt;
+
+  double NO2, NO, CN;
+  NO2 = 0.0;
+  NO = 0.0;
+  CN = sensorData[iHCN] - NO2 - NO;
+  FED_CN = ((1.0 / 220.0) * exp(CN / 43.0) - 0.0045) * dt;
+
+  FED_NOx = 0.0;
+  FLD_irr = 0.0;
+
+  double x;
+  double O2 = sensorData[iO2];  // [%]
+  x = 8.13 - 0.54*(20.9 - O2);
+  FED_O2 = dt / exp(x);
+
+  double CO2 = sensorData[iCO2];  // [%]
+  HV_CO2 = (1.0 / 7.1) * exp(0.1903 * CO2 + 2.0004);
+
+  x = (FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2;
+  sumFEDsmoke += x;
+
+  if (sumFEDsmoke >= 1.0)
+  {
+    warning += 1;
+  }
+  if (O2 < O2_limit)
+  {
+    warning += 1;
+  }
+
+  return warning;
 }
+
 
 int Sensor::checkBurnThreat()
 {
@@ -110,7 +181,6 @@ int Sensor::checkBurnThreat()
   // summation of FED and update time
   sumFEDheat1 += (FED_c1 + FED_r1);
   sumFEDheat2 += (FED_c2 + FED_r2);
-  lastTime = time;
 
   if (sumFEDheat1 >= 1.0)
   {
@@ -126,5 +196,61 @@ int Sensor::checkBurnThreat()
 
 int Sensor::checkFireSpread()
 {
-  return 1;
+  // THRESHOLD AND RATES-OF-INCREASE
+  double maxTemp = 57.0;            // [C]
+  double maxTempRate = 7.0;         // [C/min]
+  double maxCO = 25.0;              // [ppm]  ==> (10-40), 50, and 25 suggested ***
+  double maxCO2percent = 1.5;       // [%]
+  double minO2percent = 17.0;       // [%]
+  double maxRatioCOtoCO2 = 0.01;    // [unitless]
+
+  int warning = 0;
+  double tempRate = 0.0;
+
+  // check temperature
+  if (sensorData[itemp] > maxTemp)
+  {
+    warning += 1;
+  }
+
+  // compute the temperature rate using member function
+  //tempRate = getTempRate();
+  if (tempRate > maxTempRate)
+  {
+    warning += 1;
+  }
+
+  // check carbon monoxide
+  if (sensorData[iCO] > maxCO)
+  {
+    warning += 1;
+  }
+
+  // check carbon dioxide
+  if (sensorData[iCO2] > maxCO2percent)
+  {
+    warning += 1;
+  }
+
+  // check oxygen depletion
+  if (sensorData[iO2] < minO2percent)
+  {
+    warning += 1;
+  }
+
+  // check ratio of CO to CO2
+  // get CO2 as ppm first
+  // ==>  conversion: 1ppm = 0.0001% gas
+  double CO2ppm = sensorData[iCO2] * pow(10.0, 4);
+  double gasRatio = 0.0;
+  if (CO2ppm > 0.0)
+  {
+    gasRatio = sensorData[iCO] / CO2ppm;
+    if (gasRatio > maxRatioCOtoCO2)
+    {
+      warning += 1;
+    }
+  }
+
+  return warning;
 }
