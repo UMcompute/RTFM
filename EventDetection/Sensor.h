@@ -33,6 +33,7 @@ class Sensor
     int checkSmokeTox();
     int checkBurnThreat();
     int checkFireSpread();
+    double getFEDvals(int id);
 };
 
 #endif // SENSOR_H_INCLUDED

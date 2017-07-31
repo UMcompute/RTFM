@@ -32,12 +32,13 @@ int main(int argc, char* argv[])
 
   // initialize constants
   const int NUM_ROOMS = 4;    // number of rooms in simulation
-  const int NUM_DATA = 5;     // number of columns in data files
+  const int NUM_DATA = 6;     // number of columns in data files
   double nominalFreq = 1.00;  // [Hz]
   double noise = 0.01;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
+  int testing = 1;            // use for testing room 0 only for now
 
   // ================================================================
 
@@ -90,6 +91,10 @@ int main(int argc, char* argv[])
     // open "my" data file
     std::string my_file;
     my_file = file_prefix + std::to_string(pid) + file_suffix;
+    if (testing == 1)
+    {
+      my_file = "./data/test1.csv";
+    }
     std::ifstream if_file(my_file.c_str());
 
     // read in data from file and publish to LCM network
@@ -121,7 +126,8 @@ int main(int argc, char* argv[])
           my_data.O2conc = my_row[1];
           my_data.COconc = my_row[2];
           my_data.CO2conc = my_row[3];
-          my_data.heatFlux = my_row[4];
+          my_data.HCNconc = my_row[4];
+          my_data.heatFlux = my_row[5];
 
           // compute random noise for delay time
           rand_int = rand()%rand_range + min_time;

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>
+#include <stdio.h>
 #include "Sensor.h"
 
 
@@ -11,14 +12,14 @@ Sensor::Sensor()
     sensorData[i] = 0.0;
   }
 
-  // define mapping from sensorData to physical values
-  itime = 0;
-  itemp = 1;
-  iO2 = 2;
-  iCO = 3;
-  iCO2 = 4;
-  iHCN = 5;
-  iflux = 6;
+  // define mapping from sensorData array to physical values
+  itime   = 0;
+  itemp   = 1;
+  iO2     = 2;
+  iCO     = 3;
+  iCO2    = 4;
+  iHCN    = 5;
+  iflux   = 6;
 
   lastTime = 0.0;
   sumFEDheat1 = 0.0;
@@ -54,6 +55,22 @@ void Sensor::updateTime()
 }
 
 
+double Sensor::getFEDvals(int id)
+{
+  if (id == 0)
+  {
+    return sumFEDsmoke;
+  }
+  else if (id == 1)
+  {
+    return sumFEDheat1;
+  }
+  else if (id == 2)
+  {
+    return sumFEDheat2;
+  }
+}
+
 int Sensor::checkFlashover()
 {
   // definitions of warning:
@@ -63,11 +80,11 @@ int Sensor::checkFlashover()
   int warning = 0;
   double maxTemp = 600.0;
   double maxFlux = 20.0;
-  if (sensorData[itemp] > maxTemp)
+  if (sensorData[itemp] >= maxTemp)
   {
     warning += 1;
   }
-  if (sensorData[iflux] > maxFlux)
+  if (sensorData[iflux] >= maxFlux)
   {
     warning += 1;
   }
@@ -122,7 +139,7 @@ int Sensor::checkSmokeTox()
   x = (FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2;
   sumFEDsmoke += x;
 
-  if (sumFEDsmoke >= 1.0)
+  if (sumFEDsmoke > 1.0)
   {
     warning += 1;
   }
@@ -139,9 +156,8 @@ int Sensor::checkBurnThreat()
 {
   int warning = 0;
 
-  // time and dt update
-  double time = sensorData[itime];
-  double dt = (time - lastTime) / 60.0;  // converted [sec] to [min]
+  // dt update
+  double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
 
   // convection 
   double temp = sensorData[itemp];
@@ -178,7 +194,7 @@ int Sensor::checkBurnThreat()
     FED_r2 = dt / tr2;
   }
 
-  // summation of FED and update time
+  // summation of FED
   sumFEDheat1 += (FED_c1 + FED_r1);
   sumFEDheat2 += (FED_c2 + FED_r2);
 
@@ -191,12 +207,15 @@ int Sensor::checkBurnThreat()
     warning += 1;
   }
 
+  printf("warning = %d and dt = %f \n", warning, dt);
+
   return warning;
 }
 
+
 int Sensor::checkFireSpread()
 {
-  // THRESHOLD AND RATES-OF-INCREASE
+  // THRESHOLDS AND RATES-OF-INCREASE
   double maxTemp = 57.0;            // [C]
   double maxTempRate = 7.0;         // [C/min]
   double maxCO = 25.0;              // [ppm]  ==> (10-40), 50, and 25 suggested ***

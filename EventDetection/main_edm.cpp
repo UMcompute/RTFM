@@ -13,6 +13,7 @@
 #include <math.h>
 #include <unistd.h>
 #include <chrono>
+#include <fstream>
 
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
@@ -21,9 +22,6 @@
 // include my custom classes
 #include "DataHandler.h"
 #include "Sensor.h"
-
-// namespace declarations
-using namespace std;
 
 
 //const int NUM_ROOMS = 4;
@@ -50,11 +48,10 @@ using namespace std;
 
 // MAIN PROGRAM
 int main(int argc, char** argv) {
-  
   printf("starting EDM main...\n");
 
   // input
-  const int MAX_MSG_LIMIT = 5;
+  const int MAX_MSG_LIMIT = 30;
 
   //===========================================================================
 
@@ -68,6 +65,14 @@ int main(int argc, char** argv) {
   int burnThreat[NUM_ROOMS];
   int smokeToxicity[NUM_ROOMS];
   int fireSpread[NUM_ROOMS];
+
+  // testing output
+  std::ofstream outFile1;
+  std::ofstream outFile2;
+  std::ofstream outFile3;
+  outFile1.open("temp-flux.txt");
+  outFile2.open("time-flashover.txt");
+  outFile3.open("time-burn-FEDs.txt");
 
   // construct LCM and check if it is good!
   lcm::LCM lcm;
@@ -112,9 +117,10 @@ int main(int argc, char** argv) {
       lcm.handle();
       numMsgRecv += 1;
 
-      // distribute new data to each sensor
+      // check the hazards at each sensor location
       for (i = 0; i < NUM_ROOMS; i++)
       {
+        // distribute new data to each sensor
         sensorArray[i].setData(0, currentData.getTime());
         sensorArray[i].setData(1, currentData.getTemp(i));
         sensorArray[i].setData(2, currentData.getO2(i));
@@ -122,14 +128,15 @@ int main(int argc, char** argv) {
         sensorArray[i].setData(4, currentData.getCO2(i));
         sensorArray[i].setData(5, currentData.getHCN(i));
         sensorArray[i].setData(6, currentData.getFlux(i));
-      }
-
-      // check the hazards at each sensor location
-      for (i = 0; i < NUM_ROOMS; i++)
-      {
 
         // FLASHOVER
         flashover[i] = sensorArray[i].checkFlashover();
+
+        if (i == 0)
+        {
+          outFile1 << currentData.getTemp(i) << ", " << currentData.getFlux(i) << "\n";
+          outFile2 << currentData.getTime() << ", " << flashover[i] << "\n";
+        }
 
         // SMOKE TOXICITY
         smokeToxicity[i] = sensorArray[i].checkSmokeTox();
@@ -137,16 +144,23 @@ int main(int argc, char** argv) {
         // BURN THREATS
         burnThreat[i] = sensorArray[i].checkBurnThreat();
 
+        if (i == 0)
+        {
+          outFile3 << currentData.getTime() << ", " << burnThreat[i] << ", " << sensorArray[i].getFEDvals(1) << ", " << sensorArray[i].getFEDvals(2) << "\n";
+        }
+
         // FIRE SPREAD
         fireSpread[i] = sensorArray[i].checkFireSpread();
 
         // TIME UPDATE
         sensorArray[i].updateTime();
-
       }
-
     }
   }
+
+  outFile1.close();
+  outFile2.close();
+  outFile3.close();
 
   printf("exit EDM main\n");
   return 0;
