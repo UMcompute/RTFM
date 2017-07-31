@@ -65,6 +65,7 @@ int main(int argc, char** argv) {
 
   // warning arrays
   int flashover[NUM_ROOMS];
+  int burnThreat[NUM_ROOMS];
 
   // construct LCM and check if it is good!
   lcm::LCM lcm;
@@ -128,13 +129,13 @@ int main(int argc, char** argv) {
         // FLASHOVER
         // Fire Signatures: temperature, heat flux
         flashover[i] = sensorArray[i].checkFlashover();
-        std::cout << "room #" << i << " flashover check = " << flashover[i] << std::endl;
-
-        // BURN THREATS
-        // Fire Signatures: heat flux, O2
 
         // SMOKE TOXICITY
         // Fire Signatures: O2, CO, HCN, temperature
+
+        // BURN THREATS
+        // Fire Signatures: heat flux, O2, temperature
+        burnThreat[i] = sensorArray[i].checkBurnThreat();
 
         // FIRE SPREAD
         // Fire Signatures: temperature, O2, CO, CO2, 

@@ -9,8 +9,13 @@ class Sensor
   private:
     int roomID;
     double sensorData[NUM_DATA];
+    int itime;
     int itemp;
     int iflux;
+    double lastTime;
+
+    double sumFEDheat1;
+    double sumFEDheat2;
     
   public:
     Sensor();
