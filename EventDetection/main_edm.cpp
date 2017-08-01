@@ -67,12 +67,21 @@ int main(int argc, char** argv) {
   int fireSpread[NUM_ROOMS];
 
   // testing output
-  std::ofstream outFile1;
-  std::ofstream outFile2;
-  std::ofstream outFile3;
-  outFile1.open("temp-flux.txt");
-  outFile2.open("time-flashover.txt");
-  outFile3.open("time-burn-FEDs.txt");
+  int testing = 0;
+  double t, T, O2, CO, CO2, HCN, Q; 
+  std::ofstream out1;
+  std::ofstream out2;
+  std::ofstream out3;
+  std::ofstream out4;
+  std::ofstream out5;
+  if (testing == 1)
+  {
+    out1.open("time-spread.txt");
+    out2.open("time-flashover.txt");
+    out3.open("time-burn-FEDs.txt");
+    out4.open("time-smoke-FED.txt");
+    out5.open("t-T-O2-CO-CO2-HCN-Q.txt");
+  }
 
   // construct LCM and check if it is good!
   lcm::LCM lcm;
@@ -132,35 +141,47 @@ int main(int argc, char** argv) {
         // FLASHOVER
         flashover[i] = sensorArray[i].checkFlashover();
 
-        if (i == 0)
-        {
-          outFile1 << currentData.getTemp(i) << ", " << currentData.getFlux(i) << "\n";
-          outFile2 << currentData.getTime() << ", " << flashover[i] << "\n";
-        }
-
         // SMOKE TOXICITY
         smokeToxicity[i] = sensorArray[i].checkSmokeTox();
 
         // BURN THREATS
         burnThreat[i] = sensorArray[i].checkBurnThreat();
 
-        if (i == 0)
-        {
-          outFile3 << currentData.getTime() << ", " << burnThreat[i] << ", " << sensorArray[i].getFEDvals(1) << ", " << sensorArray[i].getFEDvals(2) << "\n";
-        }
-
         // FIRE SPREAD
         fireSpread[i] = sensorArray[i].checkFireSpread();
 
         // TIME UPDATE
         sensorArray[i].updateTime();
+
+        // PRINT TESTING OUTPUT
+        if (i == 0 && testing == 1)
+        {
+          t = currentData.getTime();
+          T = currentData.getTemp(i);
+          O2 = currentData.getO2(i);
+          CO = currentData.getCO(i);
+          CO2 = currentData.getCO2(i);
+          HCN = currentData.getHCN(i);
+          Q = currentData.getFlux(i);
+          out1 << t << "," << fireSpread[i] << "\n";
+          out2 << t << ", " << flashover[i] << "\n";
+          out3 << t << ", " << burnThreat[i] << ", " << sensorArray[i].getFEDvals(1) << ", " << sensorArray[i].getFEDvals(2) << "\n";
+          out4 << t << ", " << smokeToxicity[i] << ", " << sensorArray[i].getFEDvals(0) << "\n";
+          out5 << t << "," << T << "," << O2 << "," << CO << "," << CO2 << "," << HCN << "," << Q << "\n";
+        }
       }
     }
   }
 
-  outFile1.close();
-  outFile2.close();
-  outFile3.close();
+  // close the testing files
+  if (testing == 1)
+  {
+    out1.close();
+    out2.close();
+    out3.close();
+    out4.close();
+    out5.close();
+  }
 
   printf("exit EDM main\n");
   return 0;

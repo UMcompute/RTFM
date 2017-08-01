@@ -22,6 +22,7 @@ Sensor::Sensor()
   iflux   = 6;
 
   lastTime = 0.0;
+  lastTemp = 20.0;
   sumFEDheat1 = 0.0;
   sumFEDheat2 = 0.0;
   sumFEDsmoke = 0.0;
@@ -52,6 +53,7 @@ void Sensor::setData(int index, double newData)
 void Sensor::updateTime()
 {
   lastTime = sensorData[itime];
+  lastTemp = sensorData[itemp];
 }
 
 
@@ -113,41 +115,50 @@ int Sensor::checkSmokeTox()
   int warning = 0;
   double FED_CO, FED_CN, FED_NOx, FLD_irr, HV_CO2, FED_O2;
   double O2_limit = 7.0; // [%]
+  double FED_limit = 1.0;
 
   // update time step
   double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
 
+  // FED for carbon monoxide
   FED_CO = 2.764 * pow(10.0, -5) * pow(sensorData[iCO], 1.036) * dt;
 
+  // FED for CN which removes [NO2] and [NO] first
+  // **note: we are not currently measuring [NO2] or [NO]
   double NO2, NO, CN;
   NO2 = 0.0;
   NO = 0.0;
   CN = sensorData[iHCN] - NO2 - NO;
   FED_CN = ((1.0 / 220.0) * exp(CN / 43.0) - 0.0045) * dt;
 
+  // FED for any [NOx] present
+  // **note: currently not measuring any [NOx]
   FED_NOx = 0.0;
+
+  // FLD for irritants (none currently)
+  // future: include HCl, HBr, formaldehyde, acrolein, HF, etc.
   FLD_irr = 0.0;
 
-  double x;
+  // FED for O2 depletion
   double O2 = sensorData[iO2];  // [%]
-  x = 8.13 - 0.54*(20.9 - O2);
-  FED_O2 = dt / exp(x);
+  FED_O2 = dt / exp( 8.13 - 0.54*(20.9 - O2) );
 
-  double CO2 = sensorData[iCO2];  // [%]
-  HV_CO2 = (1.0 / 7.1) * exp(0.1903 * CO2 + 2.0004);
 
-  x = (FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2;
-  sumFEDsmoke += x;
+  // Hyperventilation Factor
+  HV_CO2 = (1.0 / 7.1) * exp(0.1903 * sensorData[iCO2] + 2.0004);
 
-  if (sumFEDsmoke > 1.0)
+  // update the smoke toxicity FED sum 
+  sumFEDsmoke += ((FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2);
+
+  // check for 1.0 FED threshold and/or severe oxygen depletion
+  if (sumFEDsmoke >= FED_limit)
   {
     warning += 1;
   }
-  if (O2 < O2_limit)
+  if (O2 <= O2_limit)
   {
     warning += 1;
   }
-
   return warning;
 }
 
@@ -207,7 +218,7 @@ int Sensor::checkBurnThreat()
     warning += 1;
   }
 
-  printf("warning = %d and dt = %f \n", warning, dt);
+  //printf("warning = %d and dt = %f \n", warning, dt);
 
   return warning;
 }
@@ -226,21 +237,24 @@ int Sensor::checkFireSpread()
   int warning = 0;
   double tempRate = 0.0;
 
+  // dt update
+  double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
+
   // check temperature
-  if (sensorData[itemp] > maxTemp)
+  if (sensorData[itemp] >= maxTemp)
   {
     warning += 1;
   }
 
   // compute the temperature rate using member function
-  //tempRate = getTempRate();
-  if (tempRate > maxTempRate)
+  tempRate = (sensorData[itemp] - lastTemp) / dt;
+  if (tempRate >= maxTempRate)
   {
     warning += 1;
   }
 
   // check carbon monoxide
-  if (sensorData[iCO] > maxCO)
+  if (sensorData[iCO] >= maxCO)
   {
     warning += 1;
   }

@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
-  int testing = 1;            // use for testing room 0 only for now
+  int testing = 0;            // use for testing room 0 only for now
 
   // ================================================================
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[])
     my_file = file_prefix + std::to_string(pid) + file_suffix;
     if (testing == 1)
     {
-      my_file = "./data/test1.csv";
+      my_file = "./data/test3.csv";
     }
     std::ifstream if_file(my_file.c_str());
 

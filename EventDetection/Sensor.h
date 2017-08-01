@@ -19,6 +19,7 @@ class Sensor
     int iflux;
 
     double lastTime;
+    double lastTemp;
     double sumFEDheat1;
     double sumFEDheat2;
     double sumFEDsmoke;
