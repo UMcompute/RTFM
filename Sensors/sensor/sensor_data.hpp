@@ -28,6 +28,8 @@ class sensor_data
 
         double     CO2conc;
 
+        double     HCNconc;
+
         double     heatFlux;
 
     public:
@@ -144,6 +146,9 @@ int sensor_data::_encodeNoHash(void *buf, int offset, int maxlen) const
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->CO2conc, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->HCNconc, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __double_encode_array(buf, offset + pos, maxlen - pos, &this->heatFlux, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -172,6 +177,9 @@ int sensor_data::_decodeNoHash(const void *buf, int offset, int maxlen)
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->CO2conc, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
+    tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->HCNconc, 1);
+    if(tlen < 0) return tlen; else pos += tlen;
+
     tlen = __double_decode_array(buf, offset + pos, maxlen - pos, &this->heatFlux, 1);
     if(tlen < 0) return tlen; else pos += tlen;
 
@@ -188,12 +196,13 @@ int sensor_data::_getEncodedSizeNoHash() const
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
     enc_size += __double_encoded_array_size(NULL, 1);
+    enc_size += __double_encoded_array_size(NULL, 1);
     return enc_size;
 }
 
 uint64_t sensor_data::_computeHash(const __lcm_hash_ptr *)
 {
-    uint64_t hash = 0x3ec9ad124b9ecbf6LL;
+    uint64_t hash = 0x5170654ffd235699LL;
     return (hash<<1) + ((hash>>63)&1);
 }
 

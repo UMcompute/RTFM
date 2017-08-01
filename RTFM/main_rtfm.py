@@ -33,7 +33,8 @@ def msg_handler(channel, data):
   sensorList[room].set_value(2, msg.O2conc)
   sensorList[room].set_value(3, msg.COconc)
   sensorList[room].set_value(4, msg.CO2conc)
-  sensorList[room].set_value(5, msg.heatFlux)
+  sensorList[room].set_value(5, msg.HCNconc)
+  sensorList[room].set_value(6, msg.heatFlux)
 
   # check if IFM data is ready to send based on IFM time step
   ifm_manager.check_time(sensorList[room].get_value(0), NUM_ROOMS)
@@ -52,7 +53,7 @@ def model_handler(channel, data):
 # currently assuming one sensor per room
 # future: room can have zero, one, or multiple sensors in it 
 class Sensor:
-  NUM_DATA = 6
+  NUM_DATA = 7
 
   def __init__(self, myRoom):
     print("NEW ROOM CREATED WITH ONE SENSOR!")
@@ -158,6 +159,11 @@ try:
           edm_data.temperature[i] = sensorList[i].get_value(1)
           # index 2 is the oxygen concentration in the Sensor class object
           edm_data.O2_conc[i] = sensorList[i].get_value(2)
+          # get the rest of the data values for the current package
+          edm_data.CO_conc[i] = sensorList[i].get_value(3)
+          edm_data.CO2_conc[i] = sensorList[i].get_value(4)
+          edm_data.HCN_conc[i] = sensorList[i].get_value(5)
+          edm_data.heat_flux[i] = sensorList[i].get_value(6)
         # send complete message to EDM main loop
         lc.publish("EDM_CHANNEL", edm_data.encode())          
       # =======================================================================

@@ -13,104 +13,45 @@
 #include <math.h>
 #include <unistd.h>
 #include <chrono>
+#include <fstream>
 
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
 #include "send_to_edm/data_to_edm.hpp"
 
-// namespace declarations
-using namespace std;
-
-// global constants
-const int NUM_ROOMS = 4;
-const int NUM_DATA = 7;
+// include my custom classes
+#include "DataHandler.h"
+#include "Sensor.h"
 
 
-// LCM class for receiving message data
-class DataHandler
-{
-
-  private:
-    int my_num_rooms;
-    double my_time_stamp;
-    double my_temperature[NUM_ROOMS];
-    double my_O2_conc[NUM_ROOMS];
-    double my_CO_conc[NUM_ROOMS];
-    double my_CO2_conc[NUM_ROOMS];
-    double my_HCN_conc[NUM_ROOMS];
-    double my_heat_flux[NUM_ROOMS];
-
-  public:
-    ~DataHandler() {}
-
-    void handleMessage(const lcm::ReceiveBuffer* rbuf,
-  		     const std::string& chan,
-  		     const send_to_edm::data_to_edm* msg)
-    {
-      // assign incoming data to proper local memory
-      int i;
-      my_num_rooms = msg->num_rooms;
-      my_time_stamp = msg->time_stamp;
-      for (i = 0; i < my_num_rooms; i++)
-      {
-        my_temperature[i] = msg->temperature[i];
-        my_O2_conc[i] = msg->O2_conc[i];
-        my_CO_conc[i] = msg->CO_conc[i];
-        my_CO2_conc[i] = msg->CO2_conc[i];
-        my_HCN_conc[i] = msg->HCN_conc[i];
-        my_heat_flux[i] = msg->heat_flux[i];
-      }
-    }
-  
-    // get functions to return value at provided room index
-    double getTime()            {   return my_time_stamp;           }
-    double getTemp(int index)   {   return my_temperature[index];   }
-    double getO2(int index)     {   return my_O2_conc[index];       }
-    double getCO(int index)     {   return my_CO_conc[index];       }
-    double getCO2(int index)    {   return my_CO2_conc[index];      }
-    double getHCN(int index)    {   return my_HCN_conc[index];      }
-    double getFlux(int index)   {   return my_heat_flux[index];     }
-  
-};
+//const int NUM_ROOMS = 4;
+#define NUM_ROOMS 4
+/* ====================================
+    ASSUMPTION: one sensor per room
+==================================== */
 
 
-// Sensor class to store data on per room basis
-class Sensor
-{
-  private:
-    int roomID;
-    double sensorData[NUM_DATA];
-  public:
-    Sensor()
-    {
-      int i;
-      for (i = 0; i < NUM_DATA; i++)
-      {
-        sensorData[i] = 0.0;
-      }
-      cout << "new sensor created" <<  endl;
-    }
-    ~Sensor()
-    {
-      cout << "deleted a sensor" << endl;
-    }
-    void setID(int myID)
-    {
-      roomID = myID;
-      cout << "my room id is " << roomID << endl;
-    }
-};
-
-
+//const int NUM_DATA = 7;
+#define NUM_DATA 7
+/* ====================================
+    DATA KEY: sensorData[i]
+    i | parameter
+    0 = time
+    1 = upper layer gas temperature
+    2 = O2
+    3 = CO
+    4 = CO2
+    5 = HCN
+    6 = heat flux
+==================================== */
 
 
 // MAIN PROGRAM
 int main(int argc, char** argv) {
-  
   printf("starting EDM main...\n");
 
   // input
-  const int MAX_MSG_LIMIT = 1000;
+  const int MAX_MSG_LIMIT = 30;
 
   //===========================================================================
 
@@ -118,6 +59,29 @@ int main(int argc, char** argv) {
   int i;
   int room = 0;
   int numMsgRecv = 0;
+
+  // warning arrays
+  int flashover[NUM_ROOMS];
+  int burnThreat[NUM_ROOMS];
+  int smokeToxicity[NUM_ROOMS];
+  int fireSpread[NUM_ROOMS];
+
+  // testing output
+  int testing = 0;
+  double t, T, O2, CO, CO2, HCN, Q; 
+  std::ofstream out1;
+  std::ofstream out2;
+  std::ofstream out3;
+  std::ofstream out4;
+  std::ofstream out5;
+  if (testing == 1)
+  {
+    out1.open("time-spread.txt");
+    out2.open("time-flashover.txt");
+    out3.open("time-burn-FEDs.txt");
+    out4.open("time-smoke-FED.txt");
+    out5.open("t-T-O2-CO-CO2-HCN-Q.txt");
+  }
 
   // construct LCM and check if it is good!
   lcm::LCM lcm;
@@ -162,22 +126,61 @@ int main(int argc, char** argv) {
       lcm.handle();
       numMsgRecv += 1;
 
-      // check the getter functions
-      cout << currentData.getTime() << endl;
-      cout << currentData.getTemp(room) << endl;
-      cout << currentData.getO2(room) << endl;
-      cout << currentData.getCO(room) << endl;
-      cout << currentData.getCO2(room) << endl;
-      cout << currentData.getHCN(room) << endl;
-      cout << currentData.getFlux(room) << endl;
+      // check the hazards at each sensor location
+      for (i = 0; i < NUM_ROOMS; i++)
+      {
+        // distribute new data to each sensor
+        sensorArray[i].setData(0, currentData.getTime());
+        sensorArray[i].setData(1, currentData.getTemp(i));
+        sensorArray[i].setData(2, currentData.getO2(i));
+        sensorArray[i].setData(3, currentData.getCO(i));
+        sensorArray[i].setData(4, currentData.getCO2(i));
+        sensorArray[i].setData(5, currentData.getHCN(i));
+        sensorArray[i].setData(6, currentData.getFlux(i));
 
-      // FLASHOVER
+        // FLASHOVER
+        flashover[i] = sensorArray[i].checkFlashover();
 
-      // BURN THREATS
+        // SMOKE TOXICITY
+        smokeToxicity[i] = sensorArray[i].checkSmokeTox();
 
-      // SMOKE TOXICITY
+        // BURN THREATS
+        burnThreat[i] = sensorArray[i].checkBurnThreat();
 
+        // FIRE SPREAD
+        fireSpread[i] = sensorArray[i].checkFireSpread();
+
+        // TIME UPDATE
+        sensorArray[i].updateTime();
+
+        // PRINT TESTING OUTPUT
+        if (i == 0 && testing == 1)
+        {
+          t = currentData.getTime();
+          T = currentData.getTemp(i);
+          O2 = currentData.getO2(i);
+          CO = currentData.getCO(i);
+          CO2 = currentData.getCO2(i);
+          HCN = currentData.getHCN(i);
+          Q = currentData.getFlux(i);
+          out1 << t << "," << fireSpread[i] << "\n";
+          out2 << t << ", " << flashover[i] << "\n";
+          out3 << t << ", " << burnThreat[i] << ", " << sensorArray[i].getFEDvals(1) << ", " << sensorArray[i].getFEDvals(2) << "\n";
+          out4 << t << ", " << smokeToxicity[i] << ", " << sensorArray[i].getFEDvals(0) << "\n";
+          out5 << t << "," << T << "," << O2 << "," << CO << "," << CO2 << "," << HCN << "," << Q << "\n";
+        }
+      }
     }
+  }
+
+  // close the testing files
+  if (testing == 1)
+  {
+    out1.close();
+    out2.close();
+    out3.close();
+    out4.close();
+    out5.close();
   }
 
   printf("exit EDM main\n");

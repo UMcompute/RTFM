@@ -6,3 +6,4 @@ RTFM/update.csv
 RTFM/new_data.txt
 Sensors/temp/*
 InverseModel/out/*
+*.o

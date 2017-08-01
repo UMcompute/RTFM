@@ -8,5 +8,6 @@ struct sensor_data
   double	O2conc;
   double	COconc;
   double	CO2conc;
+  double  HCNconc;
   double	heatFlux;
 }
