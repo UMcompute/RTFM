@@ -65,9 +65,12 @@ NUMSIGNAL = 8
 #DEFINE PATHS TO INPUT
 dataFile = "../inp/data4.txt"
 
-#CONSTANTS (in all CAPS)
+# MY CONTROL PARAMETERS
 TESTING                 = 1
 POLL_TIME               = 0.5
+PLOTTING                = 1
+
+#CONSTANTS (in all CAPS)
 NUM_FAILS_ALLOWED       = 20;
 ITER_MAX                = 30;
 ERROR_TOL               = 0.10;
@@ -91,9 +94,6 @@ numCols = inData.shape[1]
 hrrin = inData[:, 1:numCols]
 timein = inData[:,0]
 
-# set 3 of 4 rooms to have no HRR input
-hrrin[:, 1:3] = 1.0
-
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
 if (TESTING == 0):
   SIGNAL_exp = np.zeros((numStep,NUMSIGNAL))
@@ -104,19 +104,18 @@ else:
   SIGNAL_exp = read_signal_xc.read_signal_xc_func(NUMCOMP, 'exp_signal_xc')
   TIME_exp = SIGNAL_exp[:, 0]  #GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
   SIGNAL_exp = np.delete(SIGNAL_exp, [0], axis=1)
+  # initialize LCM data structure for sending back to MAIN
+  ifm_output = data_from_ifm()
+  ifm_output.num_fires = NUMFIRE
+  ifm_output.current_HRR = 0.0
 
-# initialize LCM data structure for sending back to MAIN
-ifm_output = data_from_ifm()
-ifm_output.num_fires = NUMFIRE
-ifm_output.current_HRR = 0.0
-
-#INIALIZE VARIABLES
+# INIALIZE VARIABLES
 num_fail = 0
 total_iteration = 0
 error_low_tol = 0.01
 error_extra_tol = 0.0
 
-#INITIALIZE ARRAYS
+# INITIALIZE ARRAYS
 HRR_pred = 1000.0 * np.ones((numStep, NUMFIRE))
 error_least = 100.0 * np.ones(numStep)
 SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
@@ -154,41 +153,27 @@ if (TESTING == 1):
       SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
       SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
       max_SIGNAL_diff = max(abs(SIGNAL_diff))
-
-      # Paul: we need to fix max_fire for the single-fire case
-      max_fire = np.argmax(abs(SIGNAL_diff))
-
+      max_fire = np.argmax(abs(SIGNAL_diff))    # Paul: we need to fix max_fire for the single-fire case
       error_least[i] = max_SIGNAL_diff
       iteration = 1
-
-      # Paul: we should rename "factor" with something more descriptive
-      factor = 1.0  
+      factor = 1.0    # Paul: we should rename "factor" with something more descriptive
 
       #ITERATE TO GET NEW PREDICTION
-      # Paul: MAGIC NUMBER 0.001
-      error_new = SIGNAL_pred[i, max_fire] * 0.001
+      error_new = SIGNAL_pred[i, max_fire] * 0.001    # Paul: MAGIC NUMBER 0.001
       while (max_SIGNAL_diff > max(ERROR_TOL, error_new)):
         print("iteration:  %2d   %.6f   %2d" % (iteration, max_SIGNAL_diff, max_fire+1))
         total_iteration += 1
         iteration += 1
         HRR_turb = HRR_pred
-
-        # Paul: FOUND USE OF MAGIC NUMBERS 0.001, 1000.0
-        HRR_delta = min(HRR_pred[i, max_fire] * 0.001, 1000.0)
+        HRR_delta = min(HRR_pred[i, max_fire] * 0.001, 1000.0)    # Paul: FOUND USE OF MAGIC NUMBERS 0.001, 1000.0
         HRR_turb[i, max_fire] += HRR_delta
-        
         create_signal_xc.create_signal_xc_func(timein, HRR_turb, NUMFIRE, 'pred_signal_xc')
         SIGNAL_turb = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
+        k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta   # Paul: we should rename "k" with something more descriptive
+        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor    # ***NOTE: k could be zero! Need to handle this error
 
-        # Paul: we should rename "k" with something more descriptive
-        k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta
-
-        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
-
-        # ***NOTE: k could be zero! Handle this error here
-
-        # ***NOTE: k and HRR_new give different results than in MATLAB
+        # ***NOTE: k and HRR_new give different results than in MATLAB,
         #       presumably because of round-off errors (check this)
 
         if (HRR_new > HRR_MAX):
@@ -196,13 +181,11 @@ if (TESTING == 1):
           factor = 0.7 * factor                   # magic number
         else:
           factor = min(1.0, factor * 1.5)         # magic numbers
-
         HRR_pred[i, max_fire] = HRR_new
 
         create_signal_xc.create_signal_xc_func(timein, HRR_pred, NUMFIRE, 'pred_signal_xc')
         SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
-
         SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
         max_SIGNAL_diff = max(abs(SIGNAL_diff))
         max_fire = np.argmax(abs(SIGNAL_diff))
@@ -216,12 +199,10 @@ if (TESTING == 1):
           checkVal = 1.0
         else:
           checkVal = 0.0
-
         check1 = HRR_new < HRR_LOW
         check2 = error_least[i] < 0.5 * (error_low_tol + checkVal)
         check3 = HRR_new > HRR_LOW
         check4 = error_least[i] < 0.5 * (error_extra_tol + checkVal)
-
         if (check1 and check2) or (check3 and check4):
           break
 
@@ -255,6 +236,7 @@ except KeyboardInterrupt:
   pass
 '''
 
+
 # call timer function to finish main loop
 toc = time.time()
 tim = toc - tic;
@@ -264,13 +246,14 @@ print("\ntotal of " + str(tim) + " seconds elapsed")
 np.savetxt('../out/HRR1.out', HRR_pred, delimiter=',', fmt='%f')
 
 # plot the results for the predicted HRR curve
-plt.close('all')
-if (NUMFIRE == 1):
-  fig1, ax = plt.subplots()
-  ax.plot(timein, hrrin[:,0])
-  ax.plot(timein, HRR_pred[:,0])
-  ax.set_title('sample title')
-  ax.set_xlabel('Time [s]')
-  ax.set_ylabel('HRR [kW]')
-  fig1.tight_layout()
-  plt.show()
+if (PLOTTING == 1):
+  plt.close('all')
+  if (NUMFIRE == 1):
+    fig1, ax = plt.subplots()
+    ax.plot(timein, hrrin[:,0])
+    ax.plot(timein, HRR_pred[:,0])
+    ax.set_title('sample title')
+    ax.set_xlabel('Time [s]')
+    ax.set_ylabel('HRR [kW]')
+    fig1.tight_layout()
+    plt.show()
