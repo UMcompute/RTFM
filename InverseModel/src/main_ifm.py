@@ -66,7 +66,7 @@ NUMSIGNAL = 8
 dataFile = "../inp/data4.txt"
 
 #CONSTANTS (in all CAPS)
-TESTING                 = 0
+TESTING                 = 1
 POLL_TIME               = 0.5
 NUM_FAILS_ALLOWED       = 20;
 ITER_MAX                = 30;
@@ -80,8 +80,9 @@ tic = time.time()
 #----------------------------------------------------------------------------------------%
 
 # initialize the LCM library
-lc = lcm.LCM()
-lc.subscribe("IFM_CHANNEL", my_handler)
+if (TESTING == 0):
+  lc = lcm.LCM()
+  lc.subscribe("IFM_CHANNEL", my_handler)
 
 #the format of data should be a matrix with [timein, hrr1, hrr2, hrr3, hrr4]
 inData = np.loadtxt(dataFile)
@@ -90,21 +91,19 @@ numCols = inData.shape[1]
 hrrin = inData[:, 1:numCols]
 timein = inData[:,0]
 
-# CHANGE DATA4 TO REDUCE FIRES IN 1, 2, 3 TO 1.0
-hrrin[:, 1] = 1.0
-hrrin[:, 2] = 1.0
-hrrin[:, 3] = 1.0
+# set 3 of 4 rooms to have no HRR input
+hrrin[:, 1:3] = 1.0
 
 #CREATE AND READ REAL CONCENTRATIONS AND FLOWS
-if (TESTING == 1):
+if (TESTING == 0):
+  SIGNAL_exp = np.zeros((numStep,NUMSIGNAL))
+  data_temperature = Signal()
+  data_oxygen_conc = Signal()
+else:
   create_signal_xc.create_signal_xc_func(timein, hrrin, NUMFIRE, 'exp_signal_xc')
   SIGNAL_exp = read_signal_xc.read_signal_xc_func(NUMCOMP, 'exp_signal_xc')
   TIME_exp = SIGNAL_exp[:, 0]  #GET TIME FROM COLUMN 0; THEN DELETE IT FROM SIGNAL
   SIGNAL_exp = np.delete(SIGNAL_exp, [0], axis=1)
-else:
-  SIGNAL_exp = np.zeros((numStep,NUMSIGNAL))
-  data_temperature = Signal()
-  data_oxygen_conc = Signal()
 
 # initialize LCM data structure for sending back to MAIN
 ifm_output = data_from_ifm()
@@ -124,11 +123,12 @@ SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
 HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
 
 #MAIN TIME LOOP: get sensor data using select function and waiting
+
+''' LCM
 i = 0
 try:
   timeout = POLL_TIME  # amount of time to wait, in seconds
-  #while True:
-  while (data_temperature.get_time() < 20.0):
+  while True:
     rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
     if rfds:
       lc.handle()
@@ -141,25 +141,18 @@ try:
       for icomp in range(0, NUMCOMP):
         SIGNAL_exp[i, icomp] = data_temperature.get_value(icomp)
         SIGNAL_exp[i, icomp + NUMCOMP] = data_oxygen_conc.get_value(icomp)
+'''
+
+if (TESTING == 1):
+  if (TESTING > 0):
+    for i in range(1, numStep):
+      print("Current Time = %f" % timein[i])
 
       HRR_pred[i,:] = HRR_temp
       create_signal_xc.create_signal_xc_func(timein, HRR_pred, NUMFIRE, 'pred_signal_xc')
       SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
       SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
-      
-      for j in range(0, NUMSIGNAL):
-        print(my_format(SIGNAL_pred[i,j]))
-      print("====")
-      for j in range(0, NUMSIGNAL):
-        print(my_format(SIGNAL_exp[i,j]))
-      print("====")
-
       SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
-
-      for j in range(0, NUMSIGNAL):
-        print(my_format(SIGNAL_diff[j]))
-      print("====")
-
       max_SIGNAL_diff = max(abs(SIGNAL_diff))
 
       # Paul: we need to fix max_fire for the single-fire case
@@ -167,7 +160,9 @@ try:
 
       error_least[i] = max_SIGNAL_diff
       iteration = 1
-      factor = 1.0  # Paul: we should rename factor with something more descriptive
+
+      # Paul: we should rename "factor" with something more descriptive
+      factor = 1.0  
 
       #ITERATE TO GET NEW PREDICTION
       # Paul: MAGIC NUMBER 0.001
@@ -179,28 +174,17 @@ try:
         HRR_turb = HRR_pred
 
         # Paul: FOUND USE OF MAGIC NUMBERS 0.001, 1000.0
-        # Paul: adding this if statement because the single-fire case goes out of bounds
-        #       when max_fire is not 0 sometimes (for some reason)
-        if (NUMFIRE == 1):
-          HRR_delta = max(HRR_pred[i, 0] * 0.001, 1000.0)
-          HRR_turb[i, 0] += HRR_delta
-        else:
-          HRR_delta = max(HRR_pred[i, max_fire] * 0.001, 1000.0)
-          HRR_turb[i, max_fire] += HRR_delta
+        HRR_delta = min(HRR_pred[i, max_fire] * 0.001, 1000.0)
+        HRR_turb[i, max_fire] += HRR_delta
         
         create_signal_xc.create_signal_xc_func(timein, HRR_turb, NUMFIRE, 'pred_signal_xc')
         SIGNAL_turb = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
 
+        # Paul: we should rename "k" with something more descriptive
         k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta
-        print("k = " + str(my_format(k)) )
 
-        if (NUMFIRE == 1):
-          HRR_new = HRR_pred[i, 0] - SIGNAL_diff[max_fire] / k * factor
-        else:
-          HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
-
-        print("HRR_new = " + str(my_format(HRR_new)))
+        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor
 
         # ***NOTE: k could be zero! Handle this error here
 
@@ -213,10 +197,7 @@ try:
         else:
           factor = min(1.0, factor * 1.5)         # magic numbers
 
-        if (NUMFIRE == 1):
-          HRR_pred[i, 0] = HRR_new
-        else:
-          HRR_pred[i, max_fire] = HRR_new
+        HRR_pred[i, max_fire] = HRR_new
 
         create_signal_xc.create_signal_xc_func(timein, HRR_pred, NUMFIRE, 'pred_signal_xc')
         SIGNAL_pred = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
@@ -260,10 +241,11 @@ try:
       if num_fail >= NUM_FAILS_ALLOWED:
         break
 
+
+''' LCM
       # send HRR back to MAIN
-      #for ifire in range(0, NUMFIRE):
-      #  ifm_output.current_HRR[ifire] = HRR_pred[i,ifire]
-      ifm_output.current_HRR = HRR_pred[i,0]
+      for ifire in range(0, NUMFIRE):
+        ifm_output.current_HRR[ifire] = HRR_pred[i,ifire]
       lc.publish("IFM_OUT_CHANNEL", ifm_output.encode())
 
       # end main time loop
@@ -271,21 +253,24 @@ try:
       print("\n   [waiting for msg in IFM main loop]")
 except KeyboardInterrupt:
   pass
+'''
 
 # call timer function to finish main loop
 toc = time.time()
 tim = toc - tic;
 print("\ntotal of " + str(tim) + " seconds elapsed")
 
+# print the output
+np.savetxt('../out/HRR1.out', HRR_pred, delimiter=',', fmt='%f')
+
 # plot the results for the predicted HRR curve
+plt.close('all')
 if (NUMFIRE == 1):
-  f, ax = plt.subplots()
+  fig1, ax = plt.subplots()
   ax.plot(timein, hrrin[:,0])
   ax.plot(timein, HRR_pred[:,0])
-  ax.set_title('Heat Release Rate')
+  ax.set_title('sample title')
+  ax.set_xlabel('Time [s]')
+  ax.set_ylabel('HRR [kW]')
+  fig1.tight_layout()
   plt.show()
-else:
-  for counter in range(0, NUMFIRE):
-    #print("create plot for fire #" + str(counter + 1))
-    axarr[counter].plot(timein, HRR_pred[:, counter], 'r-')
-plt.show()
