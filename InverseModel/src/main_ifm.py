@@ -60,10 +60,12 @@ def my_format(value):
 #GLOBAL VALUES FOR CONFIG
 NUMCOMP = 4
 NUMFIRE = 1    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
-NUMSIGNAL = 8
+NUMDATA = 1
+NUMSIGNAL = NUMDATA * NUMCOMP
 
 #DEFINE PATHS TO INPUT
-dataFile = "../inp/data4.txt"
+#dataFile = "../inp/data4.txt"
+dataFile = "../inp/time_HRR_2.txt"
 
 # MY CONTROL PARAMETERS
 TESTING                 = 1
@@ -72,8 +74,8 @@ PLOTTING                = 1
 
 #CONSTANTS (in all CAPS)
 NUM_FAILS_ALLOWED       = 20;
-ITER_MAX                = 30;
-ERROR_TOL               = 0.10;
+ITER_MAX                = 10;
+ERROR_TOL               = 0.20;
 ERROR_MAX               = 1.00;
 HRR_LOW                 = 5000.0;
 HRR_MAX                 = 6.0 * (10.0**5);
@@ -114,6 +116,7 @@ num_fail = 0
 total_iteration = 0
 error_low_tol = 0.01
 error_extra_tol = 0.0
+k_tol = 10.0 ** -6
 
 # INITIALIZE ARRAYS
 HRR_pred = 1000.0 * np.ones((numStep, NUMFIRE))
@@ -144,7 +147,7 @@ try:
 
 if (TESTING == 1):
   if (TESTING > 0):
-    for i in range(1, numStep):
+    for i in range(1, 10):
       print("Current Time = %f" % timein[i])
 
       HRR_pred[i,:] = HRR_temp
@@ -153,7 +156,11 @@ if (TESTING == 1):
       SIGNAL_pred = np.delete(SIGNAL_pred, [0], axis=1)
       SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
       max_SIGNAL_diff = max(abs(SIGNAL_diff))
-      max_fire = np.argmax(abs(SIGNAL_diff))    # Paul: we need to fix max_fire for the single-fire case
+      max_fire = np.argmax(abs(SIGNAL_diff))
+
+      if (max_fire >= NUMFIRE):
+        max_fire = 0
+
       error_least[i] = max_SIGNAL_diff
       iteration = 1
       factor = 1.0    # Paul: we should rename "factor" with something more descriptive
@@ -167,11 +174,19 @@ if (TESTING == 1):
         HRR_turb = HRR_pred
         HRR_delta = min(HRR_pred[i, max_fire] * 0.001, 1000.0)    # Paul: FOUND USE OF MAGIC NUMBERS 0.001, 1000.0
         HRR_turb[i, max_fire] += HRR_delta
+
         create_signal_xc.create_signal_xc_func(timein, HRR_turb, NUMFIRE, 'pred_signal_xc')
         SIGNAL_turb = read_signal_xc.read_signal_xc_func(NUMCOMP, 'pred_signal_xc')
         SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
-        k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta   # Paul: we should rename "k" with something more descriptive
-        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor    # ***NOTE: k could be zero! Need to handle this error
+
+        k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta   
+        if (k < k_tol):
+          HRR_new = HRR_pred[i, max_fire]
+        else:
+          # Paul: we should rename "k" with something more descriptive
+          HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor    
+        
+        # ***NOTE: k could be zero! Need to handle this error
 
         # ***NOTE: k and HRR_new give different results than in MATLAB,
         #       presumably because of round-off errors (check this)
@@ -180,7 +195,7 @@ if (TESTING == 1):
           HRR_new = HRR_MAX
           factor = 0.7 * factor                   # magic number
         else:
-          factor = min(1.0, factor * 1.5)         # magic numbers
+          factor = min(1.0, 1.5 * factor)         # magic numbers
         HRR_pred[i, max_fire] = HRR_new
 
         create_signal_xc.create_signal_xc_func(timein, HRR_pred, NUMFIRE, 'pred_signal_xc')
@@ -189,6 +204,9 @@ if (TESTING == 1):
         SIGNAL_diff = SIGNAL_pred[i,:] - SIGNAL_exp[i,:]
         max_SIGNAL_diff = max(abs(SIGNAL_diff))
         max_fire = np.argmax(abs(SIGNAL_diff))
+
+        if (max_fire >= NUMFIRE):
+          max_fire = 0
 
         if max_SIGNAL_diff < error_least[i]:
           error_least[i] = max_SIGNAL_diff
@@ -215,6 +233,9 @@ if (TESTING == 1):
           if (error_least[i] > ERROR_MAX):
             num_fail += 1
           break
+
+        # print the output
+        np.savetxt('HRR1.out', HRR_pred, delimiter=',', fmt='%f')
         # end while loop
 
       print("iterations required = " + str(iteration))
@@ -256,4 +277,10 @@ if (PLOTTING == 1):
     ax.set_xlabel('Time [s]')
     ax.set_ylabel('HRR [kW]')
     fig1.tight_layout()
-    plt.show()
+  else:
+    fig2, axall = plt.subplots(NUMFIRE, sharex=True)
+    for i in range(0, NUMFIRE):
+      axall[i].plot(timein, hrrin[:,i])
+      axall[i].plot(timein, HRR_pred[:,i])
+    fig2.tight_layout()
+  plt.show()
