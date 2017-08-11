@@ -2,14 +2,11 @@
 *.pyc
 *.exe
 */a.out
-RTFM/update.csv
-RTFM/new_data.txt
-Sensors/temp/*
-InverseModel/out/*
 *.o
 Sensors/data/*
 Sensors/sim_sensor/*
-EventDetection/output/*
+*/out/*
 MainRTFM/sen*
 MainRTFM/sim*
-RTFM/*
+InverseModel/sen*
+

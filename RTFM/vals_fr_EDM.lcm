@@ -1,6 +1,0 @@
-package frEDM;
-
-struct edmOUT
-{
-  double	tempSlope;
-}

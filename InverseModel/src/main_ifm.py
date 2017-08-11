@@ -59,7 +59,7 @@ def my_format(value):
 
 #GLOBAL VALUES FOR CONFIG
 NUMCOMP = 4
-NUMFIRE = 2    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
+NUMFIRE = 1    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
 NUMDATA = 1
 NUMSIGNAL = NUMDATA * NUMCOMP
 
@@ -146,7 +146,7 @@ try:
 
 if (TESTING == 1):
   if (TESTING > 0):
-    for i in range(1, numStep):
+    for i in range(1, 10):
       print("Current Time = %f" % timein[i])
 
       HRR_pred[i,:] = HRR_temp
