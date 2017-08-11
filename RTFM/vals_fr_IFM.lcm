@@ -1,6 +1,0 @@
-package frIFM;
-
-struct ifmOUT
-{
-  double	currHRR;
-}

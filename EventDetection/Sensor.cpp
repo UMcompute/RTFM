@@ -73,6 +73,7 @@ double Sensor::getFEDvals(int id)
   }
 }
 
+
 int Sensor::checkFlashover()
 {
   // definitions of warning:
@@ -90,31 +91,33 @@ int Sensor::checkFlashover()
   {
     warning += 1;
   }
+  //printf("  flashover warning = %d \n", warning);
   return warning;
 }
 
 
+// Tested 08-10-17 at 11:45 with SFPE Handbook Table 63.22
 int Sensor::checkSmokeTox()
 {
 
   /* *** CHECK UNITS OF ALL DATA USED IN THIS FUNCTION! ***
 
-    CO [ppm]
-    HCN [ppm]
-    CO2 [%]
     O2 [%]
+    CO [ppm]
+    CO2 [%]
+    HCN [ppm]
 
     For example, in the case of [%], use the "number":
-
-    (20.9 - [O2])
-    if [O2] = 6.5%, then use "6.5" in the equation:
-    (20.9 - 6.5)
+      if equation contains something like this: (20.9 - [O2])
+      then say [O2] = 16.5%, 
+      then use "16.5" directly in the equation: (20.9 - 16.5)
 
   */
 
   int warning = 0;
+  int use_fds = 0;
   double FED_CO, FED_CN, FED_NOx, FLD_irr, HV_CO2, FED_O2;
-  double O2_limit = 7.0; // [%]
+  double O2_limit = 7.0; // [%] (Alarie 2002)
   double FED_limit = 1.0;
 
   // update time step
@@ -129,7 +132,18 @@ int Sensor::checkSmokeTox()
   NO2 = 0.0;
   NO = 0.0;
   CN = sensorData[iHCN] - NO2 - NO;
-  FED_CN = ((1.0 / 220.0) * exp(CN / 43.0) - 0.0045) * dt;
+
+  // use either the FDS or SFPE equation for [CN] exposure-dose
+  if (use_fds == 1)
+  {
+    // FDS Eq. 17.20
+    FED_CN = ((1.0 / 220.0) * exp(CN / 43.0) - 0.0045) * dt;
+  }
+  else
+  {
+    // SFPE Eq. 63.24
+    FED_CN = ( pow(CN, 2.36) / 1200000.0 ) * dt;
+  }
 
   // FED for any [NOx] present
   // **note: currently not measuring any [NOx]
@@ -143,9 +157,17 @@ int Sensor::checkSmokeTox()
   double O2 = sensorData[iO2];  // [%]
   FED_O2 = dt / exp( 8.13 - 0.54*(20.9 - O2) );
 
-
   // Hyperventilation Factor
-  HV_CO2 = (1.0 / 7.1) * exp(0.1903 * sensorData[iCO2] + 2.0004);
+  if (use_fds == 1)
+  {
+    // FDS
+    HV_CO2 = (1.0 / 7.1) * exp(0.1903 * sensorData[iCO2] + 2.0004);
+  }
+  else
+  {
+    // SFPE
+    HV_CO2 = exp(sensorData[iCO2] / 5.0);
+  }
 
   // update the smoke toxicity FED sum 
   sumFEDsmoke += ((FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2);
@@ -159,18 +181,29 @@ int Sensor::checkSmokeTox()
   {
     warning += 1;
   }
+  /*
+  // print output for unit test
+  printf("  FED_CO = %6.2f\n", FED_CO);
+  printf("  FED_CN = %6.2f\n", FED_CN);
+  printf("  FED_O2 = %6.2f\n", FED_O2);
+  printf("  HV_CO2 = %6.2f\n", HV_CO2);
+  printf("  FEDtot = %6.2f\n", sumFEDsmoke);
+  */
   return warning;
 }
 
 
+// Tested 08-10-17 at 09:00 with SFPE Handbook Table 63.22
 int Sensor::checkBurnThreat()
 {
+  // warning initialization
   int warning = 0;
+  double FED_limit = 1.0;
 
   // dt update
   double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
 
-  // convection 
+  // convection contribution
   double temp = sensorData[itemp];
   double tc1, tc2, FED_c1, FED_c2;
   double A1, B1, A2, B2;
@@ -183,17 +216,17 @@ int Sensor::checkBurnThreat()
   FED_c1 = dt / tc1;
   FED_c2 = dt / tc2;
 
-  // radiation
+  // radiation contribution
   double flux = sensorData[iflux];
   double tr1, tr2, FED_r1, FED_r2;
   double r1, r2;
   double minFlux = 2.5;
   r1 = 1.33;
-  r2 = 12.67;
+  r2 = 16.7;
   if (flux < minFlux)
   {
-    tr1 = 30.0;
-    tr2 = 30.0;
+    tr1 = 0.0;
+    tr2 = 0.0;
     FED_r1 = 0.0;
     FED_r2 = 0.0;
   }
@@ -209,21 +242,33 @@ int Sensor::checkBurnThreat()
   sumFEDheat1 += (FED_c1 + FED_r1);
   sumFEDheat2 += (FED_c2 + FED_r2);
 
-  if (sumFEDheat1 >= 1.0)
+  // warning check
+  if (sumFEDheat1 >= FED_limit)
   {
     warning += 1;
   }
-  if (sumFEDheat2 >= 1.0)
+  if (sumFEDheat2 >= FED_limit)
   {
     warning += 1;
   }
-
-  //printf("warning = %d and dt = %f \n", warning, dt);
-
+  /*
+  // print output for unit test
+  printf("FED for pain: \n");
+  printf("  convection = %8.2f\n", FED_c1);
+  printf("  raditation = %8.2f\n", FED_r1);
+  printf("  FEDpain(t) = %8.2f\n", FED_c1 + FED_r1);
+  printf("  FEDsum(t)  = %8.2f\n", sumFEDheat1);
+  printf("FED for full-thickness burns: \n");
+  printf("  convection = %8.2f\n", FED_c2);
+  printf("  raditation = %8.2f\n", FED_r2); 
+  printf("  FEDfull(t) = %8.2f\n", FED_c2 + FED_r2);
+  printf("  FEDsum(t)  = %8.2f\n", sumFEDheat2);
+  */
   return warning;
 }
 
 
+// Tested 08-10-17 at 16:20 with SFPE Handbook Table 63.22
 int Sensor::checkFireSpread()
 {
   // THRESHOLDS AND RATES-OF-INCREASE
@@ -260,13 +305,13 @@ int Sensor::checkFireSpread()
   }
 
   // check carbon dioxide
-  if (sensorData[iCO2] > maxCO2percent)
+  if (sensorData[iCO2] >= maxCO2percent)
   {
     warning += 1;
   }
 
   // check oxygen depletion
-  if (sensorData[iO2] < minO2percent)
+  if (sensorData[iO2] <= minO2percent)
   {
     warning += 1;
   }
@@ -279,11 +324,12 @@ int Sensor::checkFireSpread()
   if (CO2ppm > 0.0)
   {
     gasRatio = sensorData[iCO] / CO2ppm;
-    if (gasRatio > maxRatioCOtoCO2)
+    if (gasRatio >= maxRatioCOtoCO2)
     {
       warning += 1;
     }
   }
 
+  //printf("  fire spread warning = %d \n", warning);
   return warning;
 }

@@ -1,8 +1,0 @@
-package toEDM;
-
-struct edm
-{
-  double	time;
-  double	temp;
-  double	flux;
-}

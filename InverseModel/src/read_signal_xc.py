@@ -21,7 +21,7 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   #If use CO2 concentration, use 1, else, 0
   #If use Mass flow rate, use 1, else, 0
   #If use upper layer volume, use 1, else, 0
-  usedsignal = [1, 1, 0, 0, 0]
+  usedsignal = [1, 0, 0, 0, 0]
 
   # (replaces magic number)
   HT_DIMENSION = 2.45
@@ -32,7 +32,7 @@ def read_signal_xc_func(numcomp=None, inFile=None):
   #if other fire signal is used, this part has to change
   #numsignal = usedsignal[0] * numcomp + usedsignal[1] * numcomp + usedsignal[2] * numcomp 
   
-  #For each compartment, it'll have one upper layer temperature, O2 concentration, CO2 concentration
+  #For each compartment, it'll have one upper layer temperature, O2 concentration, and CO2 concentration
   numsignal = 0
   for i in range(0, len(usedsignal)):
     numsignal += usedsignal[i] * numcomp
