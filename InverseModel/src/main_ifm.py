@@ -59,13 +59,13 @@ def my_format(value):
 
 #GLOBAL VALUES FOR CONFIG
 NUMCOMP = 4
-NUMFIRE = 1    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
+NUMFIRE = 2    #NUMFIRE must be <= NUMCOMP (fire1 in comp1, fire2 in comp2, etc)
 NUMDATA = 1
 NUMSIGNAL = NUMDATA * NUMCOMP
 
 #DEFINE PATHS TO INPUT
-#dataFile = "../inp/data4.txt"
-dataFile = "../inp/time_HRR_2.txt"
+dataFile = "../inp/data4.txt"
+#dataFile = "../inp/time_HRR_2.txt"
 
 # MY CONTROL PARAMETERS
 TESTING                 = 1
@@ -73,11 +73,11 @@ POLL_TIME               = 0.5
 PLOTTING                = 1
 
 #CONSTANTS (in all CAPS)
-NUM_FAILS_ALLOWED       = 20;
-ITER_MAX                = 10;
-ERROR_TOL               = 0.20;
-ERROR_MAX               = 1.00;
-HRR_LOW                 = 5000.0;
+NUM_FAILS_ALLOWED       = 20
+ITER_MAX                = 10
+ERROR_TOL               = 0.20
+ERROR_MAX               = 1.00
+HRR_LOW                 = 10.0;
 HRR_MAX                 = 6.0 * (10.0**5);
 
 #SCRIPT TO RUN WHOLE CODE
@@ -116,13 +116,12 @@ num_fail = 0
 total_iteration = 0
 error_low_tol = 0.01
 error_extra_tol = 0.0
-k_tol = 10.0 ** -6
 
 # INITIALIZE ARRAYS
-HRR_pred = 1000.0 * np.ones((numStep, NUMFIRE))
+HRR_pred = 100.0 * np.ones((numStep, NUMFIRE))
 error_least = 100.0 * np.ones(numStep)
 SIGNAL_pred = 1.0 * np.ones((numStep, NUMSIGNAL))
-HRR_temp = 1000.0 * np.ones((1, NUMFIRE))
+HRR_temp = 100.0 * np.ones((1, NUMFIRE))
 
 #MAIN TIME LOOP: get sensor data using select function and waiting
 
@@ -147,7 +146,7 @@ try:
 
 if (TESTING == 1):
   if (TESTING > 0):
-    for i in range(1, 10):
+    for i in range(1, numStep):
       print("Current Time = %f" % timein[i])
 
       HRR_pred[i,:] = HRR_temp
@@ -180,11 +179,8 @@ if (TESTING == 1):
         SIGNAL_turb = np.delete(SIGNAL_turb, [0], axis=1)
 
         k = (SIGNAL_turb[i, max_fire] - SIGNAL_pred[i, max_fire]) / HRR_delta   
-        if (k < k_tol):
-          HRR_new = HRR_pred[i, max_fire]
-        else:
-          # Paul: we should rename "k" with something more descriptive
-          HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor    
+        # Paul: we should rename "k" with something more descriptive
+        HRR_new = HRR_pred[i, max_fire] - SIGNAL_diff[max_fire] / k * factor    
         
         # ***NOTE: k could be zero! Need to handle this error
 

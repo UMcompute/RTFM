@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <fstream>
+#include <string>
 
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
@@ -51,7 +52,8 @@ int main(int argc, char** argv) {
   printf("starting EDM main...\n");
 
   // input
-  const int MAX_MSG_LIMIT = 30;
+  const int MAX_MSG_LIMIT = 10000;
+  const double TIME_MAX = 599.00;
 
   //===========================================================================
 
@@ -66,21 +68,22 @@ int main(int argc, char** argv) {
   int smokeToxicity[NUM_ROOMS];
   int fireSpread[NUM_ROOMS];
 
-  // testing output
-  int testing = 0;
+  // preparation for output
+  int print_output = 1;
   double t, T, O2, CO, CO2, HCN, Q; 
-  std::ofstream out1;
-  std::ofstream out2;
-  std::ofstream out3;
-  std::ofstream out4;
-  std::ofstream out5;
-  if (testing == 1)
+  double FED_smoke, FED_heat_pain, FED_heat_fatal;
+  std::ofstream outFile[NUM_ROOMS];
+  std::string file_prefix = "edm_output_";
+  std::string file_suffix = ".csv";
+  std::string file_name;
+  if (print_output == 1)
   {
-    out1.open("time-spread.txt");
-    out2.open("time-flashover.txt");
-    out3.open("time-burn-FEDs.txt");
-    out4.open("time-smoke-FED.txt");
-    out5.open("t-T-O2-CO-CO2-HCN-Q.txt");
+    for (i = 0; i < NUM_ROOMS; i++)
+    {
+      file_name = file_prefix + std::to_string(i) + file_suffix;
+      std::cout << file_name << "\n";
+      outFile[i].open(file_name.c_str());
+    }
   }
 
   // construct LCM and check if it is good!
@@ -99,7 +102,8 @@ int main(int argc, char** argv) {
   }
 
   // MAIN event loop
-  while (numMsgRecv < MAX_MSG_LIMIT)
+  t = 0.0;
+  while (t < TIME_MAX)
   {
     // setup the LCM file descriptor for waiting
     int lcm_fd = lcm.getFileno();
@@ -153,9 +157,10 @@ int main(int argc, char** argv) {
         // TIME UPDATE
         sensorArray[i].updateTime();
 
-        // PRINT TESTING OUTPUT
-        if (i == 0 && testing == 1)
+        // PRINT OUTPUT
+        if (print_output == 1)
         {
+          // raw data
           t = currentData.getTime();
           T = currentData.getTemp(i);
           O2 = currentData.getO2(i);
@@ -163,24 +168,30 @@ int main(int argc, char** argv) {
           CO2 = currentData.getCO2(i);
           HCN = currentData.getHCN(i);
           Q = currentData.getFlux(i);
-          out1 << t << "," << fireSpread[i] << "\n";
-          out2 << t << ", " << flashover[i] << "\n";
-          out3 << t << ", " << burnThreat[i] << ", " << sensorArray[i].getFEDvals(1) << ", " << sensorArray[i].getFEDvals(2) << "\n";
-          out4 << t << ", " << smokeToxicity[i] << ", " << sensorArray[i].getFEDvals(0) << "\n";
-          out5 << t << "," << T << "," << O2 << "," << CO << "," << CO2 << "," << HCN << "," << Q << "\n";
+
+          // output
+          FED_smoke = sensorArray[i].getFEDvals(0);
+          FED_heat_pain = sensorArray[i].getFEDvals(1);
+          FED_heat_fatal = sensorArray[i].getFEDvals(2);
+
+          // write to specific room file 
+          outFile[i] << t << "," << T << "," << O2 << ","; 
+          outFile[i] << CO << "," << CO2 << "," << HCN << "," << Q << ",";
+          outFile[i] << FED_smoke << "," << FED_heat_pain << "," << FED_heat_fatal << ",";
+          outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
+          outFile[i] << fireSpread[i] << "," << flashover[i] << "\n";
         }
       }
     }
   }
 
   // close the testing files
-  if (testing == 1)
+  if (print_output == 1)
   {
-    out1.close();
-    out2.close();
-    out3.close();
-    out4.close();
-    out5.close();
+    for (i = 0; i < NUM_ROOMS; i++)
+    {
+      outFile[i].close();
+    }
   }
 
   printf("exit EDM main\n");

@@ -24,7 +24,7 @@
 
 // LCM include directives
 #include <lcm/lcm-cpp.hpp>
-#include "sensor/sensor_data.hpp"
+#include "sim_sensor/sensor_data.hpp"
 
 // main sensor program
 int main(int argc, char* argv[])
@@ -34,11 +34,19 @@ int main(int argc, char* argv[])
   const int NUM_ROOMS = 4;    // number of rooms in simulation
   const int NUM_DATA = 6;     // number of columns in data files
   double nominalFreq = 1.00;  // [Hz]
-  double noise = 0.01;        // [%]
+  double noise = 0.10;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
   int testing = 0;            // use for testing room 0 only for now
+
+  // unit conversions (if needed)
+  double convTemp = 1.0;
+  double convO2 = 100.0;
+  double convCO = pow(10.0, 6);
+  double convCO2 = 100.0;
+  double convHCN = pow(10.0, 6);
+  double convFlux = 1.0;
 
   // ================================================================
 
@@ -66,6 +74,9 @@ int main(int argc, char* argv[])
   int max_time = (int)max_per;
   int rand_range = max_time - min_time;
 
+  // wait to start
+  //    --> we can add an LCM command to start here
+
   // distribute one room to each thread
   #pragma omp parallel private(my_row)
   {
@@ -85,7 +96,7 @@ int main(int argc, char* argv[])
     }
 
     // declare unique LCM data packet and channel name
-    sensor::sensor_data my_data;
+    sim_sensor::sensor_data my_data;
     std::string my_chan = channel_pre + std::to_string(pid);
 
     // open "my" data file
@@ -122,12 +133,12 @@ int main(int argc, char* argv[])
 
           // package the data from the file
           my_data.roomNum = pid;
-          my_data.temperature = my_row[0];
-          my_data.O2conc = my_row[1];
-          my_data.COconc = my_row[2];
-          my_data.CO2conc = my_row[3];
-          my_data.HCNconc = my_row[4];
-          my_data.heatFlux = my_row[5];
+          my_data.temperature = my_row[0] * convTemp;
+          my_data.O2conc = my_row[1] * convO2;
+          my_data.COconc = my_row[2] * convCO;
+          my_data.CO2conc = my_row[3] * convCO2;
+          my_data.HCNconc = my_row[4] * convHCN;
+          my_data.heatFlux = my_row[5] * convFlux;
 
           // compute random noise for delay time
           rand_int = rand()%rand_range + min_time;
@@ -139,7 +150,7 @@ int main(int argc, char* argv[])
  
           //=====================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
-          usleep( rand_val * pow(10.0, 6.0) );
+          usleep( rand_val * pow(10.0, 5.0) );
           std::chrono::time_point<std::chrono::system_clock> tend;
           tend = std::chrono::system_clock::now();
           std::time_t end_time = std::chrono::system_clock::to_time_t(tend);

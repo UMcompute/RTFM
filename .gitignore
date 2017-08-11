@@ -7,3 +7,9 @@ RTFM/new_data.txt
 Sensors/temp/*
 InverseModel/out/*
 *.o
+Sensors/data/*
+Sensors/sim_sensor/*
+EventDetection/output/*
+MainRTFM/sen*
+MainRTFM/sim*
+RTFM/*
