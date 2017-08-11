@@ -9,4 +9,5 @@ Sensors/sim_sensor/*
 MainRTFM/sen*
 MainRTFM/sim*
 InverseModel/sen*
+EventDetection/sen*
 
