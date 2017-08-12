@@ -2,6 +2,7 @@
 import lcm
 import select
 import time
+import subprocess
 
 # LCM data structures
 from sim_sensor import sensor_data
@@ -19,16 +20,19 @@ from sent_by_edm import data_from_edm
 global NUM_ROOMS
 NUM_ROOMS = 4
 
-
+# input: desired time step to send to sub-models
 ifm_time_step = 10.0
 edm_time_step = 2.0
 
+# sensor simulation
+execSensor = "exec /home/pbeata/Desktop/fire_ideas/Sensors/run_sensors.sh"
 
 # handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
   msg = sensor_data.decode(data)
+  time_stamp = time.strftime("%c")
   room = msg.roomNum
-  print("Received msg from room %d on channel \"%s\" at time %f" % (room, channel, msg.sendTime))
+  print("MAIN recv %.4f from %d at %s" % (msg.sendTime, room, time_stamp))
   
   # specifically assign new data values based on LCM struct
   sensorList[room].set_value(0, msg.sendTime)
@@ -88,8 +92,6 @@ class TimeManager:
     self.sendFlag = 0
 
   def check_time(self, currTime, numRooms):
-    # TODO: update this time checking scheme 
-    #   (EDM missed one and failed to send from then on)
     if ((self.t1 < currTime) and (currTime < self.t2)):
       self.count += 1
     if ((self.count == numRooms) or (currTime > self.t2)):
@@ -113,7 +115,6 @@ for i in range(0, NUM_ROOMS):
   lc.subscribe(channel, msg_handler)
   sensorList.append(Sensor(i))
 
-
 # initialize the IFM time step manager
 ifm_manager = TimeManager(ifm_time_step)
 ifm_data = data_to_ifm()
@@ -122,7 +123,6 @@ for i in range(0, NUM_ROOMS):
   ifm_data.temperature.append(0.0)
   ifm_data.oxygen_conc.append(0.0)
 lc.subscribe("IFM_OUT_CHANNEL", model_handler)
-
 
 # initialize the EDM time step manager
 edm_manager = TimeManager(edm_time_step)
@@ -136,47 +136,66 @@ for i in range(0, NUM_ROOMS):
   edm_data.HCN_conc.append(0.0)
   edm_data.heat_flux.append(0.0)
 
-# MAIN LOOP
+# initialize main loop parameters
+timeout = 0.01  # amount of time to wait, in seconds
+checkPoll = None
 msg_time = []
+
+# launch sensor simulator
+#startSensors = raw_input('Are you ready to launch the sensors? (Enter 0 or 1) ')
+startSensors = "1"
+sensorStartTime = []
+if (startSensors == "1"):
+  sensorStartTime.append(time.time())
+  sensorProc = subprocess.Popen(execSensor, shell=True)
+  sensorStartTime.append(time.time())
+else:
+  print("***Sensor simulation was not started***")
+
+# MAIN LOOP
 start_time = time.time()
 msg_time.append(start_time)
-try:
-  timeout = 0.01  # amount of time to wait, in seconds
-  while True:
-    rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
-    if rfds:
-      lc.handle()
-      time_diff = time.time() - start_time
-      msg_time.append(time_diff)
-      # =======================================================================
-      if (ifm_manager.sendFlag == 1):
-        print("READY TO SEND DATA TO IFM")
-        ifm_data.time_stamp = ifm_manager.sim_time - ifm_manager.sim_dt
-        for i in range(0, NUM_ROOMS):
-          # index 1 is the temperature in the Sensor class object
-          ifm_data.temperature[i] = sensorList[i].get_value(1)
-          # index 2 is the oxygen concentration in the Sensor class object
-          ifm_data.oxygen_conc[i] = sensorList[i].get_value(2)
-        # send complete message to IFM main loop
-        lc.publish("IFM_CHANNEL", ifm_data.encode())
-      # =======================================================================
-      if (edm_manager.sendFlag == 1):
-        print("READY TO SEND DATA TO EDM")
-        edm_data.time_stamp = edm_manager.sim_time - edm_manager.sim_dt
-        for i in range(0, NUM_ROOMS):
-          # index 1 is the temperature in the Sensor class object
-          edm_data.temperature[i] = sensorList[i].get_value(1)
-          # index 2 is the oxygen concentration in the Sensor class object
-          edm_data.O2_conc[i] = sensorList[i].get_value(2)
-          # get the rest of the data values for the current package
-          edm_data.CO_conc[i] = sensorList[i].get_value(3)
-          edm_data.CO2_conc[i] = sensorList[i].get_value(4)
-          edm_data.HCN_conc[i] = sensorList[i].get_value(5)
-          edm_data.heat_flux[i] = sensorList[i].get_value(6)
-        # send complete message to EDM main loop
-        lc.publish("EDM_CHANNEL", edm_data.encode())
-      # =======================================================================
-    else:
-      loopStatus = 1
-except KeyboardInterrupt:
-  pass
+while ( checkPoll == None ):
+  rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
+  if rfds:
+    lc.handle()
+    time_diff = time.time() - start_time
+    msg_time.append(time_diff)
+    # =======================================================================
+    if (ifm_manager.sendFlag == 1):
+      #print("\n  ==> READY TO SEND DATA TO IFM ==> ")
+      ifm_data.time_stamp = ifm_manager.sim_time - ifm_manager.sim_dt
+      for i in range(0, NUM_ROOMS):
+        # index 1 is the temperature in the Sensor class object
+        ifm_data.temperature[i] = sensorList[i].get_value(1)
+        # index 2 is the oxygen concentration in the Sensor class object
+        ifm_data.oxygen_conc[i] = sensorList[i].get_value(2)
+      # send complete message to IFM main loop
+      lc.publish("IFM_CHANNEL", ifm_data.encode())
+    # =======================================================================
+    if (edm_manager.sendFlag == 1):
+      #print("\n  ~~> READY TO SEND DATA TO EDM ~~> ")
+      edm_data.time_stamp = edm_manager.sim_time - edm_manager.sim_dt
+      for i in range(0, NUM_ROOMS):
+        # index 1 is the temperature in the Sensor class object
+        edm_data.temperature[i] = sensorList[i].get_value(1)
+        # index 2 is the oxygen concentration in the Sensor class object
+        edm_data.O2_conc[i] = sensorList[i].get_value(2)
+        # get the rest of the data values for the current package
+        edm_data.CO_conc[i] = sensorList[i].get_value(3)
+        edm_data.CO2_conc[i] = sensorList[i].get_value(4)
+        edm_data.HCN_conc[i] = sensorList[i].get_value(5)
+        edm_data.heat_flux[i] = sensorList[i].get_value(6)
+      # send complete message to EDM main loop
+      lc.publish("EDM_CHANNEL", edm_data.encode())
+    # =======================================================================
+  else:
+    checkPoll = sensorProc.poll()
+
+# print the message time stamps to a file
+fw = open("msg_recv_time.out", "w")
+fw.write("%s \n" % sensorStartTime[0])
+fw.write("%s \n" % sensorStartTime[1])
+for msg in msg_time:
+  fw.write("%s \n" % msg)
+fw.close()

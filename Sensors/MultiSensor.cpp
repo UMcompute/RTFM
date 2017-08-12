@@ -77,6 +77,9 @@ int main(int argc, char* argv[])
   // wait to start
   //    --> we can add an LCM command to start here
 
+  // official start time
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+
   // distribute one room to each thread
   #pragma omp parallel private(my_row)
   {
@@ -109,6 +112,7 @@ int main(int argc, char* argv[])
     std::ifstream if_file(my_file.c_str());
 
     // read in data from file and publish to LCM network
+    std::chrono::steady_clock::time_point current;
     std::string my_line;
     int col = 0;
     double readValue;
@@ -148,15 +152,23 @@ int main(int argc, char* argv[])
           my_data.sendTime = my_time;
           my_time += rand_val;
  
-          //=====================================================
+          //===================================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
           usleep( rand_val * pow(10.0, 5.0) );
           std::chrono::time_point<std::chrono::system_clock> tend;
           tend = std::chrono::system_clock::now();
           std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
-          std::cout << "SENSOR " << pid << " send time at " << std::ctime(&end_time) <<"\n";
+          current = std::chrono::steady_clock::now();
+
+          std::cout << pid << " current time = ";
+          std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(current - start).count();
+          std::cout << " ms \n";
+
+          //printf("SENSOR %d sent %.4f to MAIN at %s \n", pid, my_time, std::ctime(&end_time));
+          //std::cout << "SENSOR " << pid << " sent " << my_time;
+          //std::cout << " to MAIN at " << std::ctime(&end_time) <<"\n";
           lcm.publish(my_chan, &my_data);
-          //=====================================================
+          //===================================================================
         }
       }
     }

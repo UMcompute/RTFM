@@ -1,5 +1,16 @@
 #!/bin/bash
-lcm-gen -x ../Communication/sim_sensor.lcm
+
+BASEDIR="/home/pbeata/Desktop/fire_ideas"
+
+SENSDIR="$BASEDIR/Sensors"
+COMMDIR="$BASEDIR/Communication"
+LCMFILE="sim_sensor.lcm"
+
+cd $SENSDIR
+LCMPATH="$COMMDIR/$LCMFILE"
+lcm-gen -x $LCMPATH
+
 export OMP_NUM_THREADS=4
-g++ MultiSensor.cpp -fopenmp -llcm -std=c++11
-./a.out
+g++ -O3 $SENSDIR/MultiSensor.cpp -o $SENSDIR/MultiSensor.exe -fopenmp -llcm -std=c++11
+
+$SENSDIR/MultiSensor.exe

@@ -11,3 +11,4 @@ MainRTFM/sen*
 MainRTFM/sim*
 InverseModel/sen*
 EventDetection/sen*
+*.out
