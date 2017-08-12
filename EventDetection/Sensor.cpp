@@ -6,6 +6,7 @@
 
 Sensor::Sensor()
 {
+  // initialize sensor data with zeros
   int i;
   for (i = 0; i < NUM_DATA; i++)
   {
@@ -21,6 +22,7 @@ Sensor::Sensor()
   iHCN    = 5;
   iflux   = 6;
 
+  // initial values of computed hazards
   lastTime = 0.0;
   lastTemp = 20.0;
   sumFEDheat1 = 0.0;
@@ -99,9 +101,7 @@ int Sensor::checkFlashover()
 // Tested 08-10-17 at 11:45 with SFPE Handbook Table 63.22
 int Sensor::checkSmokeTox()
 {
-
   /* *** CHECK UNITS OF ALL DATA USED IN THIS FUNCTION! ***
-
     O2 [%]
     CO [ppm]
     CO2 [%]
@@ -111,9 +111,7 @@ int Sensor::checkSmokeTox()
       if equation contains something like this: (20.9 - [O2])
       then say [O2] = 16.5%, 
       then use "16.5" directly in the equation: (20.9 - 16.5)
-
   */
-
   int warning = 0;
   int use_fds = 0;
   double FED_CO, FED_CN, FED_NOx, FLD_irr, HV_CO2, FED_O2;
@@ -271,10 +269,12 @@ int Sensor::checkBurnThreat()
 // Tested 08-10-17 at 16:20 with SFPE Handbook Table 63.22
 int Sensor::checkFireSpread()
 {
+  int method = 2;
+
   // THRESHOLDS AND RATES-OF-INCREASE
   double maxTemp = 57.0;            // [C]
   double maxTempRate = 7.0;         // [C/min]
-  double maxCO = 25.0;              // [ppm]  ==> (10-40), 50, and 25 suggested ***
+  double maxCO = 40.0;              // [ppm]  ==> (10-40), 50, and 25 suggested ***
   double maxCO2percent = 1.5;       // [%]
   double minO2percent = 17.0;       // [%]
   double maxRatioCOtoCO2 = 0.01;    // [unitless]
@@ -285,51 +285,89 @@ int Sensor::checkFireSpread()
   // dt update
   double dt = (sensorData[itime] - lastTime) / 60.0;  // converted [sec] to [min]
 
-  // check temperature
-  if (sensorData[itemp] >= maxTemp)
+  // OPTION 1: ORIGINAL APPROACH
+  if (method == 1)
   {
-    warning += 1;
+    // check temperature
+    if (sensorData[itemp] >= maxTemp)
+    {
+      warning += 1;
+    }
+
+    // compute the temperature rate using member function
+    tempRate = (sensorData[itemp] - lastTemp) / dt;
+    if (tempRate >= maxTempRate)
+    {
+      warning += 1;
+    }
+
+    // check carbon monoxide
+    if (sensorData[iCO] >= maxCO)
+    {
+      warning += 1;
+    }
+
+    // check carbon dioxide
+    if (sensorData[iCO2] >= maxCO2percent)
+    {
+      warning += 1;
+    }
+
+    // check oxygen depletion
+    if (sensorData[iO2] <= minO2percent)
+    {
+      warning += 1;
+    }
+
+    // check ratio of CO to CO2
+    // get CO2 as ppm first
+    // ==>  conversion: 1ppm = 0.0001% gas
+    double CO2ppm = sensorData[iCO2] * pow(10.0, 4);
+    double gasRatio = 0.0;
+    if (CO2ppm > 0.0)
+    {
+      gasRatio = sensorData[iCO] / CO2ppm;
+      if (gasRatio >= maxRatioCOtoCO2)
+      {
+        warning += 1;
+      }
+    }
   }
 
-  // compute the temperature rate using member function
-  tempRate = (sensorData[itemp] - lastTemp) / dt;
-  if (tempRate >= maxTempRate)
+  // OPTION 2: COMBINE RELATED CRITERIA
+  if (method == 2)
   {
-    warning += 1;
-  }
+    // check temperature and temperature rate of increase
+    tempRate = (sensorData[itemp] - lastTemp) / dt;
+    //if (sensorData[itemp] >= maxTemp && tempRate >= maxTempRate)
+    if (sensorData[itemp] >= maxTemp || tempRate >= maxTempRate)
+    {
+      warning += 1;
+    }
 
-  // check carbon monoxide
-  if (sensorData[iCO] >= maxCO)
-  {
-    warning += 1;
-  }
+    // check carbon monoxide, carbon dioxide, and ratio of them
+    // get CO2 as ppm first
+    // ==>  conversion: 1ppm = 0.0001% gas
+    double CO2ppm = sensorData[iCO2] * pow(10.0, 4);
+    double gasRatio = 0.0;
+    if (CO2ppm > 0.0)
+    {
+      gasRatio = sensorData[iCO] / CO2ppm;
+    }
+    //if (sensorData[iCO] >= maxCO && sensorData[iCO2] >= maxCO2percent && gasRatio >= maxRatioCOtoCO2)
+    if (sensorData[iCO] >= maxCO || gasRatio >= maxRatioCOtoCO2)
+    {
+      warning += 1;
+    }
 
-  // check carbon dioxide
-  if (sensorData[iCO2] >= maxCO2percent)
-  {
-    warning += 1;
-  }
-
-  // check oxygen depletion
-  if (sensorData[iO2] <= minO2percent)
-  {
-    warning += 1;
-  }
-
-  // check ratio of CO to CO2
-  // get CO2 as ppm first
-  // ==>  conversion: 1ppm = 0.0001% gas
-  double CO2ppm = sensorData[iCO2] * pow(10.0, 4);
-  double gasRatio = 0.0;
-  if (CO2ppm > 0.0)
-  {
-    gasRatio = sensorData[iCO] / CO2ppm;
-    if (gasRatio >= maxRatioCOtoCO2)
+    // check oxygen depletion
+    if (sensorData[iO2] <= minO2percent || sensorData[iCO2] >= maxCO2percent)
     {
       warning += 1;
     }
   }
 
-  //printf("  fire spread warning = %d \n", warning);
+  // impose a limit of 2 on the return
+  warning = std::min(warning, 2);
   return warning;
 }
