@@ -14,8 +14,8 @@ OutlineLevel,1
 ParentTask,0
 StartColor,-1
 FinishColor,-1
-StartTransparency,0.0000
-FinishTransparency,0.0000
+StartTransparency,0.000
+FinishTransparency,0.000
 AnimationPlaybackRate,-1
 ID,3
 ConstraintType,4
