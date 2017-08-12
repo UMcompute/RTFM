@@ -3,6 +3,7 @@
 *.exe
 */a.out
 *.o
+*.xml
 Sensors/data/*
 Sensors/sim_sensor/*
 */out/*
@@ -10,4 +11,3 @@ MainRTFM/sen*
 MainRTFM/sim*
 InverseModel/sen*
 EventDetection/sen*
-

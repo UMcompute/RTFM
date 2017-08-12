@@ -65,7 +65,6 @@ NUMSIGNAL = NUMDATA * NUMCOMP
 
 #DEFINE PATHS TO INPUT
 dataFile = "../inp/data4.txt"
-#dataFile = "../inp/time_HRR_2.txt"
 
 # MY CONTROL PARAMETERS
 TESTING                 = 1
@@ -77,8 +76,8 @@ NUM_FAILS_ALLOWED       = 20
 ITER_MAX                = 10
 ERROR_TOL               = 0.20
 ERROR_MAX               = 1.00
-HRR_LOW                 = 10.0;
-HRR_MAX                 = 6.0 * (10.0**5);
+HRR_LOW                 = 10.0
+HRR_MAX                 = 6.0 * (10.0**5)
 
 #SCRIPT TO RUN WHOLE CODE
 tic = time.time()
