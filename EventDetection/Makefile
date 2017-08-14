@@ -11,4 +11,4 @@ Sensor.o: Sensor.cpp Sensor.h
 	g++ -c Sensor.cpp -o Sensor.o
 
 clean:
-	rm -rf main_edm.exe *.o *~
+	rm -rf main_edm.exe *.o *~ a.out

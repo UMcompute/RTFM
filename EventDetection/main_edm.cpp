@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
   printf("starting EDM main...\n");
 
   // input
-  const int MAX_MSG_LIMIT = 10000;
   const double TIME_MAX = 599.00;
 
   //===========================================================================
@@ -63,10 +62,11 @@ int main(int argc, char** argv) {
   int numMsgRecv = 0;
 
   // warning arrays
-  int flashover[NUM_ROOMS];
+  //int flashover[NUM_ROOMS];
   int burnThreat[NUM_ROOMS];
   int smokeToxicity[NUM_ROOMS];
-  int fireSpread[NUM_ROOMS];
+  //int fireSpread[NUM_ROOMS];
+  int fireStatus[NUM_ROOMS];
 
   // preparation for output
   int print_output = 1;
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
         sensorArray[i].setData(6, currentData.getFlux(i));
 
         // FLASHOVER
-        flashover[i] = sensorArray[i].checkFlashover();
+        //flashover[i] = sensorArray[i].checkFlashover();
 
         // SMOKE TOXICITY
         smokeToxicity[i] = sensorArray[i].checkSmokeTox();
@@ -152,7 +152,10 @@ int main(int argc, char** argv) {
         burnThreat[i] = sensorArray[i].checkBurnThreat();
 
         // FIRE SPREAD
-        fireSpread[i] = sensorArray[i].checkFireSpread();
+        //fireSpread[i] = sensorArray[i].checkFireSpread();
+
+        // FIRE STATUS
+        fireStatus[i] = sensorArray[i].checkFireStatus();
 
         // TIME UPDATE
         sensorArray[i].updateTime();
@@ -179,7 +182,8 @@ int main(int argc, char** argv) {
           outFile[i] << CO << "," << CO2 << "," << HCN << "," << Q << ",";
           outFile[i] << FED_smoke << "," << FED_heat_pain << "," << FED_heat_fatal << ",";
           outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
-          outFile[i] << fireSpread[i] << "," << flashover[i] << "\n";
+          outFile[i] << fireStatus[i] << "\n";
+          //outFile[i] << fireSpread[i] << "," << flashover[i] << "\n";
         }
       }
     }

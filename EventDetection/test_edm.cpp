@@ -41,8 +41,7 @@ int main(int argc, char** argv)
 
   for (i = 0; i < N; i++)
   {
-    //printf("t = %f, T = %f, q = %f \n", time[i], temp[i], flux[i]);
-    printf("t = %f \n", time[i]);
+    printf("time = %f min \n", time[i]/60.0);
 
     for (j = 0; j < NUM_ROOMS; j++)
     {
@@ -55,24 +54,17 @@ int main(int argc, char** argv)
       sensorArray[j].setData(5, HCN[i]);
       sensorArray[j].setData(6, flux[i]);
 
+      // check all hazards
       burnThreat[j] = sensorArray[j].checkBurnThreat();
       smokeToxicity[j] = sensorArray[j].checkSmokeTox();
-
       fireSpread[j] = sensorArray[j].checkFireSpread();
       flashover[j] = sensorArray[j].checkFlashover();
-
-      /*
-      if (fireSpread[j] == 1)
-      {
-        flashover[j] = sensorArray[j].checkFlashover();
-      }
-      else
-      {
-        flashover[j] = 0
-      }
-      */
-      
       sensorArray[j].updateTime();
+
+      // print FED results
+      printf("  FED Smoke Tox  = %.2f \n", sensorArray[j].getFEDvals(0));
+      printf("  FED Heat Pain  = %.2f \n", sensorArray[j].getFEDvals(1));
+      printf("  FED Heat Fatal = %.2f \n", sensorArray[j].getFEDvals(2));
 
     }
 

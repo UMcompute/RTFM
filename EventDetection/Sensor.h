@@ -23,6 +23,7 @@ class Sensor
     double sumFEDheat1;
     double sumFEDheat2;
     double sumFEDsmoke;
+    int fireStatus;
     
   public:
     Sensor();
@@ -34,6 +35,7 @@ class Sensor
     int checkSmokeTox();
     int checkBurnThreat();
     int checkFireSpread();
+    int checkFireStatus();
     double getFEDvals(int id);
 };
 

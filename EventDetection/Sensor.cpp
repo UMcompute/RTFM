@@ -28,6 +28,7 @@ Sensor::Sensor()
   sumFEDheat1 = 0.0;
   sumFEDheat2 = 0.0;
   sumFEDsmoke = 0.0;
+  fireStatus = 0;
 
   std::cout << "new sensor created" << std::endl;
 }
@@ -370,4 +371,37 @@ int Sensor::checkFireSpread()
   // impose a limit of 2 on the return
   warning = std::min(warning, 2);
   return warning;
+}
+
+
+// NEW method for checking fire spread and flashover together
+int Sensor::checkFireStatus()
+{
+  // set limits for:
+  //    1. fire spread to compartment
+  //    2. flashover in compartment 
+  // *** Consider reducing flashover limits to 15-20 kW/m^2 and 500-600 C ***
+  double tempLimit1 = 57.0;
+  double fluxLimit1 = 0.6;
+  double tempLimit2 = 500.0;
+  double fluxLimit2 = 15.0;
+  int maxWarning = 2;
+  int warning = 0;
+
+  if (fireStatus < maxWarning)
+  {
+    double temperature = sensorData[itemp];
+    double heatFlux = sensorData[iflux];
+    if (temperature > tempLimit1 && heatFlux > fluxLimit1)
+    {
+      warning = 1;
+    }
+    if (temperature > tempLimit2 && heatFlux > fluxLimit2)
+    {
+      warning = 2;
+    }
+    fireStatus = std::max(fireStatus, warning);
+  }
+
+  return fireStatus;
 }

@@ -27,6 +27,10 @@ edm_time_step = 2.0
 # sensor simulation
 execSensor = "exec /home/pbeata/Desktop/fire_ideas/Sensors/run_sensors.sh"
 
+# event detection model
+execEDM = "exec /home/pbeata/Desktop/fire_ideas/EventDetection/run_edm.sh"
+
+
 # handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
   msg = sensor_data.decode(data)
@@ -141,9 +145,16 @@ timeout = 0.01  # amount of time to wait, in seconds
 checkPoll = None
 msg_time = []
 
+# launch event detection model
+startEDM = "1"
+if (startEDM == "1"):
+  edmProc = subprocess.Popen(execEDM, shell=True)
+else:
+  print("***Event detection model was not started***")
+
 # launch sensor simulator
-#startSensors = raw_input('Are you ready to launch the sensors? (Enter 0 or 1) ')
-startSensors = "1"
+startSensors = raw_input('Are you ready to launch the sensors? (Enter 0 or 1) ')
+#startSensors = "1"
 sensorStartTime = []
 if (startSensors == "1"):
   sensorStartTime.append(time.time())

@@ -27,6 +27,8 @@ FIRST DATA ROW 2:  0.0 0.0 .................
 '''
 
 devcFile = "./data/methane_four_room_devc.csv"
+devcFile = "./data/propane_two_fire_devc.csv"
+
 numRowsHeader = 2
 devcData = csvreadh_func(devcFile, numRowsHeader)
 numInc = np.shape(devcData)[0]
