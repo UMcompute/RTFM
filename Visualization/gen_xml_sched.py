@@ -1,28 +1,94 @@
 from lxml import etree
 import csv
+import numpy as np
+#import matplotlib.pyplot as plt
 
 #==============================================================================
 
 # input and setup
+NUM_ROOMS = 4
+maxTime = 600.0   # seconds
+
+edmBaseFile = "edm_output"
+baseFileName = "example"
 fileName = "example.xml"
 fullName = "C:\\Users\\pbeata\\" + fileName
 taskFile = "task_template.csv"
 
-#eventLabels = ['ambient', 'warning', 'threat', 'severe']
-eventLabels = ['Ambient_Initial', 'First_Warning', 'Major_Threat']
+eventLabels = ['warning', 'threat', 'severe']
 
 preamble = ["Name", "TimeFormat", "File", "FileFormat", \
 "StartDate", "EarlyStartDate", "LateStartDate", "FinishDate", \
 "EarlyFinishDate", "LateFinishDate", "CreationDate" ]
 
 preamleValues = ["Untitled", "s", fullName, "1", \
-"2017-08-01T08:29:35", "2017-07-29T13:42:51", "2017-07-29T13:42:51", "2017-08-01T16:55:02",\
-"2017-08-13T13:42:52", "2017-08-13T13:42:52", "2017-07-29T13:42:51" ]
+"2017-10-16T07:00:00", "2017-10-16T07:00:00", "2017-10-16T07:00:00", "2017-10-16T07:10:00", \
+"2017-10-16T07:10:00", "2017-10-16T07:10:00", "2017-10-01T07:00:00" ]
 
 firstLine = '<?xml version="1.0"?>\n'
 finalOption = "ExtendedAttributes"
 
 #==============================================================================
+#	READ EDM OUTPUT FROM CSV FILES
+for i in range(0, NUM_ROOMS):
+  edmFile = edmBaseFile + "_" + str(i) + ".csv"
+  A = np.loadtxt(edmFile, delimiter=",")
+  if (i == 0):
+    numSteps = np.shape(A)[0]
+    numCols = np.shape(A)[1]
+    allData = np.zeros((numSteps, numCols, NUM_ROOMS))
+  allData[:,:,i] = A
+
+# get the time array
+edmTime = allData[:,0,0]
+
+# get all individual warning columns
+WARN = np.zeros((numSteps, NUM_ROOMS, 3))
+for i in range(0, NUM_ROOMS):
+  WARN[:,i,0] = allData[:,10,i]   # smoke toxicity
+  WARN[:,i,1] = allData[:,11,i]   # burn threats
+  WARN[:,i,2] = allData[:,12,i]   # fire status
+
+# compare all hazards for each time step to assess threat
+threatLevel = np.zeros((numSteps,NUM_ROOMS))
+for i in range(0, NUM_ROOMS):
+  for j in range(0, numSteps):
+    s = int(WARN[j, i, 0])    # smoke warning
+    b = int(WARN[j, i, 1])    # burn warning
+    f = int(WARN[j, i, 2])    # fire warning
+
+    if ((s==1) or (b==1) or (f==1)):
+      threatLevel[j,i] = 1
+
+    if ((s==1 and b==1) or (b==1 and f==1) or (s==1 and f==1)):
+      threatLevel[j,i] = 2
+
+    if ((s==1) and (b==1) and (f==1)):
+      threatLevel[j,i] = 3  
+    
+    if ((s==2) or (b==2) or (f==2)):
+      threatLevel[j,i] = 3
+
+'''
+print(threatLevel)
+fig1, ax = plt.subplots()
+for i in range(0, NUM_ROOMS):
+  ax.plot(edmTime, threatLevel[:,i])
+fig1.tight_layout()
+plt.show()
+'''
+#==============================================================================
+
+numLevels = 3
+for i in range(0, NUM_ROOMS):
+  events = []
+  for j in range(0, numLevels):
+    checkIndex = np.argmax(threatLevel[:,i] > j)
+    if (checkIndex != 0):
+      events.append(edmTime[checkIndex])
+  print(events)
+
+
 
 # start the main tree
 root = etree.Element("Project", xmlns="http://schemas.microsoft.com/project")
@@ -104,3 +170,4 @@ fw = open(fileName, 'w')
 fw.write(firstLine)
 fw.write(etree.tostring(root, pretty_print=True))
 fw.close()
+
