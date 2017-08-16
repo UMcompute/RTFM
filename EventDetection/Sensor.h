@@ -33,8 +33,8 @@ class Sensor
     void updateTime();
     int checkFlashover();
     int checkSmokeTox();
-    int checkBurnThreat();
-    int checkFireSpread();
+    int checkBurnThreat();      // replaced by checkFireStatus()
+    int checkFireSpread();      // replaced by checkFireStatus()
     int checkFireStatus();
     double getFEDvals(int id);
 };
