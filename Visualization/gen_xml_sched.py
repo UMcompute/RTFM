@@ -12,20 +12,22 @@ maxTime = 600.0   # seconds
 
 edmBaseFile = "edm_output"
 baseFileName = "example"
-fileName = "example.xml"
-fullName = "C:\\Users\\pbeata\\" + fileName
+pathToFile = "C:\\Users\\pbeata\\Desktop\\"
 taskFile = "task_template.csv"
 
 eventLabels = ['initial', 'warning', 'threat', 'severe']
-startColor = ['2', '4', '6', '3']
-finishColor = ['4', '6', '3', '3']
+
+# starting color id #'s correspond to G-Y-O-R in ABD
+# finishing color id #'s correspond to Y-O-R-R in ABD
+startColor =  ['65280', '65535', '32767', '255']
+finishColor = ['65535', '32767', '255',   '255']
 numLevels = len(eventLabels)
 
 preamble = ["Name", "TimeFormat", "File", "FileFormat", \
 "StartDate", "EarlyStartDate", "LateStartDate", "FinishDate", \
 "EarlyFinishDate", "LateFinishDate", "CreationDate" ]
 
-preamleValues = ["Untitled", "s", fullName, "1", \
+preamleValues = ["Untitled", "s", baseFileName, "1", \
 "2017-10-16T07:00:00", "2017-10-16T07:00:00", "2017-10-16T07:00:00", "2017-10-16T07:10:00", \
 "2017-10-16T07:10:00", "2017-10-16T07:10:00", "2017-10-01T07:00:00" ]
 
@@ -108,13 +110,16 @@ for i in range(0, NUM_ROOMS):
 taskCounter = 0   # used to give unique UID to each task
 for room in range(0, NUM_ROOMS):
   fileName = baseFileName + str(room+1) + ".xml"
+  fullName = pathToFile + fileName
   root = None
 
   # start the main tree
   root = etree.Element("Project", xmlns="http://schemas.microsoft.com/project")
 
-  # create am attribute for each of the preamble components
+  # create an attribute for each of the preamble components
   counter = 0
+  preamleValues[0] = "Room-" + str(room+1) + "-Events"
+  preamleValues[2] = fullName
   for option in preamble:
     root.append(etree.Element(option))
     root[counter].text = preamleValues[counter]
