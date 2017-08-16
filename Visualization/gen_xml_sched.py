@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 # input and setup
 NUM_ROOMS = 4
+minTime = 0.0     # seconds
 maxTime = 600.0   # seconds
 
 edmBaseFile = "edm_output"
@@ -15,7 +16,9 @@ fileName = "example.xml"
 fullName = "C:\\Users\\pbeata\\" + fileName
 taskFile = "task_template.csv"
 
-eventLabels = ['warning', 'threat', 'severe']
+eventLabels = ['initial', 'warning', 'threat', 'severe']
+startColor = ['2', '4', '6', '3']
+finishColor = ['4', '6', '3', '3']
 numLevels = len(eventLabels)
 
 preamble = ["Name", "TimeFormat", "File", "FileFormat", \
@@ -85,19 +88,26 @@ for i in range(0, NUM_ROOMS):
   for j in range(0, numLevels):
     startTime[i].append(-1.0)
     numEvents[i].append(1)
-    checkIndex = np.argmax(threatLevel[:,i] > j)
-    if (checkIndex != 0):
-      startTime[i][j] = edmTime[checkIndex]
+    if (j == 0):
+      startTime[i][j] = minTime
     else:
-      numEvents[i][j] = 0
-#print(startTime)
-#print(numEvents)
+      checkIndex = np.argmax(threatLevel[:,i] > j-1)
+      if (checkIndex != 0):
+        startTime[i][j] = edmTime[checkIndex]
+      else:
+        numEvents[i][j] = 0
+
+# check event output before writing
+for i in range(0, NUM_ROOMS):
+  print(startTime[i])
+  #print(numEvents[i])
 
 #==============================================================================
 
 # WRITE THE XML FILE BASED ON THE TASK TIMES
+taskCounter = 0   # used to give unique UID to each task
 for room in range(0, NUM_ROOMS):
-  fileName = baseFileName + str(room) + ".xml"
+  fileName = baseFileName + str(room+1) + ".xml"
   root = None
 
   # start the main tree
@@ -132,8 +142,8 @@ for room in range(0, NUM_ROOMS):
       # unique task details
       roomDetails = []
       roomDetails.append("0")                     # Flag
-      roomDetails.append(eventLabels[k])          # Name
-      roomDetails.append("4")                     # ConstructionType
+      roomDetails.append(eventLabels[k] + "-" +str(room+1))   # Name
+      roomDetails.append("1")                     # ConstructionType
       # start times
       myStart = int(startTime[room][k])
       S = int(myStart%60)
@@ -171,13 +181,21 @@ for room in range(0, NUM_ROOMS):
       roomDetails.append(datePrefix + realTime)   # Late Finish
       #==============================================================
       taskList[i].append(etree.Element(taskAttrib[0][0]))
-      taskList[i][0].text = str(i+1)
+      # updated to give each task a unique UID just in case of conflict in ABD later
+      #taskList[i][0].text = str(i+1)
+      taskCounter += 1
+      taskList[i][0].text = str(taskCounter)
       for j in range(1, len(taskAttrib)):
         taskList[i].append(etree.Element(taskAttrib[j][0]))
         if (j < 10):
           taskList[i][j].text = roomDetails[j-1]
         else:
-          taskList[i][j].text = taskAttrib[j][1]
+          if (taskAttrib[j][0] == "StartColor"):
+            taskList[i][j].text = startColor[k]
+          elif (taskAttrib[j][0] == "FinishColor"):
+            taskList[i][j].text = finishColor[k]
+          else:
+            taskList[i][j].text = taskAttrib[j][1]
       taskList[i][-1].text = preamleValues[-1]
       taskList[i].append(etree.Element("ExtendedAttribute"))
       taskList[i][-1].append(etree.Element("UID"))
