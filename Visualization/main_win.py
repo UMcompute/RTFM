@@ -13,7 +13,7 @@ USE_LINUX = 1
 NUM_ROOMS = 4
 
 # timing constants
-maxTime = 600.0
+maxTime = 60.0
 waitTime = 0.1
 
 # =============================================================================
@@ -43,7 +43,7 @@ while (currTime < maxTime) and (USE_LINUX == 1):
   time.sleep(waitTime)
   for i in range(0, NUM_ROOMS):
     get_new_data.download_updates(fileNames[i], i)
-    print("downloaded new data %s \n" % fileName)
+    print("downloaded new data %s \n" % fileNames[i])
 
 # print confirmation that script finished
 print "done with main script!"

@@ -25,7 +25,7 @@ file4 = 'flux_log_' + str(room) + '.txt'
 
 # title above all the subplots
 st = fig.suptitle("Live Data: Room " + str(room+1), fontsize="x-large")
-
+ps = 'k-'
 
 #====================================================================
 def animate(i):
@@ -43,9 +43,9 @@ def animate(i):
       ys.append(y)
   sub1.clear()
   sub1.set_title('Temperature')
-  sub1.plot(xs, ys)
+  sub1.plot(xs, ys, ps)
   sub1.set_xlim([0, tmax])
-  sub1.set_ylim([0, 600])
+  sub1.set_ylim([0, 400])
   
   # Oxygen Concentration
   graph_data = open(file2, 'r').read()
@@ -59,7 +59,7 @@ def animate(i):
       ys.append(y)  
   sub2.clear()
   sub2.set_title('Oxygen')
-  sub2.plot(xs, ys)
+  sub1.plot(xs, ys, ps)
   sub2.set_xlim([0, tmax])
   sub2.set_ylim([14, 22])
 
@@ -75,9 +75,9 @@ def animate(i):
       ys.append(y)  
   sub3.clear()
   sub3.set_title('Carbon Monoxide')
-  sub3.plot(xs, ys)
+  sub1.plot(xs, ys, ps)
   sub3.set_xlim([0, tmax])
-  sub3.set_ylim([0, 8000])
+  sub3.set_ylim([0, 10000])
 
   # Heat Flux
   graph_data = open(file4, 'r').read()
@@ -91,7 +91,7 @@ def animate(i):
       ys.append(y)
   sub4.clear()
   sub4.set_title('Heat Flux')
-  sub4.plot(xs, ys)
+  sub1.plot(xs, ys, ps)
   sub4.set_xlim([0, tmax])
   sub4.set_ylim([0, 8])
 #====================================================================
