@@ -13,3 +13,5 @@ MainRTFM/sim*
 InverseModel/sen*
 EventDetection/sen*
 Visualization/edm_output*
+MainRTFM/room*
+Visualization/*.txt

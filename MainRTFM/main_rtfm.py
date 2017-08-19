@@ -47,6 +47,15 @@ def msg_handler(channel, data):
   sensorList[room].set_value(5, msg.HCNconc)
   sensorList[room].set_value(6, msg.heatFlux)
 
+  # write current output to text file for real-time plots in Windows
+  fileName = 'room_' + str(room) + '.txt'
+  dataFile = open(fileName, 'w')
+  ndata = sensorList[room].NUM_DATA
+  for i in range(0, ndata-1):
+    dataFile.write("%f, " % sensorList[room].get_value(i))
+  dataFile.write("%f \n" % sensorList[room].get_value(ndata-1))
+  dataFile.close()
+
   # check if IFM data is ready to send based on IFM time step
   ifm_manager.check_time(sensorList[room].get_value(0), NUM_ROOMS)
 
