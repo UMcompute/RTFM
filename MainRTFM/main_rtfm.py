@@ -31,6 +31,12 @@ execSensor = "exec /home/pbeata/Desktop/fire_ideas/Sensors/run_sensors.sh"
 execEDM = "exec /home/pbeata/Desktop/fire_ideas/EventDetection/run_edm.sh"
 
 
+# new message handler to forward data to EDM
+def edm_handler(channel, data):
+  msg = sensor_data.decode(data)
+  room = msg.roomNum
+  
+
 # handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
   msg = sensor_data.decode(data)
@@ -181,6 +187,8 @@ while ( checkPoll == None ):
     lc.handle()
     time_diff = time.time() - start_time
     msg_time.append(time_diff)
+
+    '''
     # =======================================================================
     if (ifm_manager.sendFlag == 1):
       #print("\n  ==> READY TO SEND DATA TO IFM ==> ")
@@ -209,6 +217,7 @@ while ( checkPoll == None ):
       # send complete message to EDM main loop
       lc.publish("EDM_CHANNEL", edm_data.encode())
     # =======================================================================
+    '''
   else:
     checkPoll = sensorProc.poll()
 
