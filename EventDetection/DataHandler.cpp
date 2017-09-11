@@ -1,7 +1,8 @@
 #include <iostream>
 #include "DataHandler.h"
 #include <lcm/lcm-cpp.hpp>
-#include "send_to_edm/data_to_edm.hpp"
+//#include "send_to_edm/data_to_edm.hpp"
+#include "sim_sensor/sensor_data.hpp"
 
 DataHandler::~DataHandler() 
 {
@@ -11,51 +12,50 @@ DataHandler::~DataHandler()
 
 void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
        const std::string& chan,
-       const send_to_edm::data_to_edm* msg)
+       const sim_sensor::sensor_data* msg)
 {
-  std::cout << "got a message in EDM at time " << msg->time_stamp << std::endl;
-  // update all incoming data in local memory
-  int i;
-  my_num_rooms = msg->num_rooms;
-  my_time_stamp = msg->time_stamp;
-  for (i = 0; i < my_num_rooms; i++)
-  {
-    my_temperature[i] = msg->temperature[i];
-    my_O2_conc[i] = msg->O2_conc[i];
-    my_CO_conc[i] = msg->CO_conc[i];
-    my_CO2_conc[i] = msg->CO2_conc[i];
-    my_HCN_conc[i] = msg->HCN_conc[i];
-    my_heat_flux[i] = msg->heat_flux[i];
-  }
+  std::cout << "got a message in EDM at time " << msg->sendTime << std::endl;
+  roomNum     = msg->roomNum;
+  sendTime    = msg->sendTime;
+  temperature = msg->temperature;
+  O2conc      = msg->O2conc;
+  COconc      = msg->COconc;
+  CO2conc     = msg->CO2conc;
+  HCNconc     = msg->HCNconc;
+  heatFlux    = msg->heatFlux;
 }
 
-// get functions to return value at provided room index
-// todo: provide error handling for reaching outside the bounds with index
+
+// "getter" functions to return data values
+int DataHandler::getRoom()
+{
+  return roomNum;
+}
 double DataHandler::getTime()            
 {   
-  return my_time_stamp;
+  return sendTime;
 }
-double DataHandler::getTemp(int index)   
+double DataHandler::getTemp()   
 {   
-  return my_temperature[index];   
+  return temperature;
 }
-double DataHandler::getO2(int index)     
+double DataHandler::getO2()     
 {   
-  return my_O2_conc[index];       
+  return O2conc;
 }
-double DataHandler::getCO(int index)     
+double DataHandler::getCO()     
 {   
-  return my_CO_conc[index];       
+  return COconc;
 }
-double DataHandler::getCO2(int index)    
+double DataHandler::getCO2()    
 {   
-  return my_CO2_conc[index];      
+  return CO2conc;
 }
-double DataHandler::getHCN(int index)    
+double DataHandler::getHCN()    
 {   
-  return my_HCN_conc[index];      
+  return HCNconc;
 }
-double DataHandler::getFlux(int index)   
+double DataHandler::getFlux()   
 {   
-  return my_heat_flux[index];     
+  return heatFlux;
 }

@@ -39,6 +39,7 @@ int main(int argc, char* argv[])
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
   int testing = 0;            // use for testing room 0 only for now
+  double timeLimit = 10.0;    // use for testing to limit number of messages 
 
   // unit conversions (if needed)
   double convTemp = 1.0;
@@ -119,6 +120,7 @@ int main(int argc, char* argv[])
     int rand_int;
     double rand_val;
     double my_time = 0.0;
+
     while (getline(if_file, my_line, ','))
     {
       std::istringstream iss(my_line);
@@ -146,7 +148,7 @@ int main(int argc, char* argv[])
 
           // compute random noise for delay time
           rand_int = rand()%rand_range + min_time;
-          rand_val = ((double)rand_int) / convFact;          
+          rand_val = ((double)rand_int) / convFact;    
 
           // wait random time and then send
           my_data.sendTime = my_time;
@@ -154,7 +156,7 @@ int main(int argc, char* argv[])
  
           //===================================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
-          usleep( rand_val * pow(10.0, 5.0) );
+          usleep( rand_val * pow(10.0, 6.0) );
           std::chrono::time_point<std::chrono::system_clock> tend;
           tend = std::chrono::system_clock::now();
           std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
@@ -171,7 +173,12 @@ int main(int argc, char* argv[])
           //===================================================================
         }
       }
+      if (my_time > timeLimit)
+      {
+        break;
+      }
     }
+
     // close "my" data file
     if_file.close();
   // exit parallel loop

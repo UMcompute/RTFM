@@ -34,8 +34,19 @@ execEDM = "exec /home/pbeata/Desktop/fire_ideas/EventDetection/run_edm.sh"
 # new message handler to forward data to EDM
 def edm_handler(channel, data):
   msg = sensor_data.decode(data)
+  time_stamp = time.strftime("%c")
   room = msg.roomNum
+  print("MAIN recv %.4f from %d at %s" % (msg.sendTime, room, time_stamp))
   
+  newSensorData.roomNum = msg.roomNum
+  newSensorData.sendTime = msg.sendTime
+  newSensorData.temperature = msg.temperature
+  newSensorData.O2conc = msg.O2conc
+  newSensorData.COconc = msg.COconc
+  newSensorData.CO2conc = msg.CO2conc
+  newSensorData.HCNconc = msg.HCNconc
+  newSensorData.heatFlux = msg.heatFlux
+
 
 # handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
@@ -131,7 +142,8 @@ lc = lcm.LCM()
 sensorList = []
 for i in range(0, NUM_ROOMS):
   channel = "ROOM" + str(i)
-  lc.subscribe(channel, msg_handler)
+  #lc.subscribe(channel, msg_handler)
+  lc.subscribe(channel, edm_handler)
   sensorList.append(Sensor(i))
 
 # initialize the IFM time step manager
@@ -160,33 +172,43 @@ timeout = 0.01  # amount of time to wait, in seconds
 checkPoll = None
 msg_time = []
 
+'''
 # launch event detection model
 startEDM = "1"
 if (startEDM == "1"):
   edmProc = subprocess.Popen(execEDM, shell=True)
 else:
   print("***Event detection model was not started***")
+'''
+
+# forward data to EDM
+newSensorData = sensor_data()
 
 # launch sensor simulator
+'''
 startSensors = raw_input('Are you ready to launch the sensors? (Enter 0 or 1) ')
 #startSensors = "1"
 sensorStartTime = []
 if (startSensors == "1"):
-  sensorStartTime.append(time.time())
   sensorProc = subprocess.Popen(execSensor, shell=True)
   sensorStartTime.append(time.time())
 else:
   print("***Sensor simulation was not started***")
+'''
 
 # MAIN LOOP
+msgRecv = 0
 start_time = time.time()
 msg_time.append(start_time)
-while ( checkPoll == None ):
+#while ( checkPoll == None ):
+while (msgRecv < 40):
   rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
   if rfds:
+    msgRecv += 1
     lc.handle()
     time_diff = time.time() - start_time
     msg_time.append(time_diff)
+    lc.publish("EDM_CHANNEL", newSensorData.encode())
 
     '''
     # =======================================================================
@@ -219,12 +241,12 @@ while ( checkPoll == None ):
     # =======================================================================
     '''
   else:
-    checkPoll = sensorProc.poll()
+    zz = 1
+    #checkPoll = sensorProc.poll()
 
 # print the message time stamps to a file
 fw = open("msg_recv_time.out", "w")
-fw.write("%s \n" % sensorStartTime[0])
-fw.write("%s \n" % sensorStartTime[1])
+#fw.write("%s \n" % sensorStartTime[0])
 for msg in msg_time:
   fw.write("%s \n" % msg)
 fw.close()

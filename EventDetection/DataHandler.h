@@ -1,40 +1,38 @@
 #ifndef DATAHANDLER_H_INCLUDED
 #define DATAHANDLER_H_INCLUDED
 
-#define NUM_ROOMS 4
-
 #include <lcm/lcm-cpp.hpp>
-#include "send_to_edm/data_to_edm.hpp"
+#include "sim_sensor/sensor_data.hpp"
 
 // LCM class for receiving message data
 class DataHandler
 {
 
   private:
-    int my_num_rooms;
-    double my_time_stamp;
-    double my_temperature[NUM_ROOMS];
-    double my_O2_conc[NUM_ROOMS];
-    double my_CO_conc[NUM_ROOMS];
-    double my_CO2_conc[NUM_ROOMS];
-    double my_HCN_conc[NUM_ROOMS];
-    double my_heat_flux[NUM_ROOMS];
+    int       roomNum;
+    double    sendTime;
+    double    temperature;
+    double    O2conc;
+    double    COconc;
+    double    CO2conc;
+    double    HCNconc;
+    double    heatFlux;
 
   public:
     ~DataHandler();
-
     void handleMessage(const lcm::ReceiveBuffer* rbuf,
            const std::string& chan,
-           const send_to_edm::data_to_edm* msg);
-  
-    // get functions to return value at provided room index
+           const sim_sensor::sensor_data* msg);
+
+    // "getter" functions to return most recent message data
+    int getRoom();
     double getTime();
-    double getTemp(int index);
-    double getO2(int index);
-    double getCO(int index);
-    double getCO2(int index);
-    double getHCN(int index);
-    double getFlux(int index);
+    double getTemp();
+    double getO2();
+    double getCO();
+    double getCO2();
+    double getHCN();
+    double getFlux();
 };
 
 #endif // DATAHANDLER_H_INCLUDED

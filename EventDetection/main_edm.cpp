@@ -18,7 +18,8 @@
 
 // additional LCM directives
 #include <lcm/lcm-cpp.hpp>
-#include "send_to_edm/data_to_edm.hpp"
+//#include "send_to_edm/data_to_edm.hpp"
+#include "sim_sensor/sensor_data.hpp"
 
 // include my custom classes
 #include "DataHandler.h"
@@ -52,7 +53,7 @@ int main(int argc, char** argv) {
   printf("starting EDM main...\n");
 
   // input
-  const double TIME_MAX = 599.00;
+  const double TIME_MAX = 9.03;
 
   //===========================================================================
 
@@ -130,61 +131,51 @@ int main(int argc, char** argv) {
       lcm.handle();
       numMsgRecv += 1;
 
-      // check the hazards at each sensor location
-      for (i = 0; i < NUM_ROOMS; i++)
+      // update data for the current sensor
+      i = currentData.getRoom();
+      sensorArray[i].setData(0, currentData.getTime());
+      sensorArray[i].setData(1, currentData.getTemp());
+      sensorArray[i].setData(2, currentData.getO2());
+      sensorArray[i].setData(3, currentData.getCO());
+      sensorArray[i].setData(4, currentData.getCO2());
+      sensorArray[i].setData(5, currentData.getHCN());
+      sensorArray[i].setData(6, currentData.getFlux());
+
+      // SMOKE TOXICITY
+      smokeToxicity[i] = sensorArray[i].checkSmokeTox();
+
+      // BURN THREATS
+      burnThreat[i] = sensorArray[i].checkBurnThreat();
+
+      // FIRE STATUS
+      fireStatus[i] = sensorArray[i].checkFireStatus();
+
+      // TIME UPDATE
+      sensorArray[i].updateTime();
+
+      // PRINT OUTPUT
+      if (print_output == 1)
       {
-        // distribute new data to each sensor
-        sensorArray[i].setData(0, currentData.getTime());
-        sensorArray[i].setData(1, currentData.getTemp(i));
-        sensorArray[i].setData(2, currentData.getO2(i));
-        sensorArray[i].setData(3, currentData.getCO(i));
-        sensorArray[i].setData(4, currentData.getCO2(i));
-        sensorArray[i].setData(5, currentData.getHCN(i));
-        sensorArray[i].setData(6, currentData.getFlux(i));
+        // raw data
+        t = currentData.getTime();
+        T = currentData.getTemp();
+        O2 = currentData.getO2();
+        CO = currentData.getCO();
+        CO2 = currentData.getCO2();
+        HCN = currentData.getHCN();
+        Q = currentData.getFlux();
 
-        // FLASHOVER
-        //flashover[i] = sensorArray[i].checkFlashover();
+        // output
+        FED_smoke = sensorArray[i].getFEDvals(0);
+        FED_heat_pain = sensorArray[i].getFEDvals(1);
+        FED_heat_fatal = sensorArray[i].getFEDvals(2);
 
-        // SMOKE TOXICITY
-        smokeToxicity[i] = sensorArray[i].checkSmokeTox();
-
-        // BURN THREATS
-        burnThreat[i] = sensorArray[i].checkBurnThreat();
-
-        // FIRE SPREAD
-        //fireSpread[i] = sensorArray[i].checkFireSpread();
-
-        // FIRE STATUS
-        fireStatus[i] = sensorArray[i].checkFireStatus();
-
-        // TIME UPDATE
-        sensorArray[i].updateTime();
-
-        // PRINT OUTPUT
-        if (print_output == 1)
-        {
-          // raw data
-          t = currentData.getTime();
-          T = currentData.getTemp(i);
-          O2 = currentData.getO2(i);
-          CO = currentData.getCO(i);
-          CO2 = currentData.getCO2(i);
-          HCN = currentData.getHCN(i);
-          Q = currentData.getFlux(i);
-
-          // output
-          FED_smoke = sensorArray[i].getFEDvals(0);
-          FED_heat_pain = sensorArray[i].getFEDvals(1);
-          FED_heat_fatal = sensorArray[i].getFEDvals(2);
-
-          // write to specific room file 
-          outFile[i] << t << "," << T << "," << O2 << ","; 
-          outFile[i] << CO << "," << CO2 << "," << HCN << "," << Q << ",";
-          outFile[i] << FED_smoke << "," << FED_heat_pain << "," << FED_heat_fatal << ",";
-          outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
-          outFile[i] << fireStatus[i] << "\n";
-          //outFile[i] << fireSpread[i] << "," << flashover[i] << "\n";
-        }
+        // write to specific room file 
+        outFile[i] << t << "," << T << "," << O2 << ","; 
+        outFile[i] << CO << "," << CO2 << "," << HCN << "," << Q << ",";
+        outFile[i] << FED_smoke << "," << FED_heat_pain << "," << FED_heat_fatal << ",";
+        outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
+        outFile[i] << fireStatus[i] << "\n";
       }
     }
   }
