@@ -3,6 +3,7 @@ import lcm
 import select
 import time
 import subprocess
+from datetime import datetime
 
 # LCM data structures
 from sim_sensor import sensor_data
@@ -20,6 +21,7 @@ from sent_by_edm import data_from_edm
 global NUM_ROOMS
 NUM_ROOMS = 4
 
+'''
 # input: desired time step to send to sub-models
 ifm_time_step = 10.0
 edm_time_step = 2.0
@@ -29,15 +31,17 @@ execSensor = "exec /home/pbeata/Desktop/fire_ideas/Sensors/run_sensors.sh"
 
 # event detection model
 execEDM = "exec /home/pbeata/Desktop/fire_ideas/EventDetection/run_edm.sh"
+'''
 
 
 # new message handler to forward data to EDM
 def edm_handler(channel, data):
   msg = sensor_data.decode(data)
   time_stamp = time.strftime("%c")
+
   room = msg.roomNum
-  print("MAIN recv %.4f from %d at %s" % (msg.sendTime, room, time_stamp))
-  
+  #print("MAIN recv %.4f from %d at %s" % (msg.sendTime, room, time_stamp))
+
   newSensorData.roomNum = msg.roomNum
   newSensorData.sendTime = msg.sendTime
   newSensorData.temperature = msg.temperature
@@ -47,7 +51,7 @@ def edm_handler(channel, data):
   newSensorData.HCNconc = msg.HCNconc
   newSensorData.heatFlux = msg.heatFlux
 
-
+'''
 # handle new sensor data by assigning it to each Sensor class object
 def msg_handler(channel, data):
   msg = sensor_data.decode(data)
@@ -85,7 +89,7 @@ def model_handler(channel, data):
   msg = data_from_ifm.decode(data)
   print(channel)
   print(msg.current_HRR)
-
+'''
 
 # currently assuming one sensor per room
 # future: room can have zero, one, or multiple sensors in it 
@@ -93,7 +97,7 @@ class Sensor:
   NUM_DATA = 7
 
   def __init__(self, myRoom):
-    print("NEW ROOM CREATED WITH ONE SENSOR!")
+    print("NEW SENSOR CLASS OBJECT CREATED")
     self.room_id = myRoom
     self.my_data = []
     for i in range(0, self.NUM_DATA):
@@ -108,7 +112,7 @@ class Sensor:
   def print_value(self, index):
     print("Room #%d has value %f at %d" % (self.room_id, self.my_data[index], index))
 
-
+'''
 # manager class to determine when to send message to sub-models
 class TimeManager:
   tol = 0.5
@@ -133,6 +137,7 @@ class TimeManager:
       self.count = 0
     else:
       self.sendFlag = 0
+'''
 
 
 # initialize the LCM library
@@ -146,6 +151,7 @@ for i in range(0, NUM_ROOMS):
   lc.subscribe(channel, edm_handler)
   sensorList.append(Sensor(i))
 
+'''
 # initialize the IFM time step manager
 ifm_manager = TimeManager(ifm_time_step)
 ifm_data = data_to_ifm()
@@ -166,6 +172,7 @@ for i in range(0, NUM_ROOMS):
   edm_data.CO2_conc.append(0.0)
   edm_data.HCN_conc.append(0.0)
   edm_data.heat_flux.append(0.0)
+'''
 
 # initialize main loop parameters
 timeout = 0.01  # amount of time to wait, in seconds
@@ -206,9 +213,15 @@ while (msgRecv < 40):
   if rfds:
     msgRecv += 1
     lc.handle()
-    time_diff = time.time() - start_time
-    msg_time.append(time_diff)
+
+    dummyTime = datetime.now()
+
     lc.publish("EDM_CHANNEL", newSensorData.encode())
+
+    currentTime = dummyTime.isoformat()
+    print("sensor #" + str(newSensorData.roomNum) + " sent at time " + currentTime[11:23])
+
+    #msg_time.append( time.time() - start_time )
 
     '''
     # =======================================================================

@@ -1,7 +1,6 @@
 #include <iostream>
 #include "DataHandler.h"
 #include <lcm/lcm-cpp.hpp>
-//#include "send_to_edm/data_to_edm.hpp"
 #include "sim_sensor/sensor_data.hpp"
 
 DataHandler::~DataHandler() 
@@ -14,7 +13,7 @@ void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
        const std::string& chan,
        const sim_sensor::sensor_data* msg)
 {
-  std::cout << "got a message in EDM at time " << msg->sendTime << std::endl;
+  //std::cout << "got a message in EDM at time " << msg->sendTime << std::endl;
   roomNum     = msg->roomNum;
   sendTime    = msg->sendTime;
   temperature = msg->temperature;

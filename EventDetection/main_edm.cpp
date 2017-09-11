@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <queue>
 #include <sys/select.h>
+#include <sys/time.h>
+#include <time.h>
 #include <ctime>
 #include <math.h>
 #include <unistd.h>
@@ -63,10 +65,8 @@ int main(int argc, char** argv) {
   int numMsgRecv = 0;
 
   // warning arrays
-  //int flashover[NUM_ROOMS];
   int burnThreat[NUM_ROOMS];
   int smokeToxicity[NUM_ROOMS];
-  //int fireSpread[NUM_ROOMS];
   int fireStatus[NUM_ROOMS];
 
   // preparation for output
@@ -87,6 +87,12 @@ int main(int argc, char** argv) {
     }
   }
 
+  // timer setup
+  char buffer[26];
+  int millisec;
+  struct tm* tm_info;
+  struct timeval tv;  
+
   // construct LCM and check if it is good!
   lcm::LCM lcm;
   if(!lcm.good()) return 1;
@@ -102,9 +108,14 @@ int main(int argc, char** argv) {
     sensorArray[i].setID(i);
   }
 
+  // official start time
+  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point current;
+
   // MAIN event loop
   t = 0.0;
-  while (t < TIME_MAX)
+  //while (t < TIME_MAX)
+  while (numMsgRecv < 40)
   {
     // setup the LCM file descriptor for waiting
     int lcm_fd = lcm.getFileno();
@@ -123,7 +134,7 @@ int main(int argc, char** argv) {
     if (0 == status)
     {
       // no msg yet!
-      printf("\n   [waiting for msg in EDM main loop]\n");
+      //printf("\n   [waiting for msg in EDM main loop]\n");
     }
     else if (FD_ISSET(lcm_fd, &fds))
     {
@@ -152,6 +163,33 @@ int main(int argc, char** argv) {
 
       // TIME UPDATE
       sensorArray[i].updateTime();
+
+      //=================================
+      // new timer
+      gettimeofday(&tv, NULL);
+
+      millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+      if (millisec>=1000) { // Allow for rounding up to nearest second
+        millisec -=1000;
+        tv.tv_sec++;
+      }
+
+      tm_info = localtime(&tv.tv_sec);
+
+      strftime(buffer, 26, "%H:%M:%S", tm_info);
+      printf("sensor #%d checks finished at msg #%d time %s.%03d\n", i, numMsgRecv, buffer, millisec);
+      //=================================
+
+      /*
+      std::chrono::time_point<std::chrono::system_clock> tend;
+      tend = std::chrono::system_clock::now();
+      std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
+      current = std::chrono::steady_clock::now();
+
+      std::cout << i << " current time = ";
+      std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(current - start).count();
+      std::cout << " ms \n";
+      */
 
       // PRINT OUTPUT
       if (print_output == 1)
