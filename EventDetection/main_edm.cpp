@@ -29,7 +29,7 @@
 
 
 //const int NUM_ROOMS = 4;
-#define NUM_ROOMS 4
+#define NUM_ROOMS 128
 /* ====================================
     ASSUMPTION: one sensor per room
 ==================================== */
@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
   printf("starting EDM main...\n");
 
   // input
-  const double TIME_MAX = 9.03;
+  //const double TIME_MAX = 9.03;
 
   //===========================================================================
 
@@ -63,6 +63,8 @@ int main(int argc, char** argv) {
   int i;
   int room = 0;
   int numMsgRecv = 0;
+  int msgFromEachSensor[NUM_ROOMS];
+  int msgLimit = 38528;
 
   // warning arrays
   int burnThreat[NUM_ROOMS];
@@ -70,7 +72,7 @@ int main(int argc, char** argv) {
   int fireStatus[NUM_ROOMS];
 
   // preparation for output
-  int print_output = 1;
+  int print_output = 0;
   double t, T, O2, CO, CO2, HCN, Q; 
   double FED_smoke, FED_heat_pain, FED_heat_fatal;
   std::ofstream outFile[NUM_ROOMS];
@@ -106,6 +108,7 @@ int main(int argc, char** argv) {
   for (i = 0; i < NUM_ROOMS; i++)
   {
     sensorArray[i].setID(i);
+    msgFromEachSensor[i] = 0;
   }
 
   // official start time
@@ -115,7 +118,7 @@ int main(int argc, char** argv) {
   // MAIN event loop
   t = 0.0;
   //while (t < TIME_MAX)
-  while (numMsgRecv < 40)
+  while (numMsgRecv < msgLimit)
   {
     // setup the LCM file descriptor for waiting
     int lcm_fd = lcm.getFileno();
@@ -144,6 +147,7 @@ int main(int argc, char** argv) {
 
       // update data for the current sensor
       i = currentData.getRoom();
+      msgFromEachSensor[i] += 1;
       sensorArray[i].setData(0, currentData.getTime());
       sensorArray[i].setData(1, currentData.getTemp());
       sensorArray[i].setData(2, currentData.getO2());
@@ -163,33 +167,6 @@ int main(int argc, char** argv) {
 
       // TIME UPDATE
       sensorArray[i].updateTime();
-
-      //=================================
-      // new timer
-      gettimeofday(&tv, NULL);
-
-      millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
-      if (millisec>=1000) { // Allow for rounding up to nearest second
-        millisec -=1000;
-        tv.tv_sec++;
-      }
-
-      tm_info = localtime(&tv.tv_sec);
-
-      strftime(buffer, 26, "%H:%M:%S", tm_info);
-      printf("sensor #%d checks finished at msg #%d time %s.%03d\n", i, numMsgRecv, buffer, millisec);
-      //=================================
-
-      /*
-      std::chrono::time_point<std::chrono::system_clock> tend;
-      tend = std::chrono::system_clock::now();
-      std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
-      current = std::chrono::steady_clock::now();
-
-      std::cout << i << " current time = ";
-      std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(current - start).count();
-      std::cout << " ms \n";
-      */
 
       // PRINT OUTPUT
       if (print_output == 1)
@@ -215,6 +192,23 @@ int main(int argc, char** argv) {
         outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
         outFile[i] << fireStatus[i] << "\n";
       }
+
+      //=================================
+      // new timer
+      gettimeofday(&tv, NULL);
+      millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
+      if (millisec>=1000) 
+      {
+        // Allows for rounding up to nearest second
+        millisec -=1000;
+        tv.tv_sec++;
+      }
+      tm_info = localtime(&tv.tv_sec);
+      strftime(buffer, 26, "%H:%M:%S", tm_info);
+      //printf("sensor #%d checks finished at msg #%d time %s.%03d\n", i, msgFromEachSensor[i], buffer, millisec);
+      printf("%d, %d, %s.%03d \n", i, msgFromEachSensor[i], buffer, millisec);
+      //=================================
+      
     }
   }
 

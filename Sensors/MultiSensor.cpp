@@ -34,15 +34,15 @@ int main(int argc, char* argv[])
 {
 
   // initialize constants
-  const int NUM_ROOMS = 4;    // number of rooms in simulation
+  const int NUM_ROOMS = 128;  // number of rooms in simulation
   const int NUM_DATA = 6;     // number of columns in data files
   double nominalFreq = 1.00;  // [Hz]
-  double noise = 0.45;        // [%]
+  double noise = 0.25;        // [%]
   int convFact = 1000000;     // [s] to [us]
   float roundup = 0.5;        // [us]
   srand(22);                  // seed for random numbers
   int testing = 0;            // use for testing room 0 only for now 
-  int msgLimit = 10;           // use for testing with a small number of messages
+  int msgLimit = 301;         // use for testing with a small number of messages
 
   // unit conversions (if needed)
   double convTemp = 1.0;
@@ -78,30 +78,23 @@ int main(int argc, char* argv[])
   int max_time = (int)max_per;
   int rand_range = max_time - min_time;
 
-  // wait to start
-  //    --> we can add an LCM command to start here
-
+  //=================================
+  // timer 
   // official start time
-
   char buffer1[26];
   int millisec1;
   struct tm* tm_info1;
   struct timeval tv1; 
-
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-
-  //=================================
-  // new timer 
   gettimeofday(&tv1, NULL);
-
   millisec1 = lrint(tv1.tv_usec/1000.0); // Round to nearest millisec
-  if (millisec1>=1000) { // Allow for rounding up to nearest second
+  if (millisec1>=1000) 
+  { 
+    // Allows for rounding up to nearest second
     millisec1 -=1000;
     tv1.tv_sec++;
   }
-
   tm_info1 = localtime(&tv1.tv_sec);
-
   strftime(buffer1, 26, "%H:%M:%S", tm_info1);
   printf("START TIME: %s.%03d\n", buffer1, millisec1);
   //=================================    
@@ -189,38 +182,20 @@ int main(int argc, char* argv[])
           //===================================================================
           // PUBLISH LCM MSG TO MAIN PROGRAM WITH NEW SENSOR DATA
           usleep( rand_val * pow(10.0, 6.0) );
-          /*
-          std::chrono::time_point<std::chrono::system_clock> tend;
-          tend = std::chrono::system_clock::now();
-          std::time_t end_time = std::chrono::system_clock::to_time_t(tend);
-          current = std::chrono::steady_clock::now();
-
-          std::cout << pid << " current time = ";
-          std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(current - start).count();
-          std::cout << " ms \n";
-          */
-          //=================================
-          // new timer
           gettimeofday(&tv, NULL);
-          //=================================          
-
-          //printf("SENSOR %d sent %.4f to MAIN at %s \n", pid, my_time, std::ctime(&end_time));
-          //std::cout << "SENSOR " << pid << " sent " << my_time;
-          //std::cout << " to MAIN at " << std::ctime(&end_time) <<"\n";
           lcm.publish(my_chan, &my_data);
-
           numMsgSent += 1;
-
           millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
-          if (millisec>=1000) { // Allow for rounding up to nearest second
+          if (millisec>=1000) 
+          { 
+            // Allows for rounding up to nearest second
             millisec -=1000;
             tv.tv_sec++;
           }
-
           tm_info = localtime(&tv.tv_sec);
-
           strftime(buffer, 26, "%H:%M:%S", tm_info);
-          printf("sensor #%d sent msg #%d at time %s.%03d\n", pid, numMsgSent, buffer, millisec);
+          //printf("sensor #%d sent msg #%d at time %s.%03d\n", pid, numMsgSent, buffer, millisec);
+          printf("%d, %d, %s.%03d \n", pid, numMsgSent, buffer, millisec);
           //===================================================================
         }
         else
@@ -229,24 +204,23 @@ int main(int argc, char* argv[])
         }
       }
     }
-
+    
     // close "my" data file
     if_file.close();
-  // exit parallel loop
-  }
+
+  } // exit parallel loop
 
   //=================================
-  // new timer 
+  // timer 
   gettimeofday(&tv1, NULL);
-
   millisec1 = lrint(tv1.tv_usec/1000.0); // Round to nearest millisec
-  if (millisec1>=1000) { // Allow for rounding up to nearest second
+  if (millisec1>=1000) 
+  { 
+    // Allows for rounding up to nearest second
     millisec1 -=1000;
     tv1.tv_sec++;
   }
-
   tm_info1 = localtime(&tv1.tv_sec);
-
   strftime(buffer1, 26, "%H:%M:%S", tm_info1);
   printf("END TIME: %s.%03d\n", buffer1, millisec1);
   //================================= 

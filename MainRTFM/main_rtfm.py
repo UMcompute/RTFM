@@ -19,7 +19,8 @@ from sent_by_edm import data_from_edm
 
 # global variable for the number of rooms
 global NUM_ROOMS
-NUM_ROOMS = 4
+NUM_ROOMS = 128
+msgLimit = 38528
 
 '''
 # input: desired time step to send to sub-models
@@ -208,7 +209,7 @@ msgRecv = 0
 start_time = time.time()
 msg_time.append(start_time)
 #while ( checkPoll == None ):
-while (msgRecv < 40):
+while (msgRecv < msgLimit):
   rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
   if rfds:
     msgRecv += 1
@@ -219,7 +220,7 @@ while (msgRecv < 40):
     lc.publish("EDM_CHANNEL", newSensorData.encode())
 
     currentTime = dummyTime.isoformat()
-    print("sensor #" + str(newSensorData.roomNum) + " sent at time " + currentTime[11:23])
+    #print("sensor #" + str(newSensorData.roomNum) + " sent at time " + currentTime[11:23])
 
     #msg_time.append( time.time() - start_time )
 

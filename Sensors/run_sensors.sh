@@ -10,7 +10,7 @@ cd $SENSDIR
 LCMPATH="$COMMDIR/$LCMFILE"
 lcm-gen -x $LCMPATH
 
-export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=128
 g++ -O3 $SENSDIR/MultiSensor.cpp -o $SENSDIR/MultiSensor.exe -fopenmp -llcm -std=c++11
 
 $SENSDIR/MultiSensor.exe
