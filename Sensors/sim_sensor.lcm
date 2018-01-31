@@ -1,0 +1,12 @@
+package sim_sensor;
+
+struct sensor_data
+{
+  int32_t sensorID;
+  double  sendTime;
+  boolean status;
+  int32_t dim;
+  double  position[dim];
+  int32_t ndata;
+  double  data[ndata];
+}
