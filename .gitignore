@@ -6,7 +6,7 @@
 *.xml
 *.out
 Sensors/data/*
-*/sim_sensor/*
+*/sensor/*
 */out/*
 MainRTFM/sen*
 MainRTFM/sim*

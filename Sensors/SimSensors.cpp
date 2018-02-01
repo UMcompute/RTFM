@@ -12,14 +12,16 @@
 #include "sensor/sensor_data.hpp"
 
 
-#define DIM 3
-#define NDATA 6
-
-
 class SensorEvent
 {
+  private:
+    int ID;
+    double time;
+
   public:
-    SensorEvent(int inID, double inTime)
+    SensorEvent(
+      int inID, 
+      double inTime)
     {
       ID = inID;
       time = inTime;
@@ -32,18 +34,29 @@ class SensorEvent
     {
       return time; 
     }
-  private:
-    int ID;
-    double time;
 };
 
 
 class Sensor
 {
+  private:
+    int DIM;
+    int NDATA;
+    int ID;
+    bool active;
+    double *position;
+    double *data;
+
   public:
     Sensor()
     {
       active = true;
+      DIM = 3;
+      NDATA = 6;
+
+      position = new double [DIM];
+      data = new double [NDATA];
+
       for (int i = 0; i < DIM; i++)
       {
         position[i] = 0.0;
@@ -53,14 +66,30 @@ class Sensor
         data[j] = 0.0;
       }
     }
+
+    ~Sensor()
+    {
+      delete [] position;
+      delete [] data;
+    }
+    
+    int getNDATA()
+    {
+      return NDATA;
+    }
+    
     void setID(int inID)
     {
       ID = inID;
     }
-    void setData(int index, double value)
+    
+    void setData(
+      int index, 
+      double value)
     {
       data[index] = value;
     }
+    
     double getData(int index)
     {
       if (index >= 0 && index < NDATA)
@@ -69,26 +98,27 @@ class Sensor
       }
       else
       {
-        std::cout << "***error in getData(index): index out of bounds\n";
-        return 10000.0;
+        std::cout << "\n***error in getData(index): index out of bounds\n";
+        return -1.0;
       }
     }
+    
     void setActive(bool newStatus)
     {
       active = newStatus;
     }
+    
     bool getActive()
     {
       return active;
     }
+    
     void fillDataContainer(
       double time, 
       sensor::sensor_data &container)
     {
-
       /*
       based on our "sensor_data.lcm" data struct:
-
         struct sensor_data
         {
           int32_t sensorID;
@@ -99,7 +129,6 @@ class Sensor
           int32_t ndata;
           double  data[ndata];
         }
-
       */
 
       // set scalar values to be sent
@@ -120,23 +149,21 @@ class Sensor
       {
         container.data[j] = data[j];
       }
-
     }
-  private:
-    int ID;
-    bool active;
-    double position[DIM];
-    double data[NDATA];
 };
 
 
-bool operator>(const SensorEvent& lhs, const SensorEvent& rhs)
+// This overloaded operator is needed for the priority queue 
+// to sort events by ascending time.
+bool operator>(
+  const SensorEvent& lhs, 
+  const SensorEvent& rhs)
 {
   return (lhs.getTime() > rhs.getTime());
 }
 
 
-// returns a random number between 0 and 1
+// returns a random number between 0.0 and 1.0
 double getRandDble()
 {
   double p = 0.0;
@@ -155,6 +182,8 @@ int main(int argc, char* argv[])
   const double tmax = 11.0;
   const double failureProb = 0.40;
   // ==================================
+
+  std::cout << "\n    {Started Sensor Simulator}\n";
 
   srand(1000);
   int sid; 
@@ -185,6 +214,7 @@ int main(int argc, char* argv[])
     eventQueue.push( SensorEvent(i, myTime) );
     sensorArray[i].setID(i);
   }
+  int NDATA = sensorArray[0].getNDATA();
 
   // handle the event queue to send messages
   while (!eventQueue.empty())
@@ -202,7 +232,7 @@ int main(int argc, char* argv[])
       failCheck = getRandDble();
       if (failCheck < failureProb)
       {
-        std::cout << "***sensor #" << sid << " FAILED at time = " << time << " sec\n";
+        std::cout << "\n***sensor #" << sid << " FAILED at time = " << time << " sec\n";
         sensorArray[sid].setActive(false);
         numFailed += 1;
         for (int j = 0; j < NDATA; j++)
@@ -212,7 +242,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-        //std::cout << "sensor #" << sid << " records new data at time = " << time << " sec \n";
+        // sensor #sid records new data at time
         for (int j = 0; j < NDATA; j++)
         {
           sensorArray[sid].setData(j, 1.0);

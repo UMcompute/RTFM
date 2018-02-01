@@ -3,63 +3,61 @@
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
 
+DataHandler::DataHandler() 
+{
+  // initialize the position and data arrays with zeros
+  position = new double [DIM];
+  data = new double [NDATA];
+  for (int i = 0; i < DIM; i++)
+  {
+    position[i] = 0.0;
+  }
+  for (int j = 0; j < NDATA; j++)
+  {
+    data[j] = 0.0;
+  }        
+}
+
 DataHandler::~DataHandler() 
 {
-  // custom destructor
-  // (if needed for deleting dynamic memory later)
+  // custom destructor to delete dynamic memory
+  delete [] position;
+  delete [] data;
 }
 
 void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
        const std::string& chan,
        const sensor::sensor_data* msg)
 {
-  roomNum = msg->sensorID;
+  printf("      ==>> EDM recv %.3f from sensor #%d\n", msg->sendTime, msg->sensorID);
+  
+  sensorID = msg->sensorID;
   sendTime = msg->sendTime;
-  printf("      ==>> EDM recv %f from sensor %d\n", msg->sendTime, msg->sensorID);
+  sensorStatus = msg->status;
+  
+  for (int i = 0; i < DIM; i++)
+  {
+    position[i] = msg->position[i];
+  }
 
-  /*
-  
-  
-  temperature = msg->temperature;
-  O2conc      = msg->O2conc;
-  COconc      = msg->COconc;
-  CO2conc     = msg->CO2conc;
-  HCNconc     = msg->HCNconc;
-  heatFlux    = msg->heatFlux;
-  */
+  for (int i = 0; i < NDATA; i++)
+  {
+    data[i] = msg->data[i];
+  }
+
 }
 
-
-// "getter" functions to return data values
-int DataHandler::getRoom()
+int DataHandler::getID()
 {
-  return roomNum;
+  return sensorID;
 }
+
 double DataHandler::getTime()            
 {   
   return sendTime;
 }
-double DataHandler::getTemp()   
-{   
-  return temperature;
-}
-double DataHandler::getO2()     
-{   
-  return O2conc;
-}
-double DataHandler::getCO()     
-{   
-  return COconc;
-}
-double DataHandler::getCO2()    
-{   
-  return CO2conc;
-}
-double DataHandler::getHCN()    
-{   
-  return HCNconc;
-}
-double DataHandler::getFlux()   
-{   
-  return heatFlux;
+
+bool DataHandler::getStatus()
+{
+  return sensorStatus;
 }

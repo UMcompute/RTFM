@@ -1,3 +1,4 @@
+// typical C++ directives
 #include <stdio.h>
 
 // directives needed for LCM work
@@ -5,11 +6,39 @@
 #include "sensor/sensor_data.hpp"
 #include "DataHandler.h"
 
-/*
-    $ lcm-gen -x ../RTFM/data_edm.lcm
-    $ g++ main_edm.cpp -llcm -std=c++11
-    $ ./a.out
-*/
+
+// This function checks if a new LCM message is available 
+//   (it returns TRUE if there IS a new message, which then
+//   must be handled properly with "lcm.handle()").
+bool checkForNewMsg(lcm::LCM &lcm)
+{
+
+  // setup the LCM file descriptor for waiting
+  int lcm_fd = lcm.getFileno();
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(lcm_fd, &fds);
+
+  // wait a limited amount of time for an incoming msg
+  struct timeval timeout = {
+    1,  // seconds
+    0   // microseconds
+  };
+  int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
+
+  // interpret the file descriptor status
+  if (0 == status)
+  {
+    return false;
+  }
+  else if (FD_ISSET(lcm_fd, &fds))
+  {
+    return true;
+  }
+}
+
+
+
 
 /*
 // C++ preprocessor directives
@@ -57,17 +86,14 @@
 // MAIN EVENT DETECTION MODEL
 int main(int argc, char** argv) 
 {
-  
 
   // INPUT ============================
-  // (move this into an input file?)
-  const int numSensors = 4;
-  const double maxTime = 10.0;
+  const double maxTime = 20.0;
   // ==================================
 
+  printf("\n    {Started Event Detection Model}\n");
 
   // initiate LCM and check if it is working
-  printf("\n    {Start Event Detection Model}\n");
   lcm::LCM lcm;
   if(!lcm.good()) return 1;
 
@@ -75,47 +101,28 @@ int main(int argc, char** argv)
   DataHandler currentData;
   lcm.subscribe("EDM_CHANNEL", &DataHandler::handleMessage, &currentData);
 
-
   // main time loop
   double currentTime = 0.0;
   while (currentTime < maxTime)
   {
-
-    // setup the LCM file descriptor for waiting
-    int lcm_fd = lcm.getFileno();
-    fd_set fds;
-    FD_ZERO(&fds);
-    FD_SET(lcm_fd, &fds);
-
-    // wait a limited amount of time for an incoming msg
-    struct timeval timeout = {
-      1,  // seconds
-      0   // microseconds
-    };
-    int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
-
-    // interpret the file descriptor status
-    if (0 == status)
+    if ( checkForNewMsg(lcm) )
     {
-      // there is NO new message from LCM right now
-    }
-    else if (FD_ISSET(lcm_fd, &fds))
-    {
-      // a new message has been sent via LCM
+      // if true, a new message has been sent via LCM
       lcm.handle();
       currentTime = currentData.getTime();
-      printf("\t\tEDM currentTime: %f\n", currentTime);
     }
-
   }  // end main time loop
 
+  printf("\n\n    {End of Event Detection Model}\n");
+
+  return 0;
 
 
 
 
-
-
-  /*
+  /*    OLD STUFF 
+  
+  printf("\t\tEDM currentTime: %f\n", currentTime);
   // input
   const double TIME_MAX = 10.0;
 
@@ -261,6 +268,4 @@ int main(int argc, char** argv)
     }
   }
   */  
-  printf("    {End Event Detection Model}\n");
-  return 0;
 }
