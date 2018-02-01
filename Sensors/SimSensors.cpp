@@ -6,6 +6,8 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <stdio.h>
+#include <fstream>
 
 // LCM directives
 #include <lcm/lcm-cpp.hpp>
@@ -39,16 +41,34 @@ double getRandDble()
 int main(int argc, char* argv[])
 {
 
-  // INPUT ============================
-  // (move this into an input file?)
-  const int numSensors = 4;
-  const double tnom = 2.5;
-  const double tmax = 11.0;
-  const double failureProb = 0.40;
-  // ==================================
+  // INPUT ================================================
+  int numSensors;
+  double tmax, tnom, failureProb;
+  // get input file from command line argument
+  std::ifstream inFile;
+  std::string inFileName;
+  if (argc != 2)
+  {
+    printf("***Error: only supply one command line argument\n");
+    printf("   Expected usage:  $ ./SimSensors.ex <input_file>\n");
+    return 1;
+  }
+  else
+  {
+    inFileName = argv[1];
+    printf("\n%s has input file: %s \n", argv[0], inFileName.c_str());
+  }
+  // read the four input values needed
+  inFile.open(inFileName.c_str());
+  inFile >> numSensors;
+  inFile >> tmax;
+  inFile >> tnom;
+  inFile >> failureProb;
+  inFile.close();
+  // ======================================================
 
-  std::cout << "\n    {Started Sensor Simulator}\n";
-
+  // initialize the sensor simulator
+  printf("\n\t{Started Sensor Simulator}\n");
   srand(1000);
   int sid; 
   int numFailed = 0;
@@ -56,10 +76,12 @@ int main(int argc, char* argv[])
   double time = 0.0;
   double dt, st, myTime, failCheck;
 
-  sensor::sensor_data dataToSend;
-  Sensor sensorArray[numSensors];
+  // initialize the LCM data structures
   std::string channelPrefix = "SENSOR";
   std::string channel;
+  sensor::sensor_data dataToSend;
+  Sensor *sensorArray;
+  sensorArray = new Sensor [numSensors];
 
   // declare the primary queue for sensorEvent events
   std::priority_queue< SensorEvent, std::vector<SensorEvent>, std::greater<SensorEvent> > eventQueue;
@@ -96,7 +118,7 @@ int main(int argc, char* argv[])
       failCheck = getRandDble();
       if (failCheck < failureProb)
       {
-        std::cout << "\n***sensor #" << sid << " FAILED at time = " << time << " sec\n";
+        printf("\n***sensor #%d FAILED at time = %f sec***\n", sid, time);
         sensorArray[sid].setActive(false);
         numFailed += 1;
         for (int j = 0; j < NDATA; j++)
@@ -128,12 +150,16 @@ int main(int argc, char* argv[])
   }
 
   // print summary statistics
-  std::cout << "\n  *SENSOR SIMULATOR SUMMARY* \n";
-  std::cout << "\t" << numFailed << " sensors failed\n";
-  std::cout << "\t" << numSensors << " total sensors\n";
-  std::cout << "\t" << ( (double)numFailed / (double)numSensors) * 100.0 << "% failure rate\n";
-  printf("\t%.3f total time [sec]\n", time );
-  printf("\t%.3f failed per sec\n\n", (double)numFailed / time );
+  printf("\n\t{Sensor Simulation Summary}\n");
+  printf("\t  %d sensors failed\n", numFailed);
+  printf("\t  %d total sensors\n", numSensors);
+  printf("\t  %.2f percent failure rate\n", ( (double)numFailed / (double)numSensors) * 100.0);
+  printf("\t  %.3f total time [sec]\n", time );
+  printf("\t  %.3f failed per sec\n\n", (double)numFailed / time );
 
+  // free dynamic memory
+  delete [] sensorArray;
+
+  // exit the main program
   return 0;
 }
