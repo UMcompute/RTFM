@@ -239,7 +239,7 @@ int main(int argc, char* argv[])
   std::cout << "\t" << numSensors << " total sensors\n";
   std::cout << "\t" << ( (double)numFailed / (double)numSensors) * 100.0 << "% failure rate\n";
   printf("\t%.3f total time [sec]\n", time );
-  printf("\t%.3f failed per sec\n", (double)numFailed / time );
+  printf("\t%.3f failed per sec\n\n", (double)numFailed / time );
 
   return 0;
 }
