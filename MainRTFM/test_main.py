@@ -19,8 +19,10 @@ def sensor_handler(channel, data):
   msg = sensor_data.decode(data)
   sid = msg.sensorID
   print(" --> MAIN RTFM recv %.4f from sensor #%d at %s" % (msg.sendTime, sid, timeStamp))
-  # note: we are setting the global newSensorData struct here
-  newSensorData = msg
+
+  # note: we are filling the globally scope newSensorData struct here
+  newSensorData.sensorID = msg.sensorID
+  newSensorData.sendTime = msg.sendTime
 
 
 print("\n[START MAIN RTFM]\n")
@@ -28,7 +30,7 @@ print("\n[START MAIN RTFM]\n")
 NUM_SENSORS = 4
 timeout = 0.01  # amount of time to wait, in seconds
 channelPrefix = "SENSOR"
-execEventDetection = "exec ../EventDetection/main_edm.ex"
+execEventDetection = "exec ../EventDetection/MainEDM.ex"
 execSensor = "exec ../Sensors/SimSensors.ex"
 # =========================================================
 

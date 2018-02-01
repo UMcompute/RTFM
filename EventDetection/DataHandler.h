@@ -2,7 +2,7 @@
 #define DATAHANDLER_H_INCLUDED
 
 #include <lcm/lcm-cpp.hpp>
-#include "sim_sensor/sensor_data.hpp"
+#include "sensor/sensor_data.hpp"
 
 // LCM class for receiving message data
 class DataHandler
@@ -22,7 +22,7 @@ class DataHandler
     ~DataHandler();
     void handleMessage(const lcm::ReceiveBuffer* rbuf,
            const std::string& chan,
-           const sim_sensor::sensor_data* msg);
+           const sensor::sensor_data* msg);
 
     // "getter" functions to return most recent message data
     int getRoom();
