@@ -1,4 +1,4 @@
-package sim_sensor;
+package sensor;
 
 struct sensor_data
 {

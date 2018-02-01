@@ -7,7 +7,7 @@ import time
 import lcm
 
 # LCM data structures
-from sim_sensor import sensor_data
+from sensor import sensor_data
 
 # global variables (move to input file?)
 global NUM_SENSORS
@@ -29,7 +29,7 @@ NUM_SENSORS = 4
 timeout = 0.01  # amount of time to wait, in seconds
 channelPrefix = "SENSOR"
 execEventDetection = "exec ../EventDetection/main_edm.ex"
-execSensor = "exec ../Sensors/QueueSensors.ex"
+execSensor = "exec ../Sensors/SimSensors.ex"
 # =========================================================
 
 # initialize the LCM library

@@ -9,7 +9,7 @@
 
 // LCM include directives
 #include <lcm/lcm-cpp.hpp>
-#include "sim_sensor/sensor_data.hpp"
+#include "sensor/sensor_data.hpp"
 
 
 #define DIM 3
@@ -83,11 +83,11 @@ class Sensor
     }
     void fillDataContainer(
       double time, 
-      sim_sensor::sensor_data &container)
+      sensor::sensor_data &container)
     {
 
       /*
-      based on our "sim_sensor.lcm" data struct: 
+      based on our "sensor_data.lcm" data struct:
 
         struct sensor_data
         {
@@ -163,7 +163,7 @@ int main(int argc, char* argv[])
   double time = 0.0;
   double dt, st, myTime, failCheck;
 
-  sim_sensor::sensor_data dataToSend;
+  sensor::sensor_data dataToSend;
   Sensor sensorArray[numSensors];
   std::string channelPrefix = "SENSOR";
   std::string channel;
