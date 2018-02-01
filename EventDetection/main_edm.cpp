@@ -1,5 +1,6 @@
 // typical C++ directives
 #include <stdio.h>
+#include <fstream>
 
 // directives needed for LCM work
 #include <lcm/lcm-cpp.hpp>
@@ -38,10 +39,87 @@ bool checkForNewMsg(lcm::LCM &lcm)
 }
 
 
+// MAIN EVENT DETECTION MODEL
+int main(int argc, char** argv) 
+{
+  // INPUT ============================
+  int numSensors;
+  double tmax;
+  // get input file from command line argument
+  std::ifstream inFile;
+  std::string inFileName;
+  if (argc != 2)
+  {
+    printf("***Error: only supply one command line argument\n");
+    printf("   Expected usage:  $ ./MainEDM.ex <input_file>\n");
+    return 1;
+  }
+  else
+  {
+    inFileName = argv[1];
+    printf("\n%s has input file: %s \n", argv[0], inFileName.c_str());
+  }
+  // read the four input values needed
+  inFile.open(inFileName.c_str());
+  inFile >> numSensors;
+  inFile >> tmax;
+  inFile.close();  
+  // ==================================
+
+  // initiate LCM and check if it is working
+  printf("\n\t{Started Event Detection Model}\n");
+  lcm::LCM lcm;
+  if(!lcm.good()) return 1;
+
+  // construct a Handler and subsribe to receive messages from main RTFM
+  DataHandler currentData;
+  lcm.subscribe("EDM_CHANNEL", &DataHandler::handleMessage, &currentData);
+
+  // construct an array of warnings for hazard detection checks
+  int *burnThreat;
+  burnThreat = new int [numSensors];
+  int *smokeToxicity;
+  smokeToxicity = new int [numSensors];
+  int *fireStatus;
+  fireStatus = new int [numSensors];
+
+  // main time loop
+  int sid;
+  double currentTime = 0.0;
+  while (currentTime < tmax)
+  {
+    if ( checkForNewMsg(lcm) )
+    {
+      // if true, a new message has been sent via LCM
+      lcm.handle();
+
+      // get the current time and the sensorID
+      sid = currentData.getID();
+      currentTime = currentData.getTime();
+
+      // SMOKE TOXICITY
+      smokeToxicity[sid] = currentData.checkSmokeTox();
+
+      // BURN THREATS
+      burnThreat[sid] = currentData.checkBurnThreat();
+
+      // FIRE STATUS
+      fireStatus[sid] = currentData.checkFireStatus();
+    }
+  }  // end main time loop
+
+  // release dynamic memory
+  delete [] burnThreat;
+  delete [] smokeToxicity;
+  delete [] fireStatus;
+
+  // end the event detection program
+  printf("\n\n\t{End of Event Detection Model}\n");
+  return 0;
+}
 
 
-/*
-// C++ preprocessor directives
+  /*    OLD STUFF 
 #include <iostream>
 #include <queue>
 #include <sys/select.h>
@@ -54,23 +132,9 @@ bool checkForNewMsg(lcm::LCM &lcm)
 #include <fstream>
 #include <string>
 
-//#include "send_to_edm/data_to_edm.hpp"
-
-// include my custom classes
-
 #include "Sensor.h"
-*/
 
-//const int NUM_ROOMS = 4;
-//#define NUM_ROOMS 4
-/* ====================================
-    ASSUMPTION: one sensor per room
-==================================== */
-
-
-//const int NUM_DATA = 7;
-//#define NUM_DATA 7
-/* ====================================
+====================================
     DATA KEY: sensorData[i]
     i | parameter
     0 = time
@@ -80,65 +144,7 @@ bool checkForNewMsg(lcm::LCM &lcm)
     4 = CO2
     5 = HCN
     6 = heat flux
-==================================== */
-
-
-// MAIN EVENT DETECTION MODEL
-int main(int argc, char** argv) 
-{
-
-  // INPUT ============================
-  const double maxTime = 20.0;
-  // ==================================
-
-  printf("\n    {Started Event Detection Model}\n");
-
-  // initiate LCM and check if it is working
-  lcm::LCM lcm;
-  if(!lcm.good()) return 1;
-
-  // construct a Handler and subsribe to receive messages from main RTFM
-  DataHandler currentData;
-  lcm.subscribe("EDM_CHANNEL", &DataHandler::handleMessage, &currentData);
-
-  // main time loop
-  double currentTime = 0.0;
-  while (currentTime < maxTime)
-  {
-    if ( checkForNewMsg(lcm) )
-    {
-      // if true, a new message has been sent via LCM
-      lcm.handle();
-      currentTime = currentData.getTime();
-    }
-  }  // end main time loop
-
-  printf("\n\n    {End of Event Detection Model}\n");
-
-  return 0;
-
-
-
-
-  /*    OLD STUFF 
-  
-  printf("\t\tEDM currentTime: %f\n", currentTime);
-  // input
-  const double TIME_MAX = 10.0;
-
-  //===========================================================================
-
-  // init
-  int i;
-  int room = 0;
-  int numMsgRecv = 0;
-  int msgFromEachSensor[NUM_ROOMS];
-  int msgLimit = 38528;
-
-  // warning arrays
-  int burnThreat[NUM_ROOMS];
-  int smokeToxicity[NUM_ROOMS];
-  int fireStatus[NUM_ROOMS];
+====================================
 
   // preparation for output
   int print_output = 0;
@@ -203,14 +209,9 @@ int main(int argc, char** argv)
       sensorArray[i].setData(5, currentData.getHCN());
       sensorArray[i].setData(6, currentData.getFlux());
 
-      // SMOKE TOXICITY
-      smokeToxicity[i] = sensorArray[i].checkSmokeTox();
 
-      // BURN THREATS
-      burnThreat[i] = sensorArray[i].checkBurnThreat();
 
-      // FIRE STATUS
-      fireStatus[i] = sensorArray[i].checkFireStatus();
+
 
       // TIME UPDATE
       sensorArray[i].updateTime();
@@ -268,4 +269,3 @@ int main(int argc, char** argv)
     }
   }
   */  
-}

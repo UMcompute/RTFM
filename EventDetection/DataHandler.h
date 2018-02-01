@@ -41,6 +41,10 @@ class DataHandler
     int getID();
     double getTime();
     bool getStatus();
+
+    int checkSmokeTox();
+    int checkBurnThreat();
+    int checkFireStatus();
 };
 
 #endif // DATAHANDLER_H_INCLUDED

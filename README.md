@@ -1,5 +1,6 @@
-# fire_ideas
-This is the core of the fire monitoring project.
+# RTFM
+
+This repository contains the source code for the real-time fire monitoring project (RTFM) at the University of Michigan. 
 
 System Requirements:
 

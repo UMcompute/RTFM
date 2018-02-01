@@ -61,3 +61,21 @@ bool DataHandler::getStatus()
 {
   return sensorStatus;
 }
+
+// SMOKE TOXICITY
+int DataHandler::checkSmokeTox()
+{
+  return 0;
+}
+
+// BURN THREATS
+int DataHandler::checkBurnThreat()
+{
+  return 0;
+}
+
+// FIRE STATUS
+int DataHandler::checkFireStatus()
+{
+  return 0;
+}
