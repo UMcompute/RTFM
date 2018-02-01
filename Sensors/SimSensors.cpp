@@ -1,3 +1,4 @@
+// C++ directives
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -6,35 +7,12 @@
 #include <vector>
 #include <string>
 
-
-// LCM include directives
+// LCM directives
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
 
-
-class SensorEvent
-{
-  private:
-    int ID;
-    double time;
-
-  public:
-    SensorEvent(
-      int inID, 
-      double inTime)
-    {
-      ID = inID;
-      time = inTime;
-    }
-    int getID() const
-    {
-      return ID;
-    }
-    double getTime() const
-    {
-      return time; 
-    }
-};
+// my new directives
+#include "SensorEvent.h"
 
 
 class Sensor
