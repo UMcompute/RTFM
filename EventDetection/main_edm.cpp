@@ -114,10 +114,10 @@ int main(int argc, char** argv)
         fireStatus[sid] = sensorArray[sid].checkFireStatus(currentData);
         
         // BURN THREATS
-        //burnThreat[sid] = sensorArray[sid].checkBurnThreat()currentData;
+        burnThreat[sid] = sensorArray[sid].checkBurnThreat(currentData);
 
         // SMOKE TOXICITY
-        // smokeToxicity[sid] = currentData.checkSmokeTox();
+        smokeToxicity[sid] = sensorArray[sid].checkSmokeTox(currentData);
       }
     }
   }  // end main time loop
