@@ -1,14 +1,16 @@
+#include <fstream>
+#include <math.h>
+
 #include "SensorEDM.h"
 #include "DataHandler.h"
-#include <math.h>
 
 
 SensorEDM::SensorEDM()
 {
   // initialize the hazard variables:
+  sumFEDsmoke = 0.0;
   sumFEDheat1 = 0.0;
   sumFEDheat2 = 0.0;
-  sumFEDsmoke = 0.0;
 }
 
 SensorEDM::~SensorEDM()
@@ -19,6 +21,33 @@ SensorEDM::~SensorEDM()
 void SensorEDM::setID(int myID)
 {
   sensorID = myID;
+}
+
+void SensorEDM::writeOutput(
+  std::ofstream& fileHandle, 
+  DataHandler &inData,
+  int smoke,
+  int burn,
+  int fire)
+{
+  fileHandle << inData.getTime() << ","; 
+
+  fileHandle << inData.getDataValue(itemp) << ","; 
+  fileHandle << inData.getDataValue(iO2) << ","; 
+  fileHandle << inData.getDataValue(iCO) << ","; 
+  fileHandle << inData.getDataValue(iCO2) << ","; 
+  fileHandle << inData.getDataValue(iHCN) << ","; 
+  fileHandle << inData.getDataValue(iflux) << ","; 
+
+  fileHandle << sumFEDsmoke << ",";
+  fileHandle << sumFEDheat1 << ",";
+  fileHandle << sumFEDheat2 << ",";
+
+  fileHandle << smoke << ",";
+  fileHandle << burn << ",";
+  fileHandle << fire << ",";
+
+  fileHandle << inData.getStatus() << "\n"; 
 }
 
 

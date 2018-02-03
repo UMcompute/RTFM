@@ -67,6 +67,7 @@ int main(int argc, char** argv)
   inFile >> numSensors;
   inFile >> tmax;
   inFile.close();  
+  int writeLog = 1;
   // ==================================
 
   // initiate LCM and check if it is working
@@ -94,9 +95,27 @@ int main(int argc, char** argv)
     sensorArray[i].setID(i);
   }
 
+  // preparation for output
+  std::ofstream *outFiles;
+  outFiles = new std::ofstream [numSensors];
+  std::string file_prefix = "SensorLog-";
+  std::string file_suffix = ".csv";
+  std::string file_name;
+  if (writeLog == 1)
+  {
+    for (int i = 0; i < numSensors; i++)
+    {
+      file_name = file_prefix + std::to_string(i) + file_suffix;
+      outFiles[i].open(file_name.c_str(), std::ios::out);
+    }
+  }
+
+
+  //-------------------------------------------------------
   // main time loop
   int sid;
   double currentTime = 0.0;
+  bool active = true;
   while (currentTime < tmax)
   {
     if ( checkForNewMsg(lcm) )
@@ -107,22 +126,56 @@ int main(int argc, char** argv)
       // get the current time and the sensorID
       sid = currentData.getID();
       currentTime = currentData.getTime();
+      active = currentData.getStatus();
 
+      // assess the hazards
       if (currentTime < tmax)
       {
-        // FIRE STATUS
-        fireStatus[sid] = sensorArray[sid].checkFireStatus(currentData);
-        
-        // BURN THREATS
-        burnThreat[sid] = sensorArray[sid].checkBurnThreat(currentData);
+        // healthy sensor:
+        if (active)
+        {
+          // FIRE STATUS
+          fireStatus[sid] = sensorArray[sid].checkFireStatus(currentData);
+          
+          // BURN THREATS
+          burnThreat[sid] = sensorArray[sid].checkBurnThreat(currentData);
 
-        // SMOKE TOXICITY
-        smokeToxicity[sid] = sensorArray[sid].checkSmokeTox(currentData);
+          // SMOKE TOXICITY
+          smokeToxicity[sid] = sensorArray[sid].checkSmokeTox(currentData);
+        }
+        // special case of damaged sensor:
+        else
+        {
+
+        }
+
+        // write output to propoer log file
+        if (writeLog == 1)
+        {
+          sensorArray[sid].writeOutput(
+            outFiles[sid], 
+            currentData,
+            smokeToxicity[sid],
+            burnThreat[sid],
+            fireStatus[sid]);
+        }
       }
     }
   }  // end main time loop
+  //-------------------------------------------------------
+
+
+  // close the output files
+  if (writeLog == 1)
+  {
+    for (int i = 0; i < numSensors; i++)
+    {
+      outFiles[i].close();
+    }
+  }
 
   // release dynamic memory
+  delete [] outFiles;
   delete [] sensorArray;
   delete [] burnThreat;
   delete [] smokeToxicity;
@@ -132,154 +185,3 @@ int main(int argc, char** argv)
   printf("\n\n\t{End of Event Detection Model}\n");
   return 0;
 }
-
-
-
-
-
-
-
-
-  /*    OLD STUFF 
-#include <iostream>
-#include <queue>
-#include <sys/select.h>
-#include <sys/time.h>
-#include <time.h>
-#include <ctime>
-#include <math.h>
-#include <unistd.h>
-#include <chrono>
-#include <fstream>
-#include <string>
-
-
-====================================
-    DATA KEY: sensorData[i]
-    i | parameter
-    0 = time
-    1 = upper layer gas temperature
-    2 = O2
-    3 = CO
-    4 = CO2
-    5 = HCN
-    6 = heat flux
-====================================
-
-  // preparation for output
-  int print_output = 0;
-  double t, T, O2, CO, CO2, HCN, Q; 
-  double FED_smoke, FED_heat_pain, FED_heat_fatal;
-  std::ofstream outFile[NUM_ROOMS];
-  std::string file_prefix = "edm_output_";
-  std::string file_suffix = ".csv";
-  std::string file_name;
-  if (print_output == 1)
-  {
-    for (i = 0; i < NUM_ROOMS; i++)
-    {
-      file_name = file_prefix + std::to_string(i) + file_suffix;
-      std::cout << file_name << "\n";
-      outFile[i].open(file_name.c_str());
-    }
-  }
-
-  // timer setup
-  char buffer[26];
-  int millisec;
-  struct tm* tm_info;
-  struct timeval tv;  
-
-  
-
-
-
-
-
-
-
-  // official start time
-  std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point current;
-
-  // MAIN event loop
-  xxxxxxxxxxxxxxxxxxx  t = 0.0;
-  //while (numMsgRecv < msgLimit)
-  xxxxxxxxxxxxxxxxxxx  while (t < TIME_MAX)
-  {
-
-
-
-      numMsgRecv += 1;
-
-      // update data for the current sensor
-      i = currentData.getRoom();
-      msgFromEachSensor[i] += 1;
-      sensorArray[i].setData(0, currentData.getTime());
-      sensorArray[i].setData(1, currentData.getTemp());
-      sensorArray[i].setData(2, currentData.getO2());
-      sensorArray[i].setData(3, currentData.getCO());
-      sensorArray[i].setData(4, currentData.getCO2());
-      sensorArray[i].setData(5, currentData.getHCN());
-      sensorArray[i].setData(6, currentData.getFlux());
-
-
-
-
-
-      // TIME UPDATE
-      sensorArray[i].updateTime();
-
-      // PRINT OUTPUT
-      if (print_output == 1)
-      {
-        // raw data
-        t = currentData.getTime();
-        T = currentData.getTemp();
-        O2 = currentData.getO2();
-        CO = currentData.getCO();
-        CO2 = currentData.getCO2();
-        HCN = currentData.getHCN();
-        Q = currentData.getFlux();
-
-        // output
-        FED_smoke = sensorArray[i].getFEDvals(0);
-        FED_heat_pain = sensorArray[i].getFEDvals(1);
-        FED_heat_fatal = sensorArray[i].getFEDvals(2);
-
-        // write to specific room file 
-        outFile[i] << t << "," << T << "," << O2 << ","; 
-        outFile[i] << CO << "," << CO2 << "," << HCN << "," << Q << ",";
-        outFile[i] << FED_smoke << "," << FED_heat_pain << "," << FED_heat_fatal << ",";
-        outFile[i] << smokeToxicity[i] << "," << burnThreat[i] << ",";
-        outFile[i] << fireStatus[i] << "\n";
-      }
-
-      //=================================
-      // new timer
-      gettimeofday(&tv, NULL);
-      millisec = lrint(tv.tv_usec/1000.0); // Round to nearest millisec
-      if (millisec>=1000) 
-      {
-        // Allows for rounding up to nearest second
-        millisec -=1000;
-        tv.tv_sec++;
-      }
-      tm_info = localtime(&tv.tv_sec);
-      strftime(buffer, 26, "%H:%M:%S", tm_info);
-      //printf("sensor #%d checks finished at msg #%d time %s.%03d\n", i, msgFromEachSensor[i], buffer, millisec);
-      printf("%d, %d, %s.%03d \n", i, msgFromEachSensor[i], buffer, millisec);
-      //=================================
-      
-    }
-  }
-
-  // close the testing files
-  if (print_output == 1)
-  {
-    for (i = 0; i < NUM_ROOMS; i++)
-    {
-      outFile[i].close();
-    }
-  }
-  */  

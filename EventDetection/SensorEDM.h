@@ -1,6 +1,7 @@
 #ifndef SENSOREDM_H_INCLUDED
 #define SENSOREDM_H_INCLUDED
 
+#include <fstream>
 #include "DataHandler.h"
 
 
@@ -21,8 +22,8 @@ class SensorEDM
     const int iHCN  = 5;
 
     // SMOKE TOXICITY
-    double O2_limit = 7.0;          // [%] (Alarie 2002)
-    const double FED_limit = 1.0;   // FED sums to 1.0
+    double O2_limit = 7.0;            // [%] (Alarie 2002)
+    const double FED_limit = 1.0;     // FED sums to 1.0
     double sumFEDsmoke;
 
     // BURN THREATS
@@ -40,6 +41,12 @@ class SensorEDM
 
     // utilities
     void setID(int myID);
+    void writeOutput(
+        std::ofstream& fileHandle,
+        DataHandler &inData,
+        int smoke,
+        int burn,
+        int fire);
 
     // HAZARDS
     int checkFireStatus(DataHandler& inData);

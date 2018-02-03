@@ -29,19 +29,21 @@ def sensor_handler(channel, data):
   newSensorData.data[0:n] = msg.data[0:n] 
 
 
-
 # INPUT ===================================================
-NUM_SENSORS = 4         # todo: read this from input file
-timeout = 0.01          # amount of time to wait, in [sec]
-smallDelay = 1.0        # [sec]
-killEDMtime = 100000.0  # [sec]
-channelPrefix = "SENSOR"
 inputFile = "../input.txt"
+fr = open(inputFile, 'r')
+NUM_SENSORS = int( fr.readline(1) )
+fr.close()
 execEventDetection = "exec ../EventDetection/MainEDM.ex " + inputFile
 execSensor = "exec ../Sensors/SimSensors.ex " + inputFile
 # =========================================================
 
 
+# fixed parameters
+channelPrefix = "SENSOR"
+timeout = 0.01          # amount of time to wait, in [sec]
+smallDelay = 1.0        # [sec]
+killEDMtime = 100000.0  # [sec]
 
 # initialize the LCM library
 print("\n[START MAIN RTFM]\n")
@@ -73,10 +75,10 @@ else:
   print("***Sensor Simulator was not started***")
 
 
+# ---------------------------------------------------------
 # main event handling loop to do the following:
 #   1. receive new data from any sensor
 #   2. forward that data to sub-models (e.g. EDM)
-
 newSensorData = sensor_data()
 checkPoll = None
 while (checkPoll == None):
@@ -96,6 +98,8 @@ while (checkPoll == None):
     # send the new data to EDM if it is active
     if 'edmProcess' in locals():
       lc.publish("EDM_CHANNEL", newSensorData.encode())
+# ---------------------------------------------------------
+
 
 # try to close event detection model if it is still running
 if 'edmProcess' in locals():
