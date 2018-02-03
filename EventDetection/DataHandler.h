@@ -4,6 +4,7 @@
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
 
+
 // LCM-based class for receiving new message data
 class DataHandler
 {
@@ -34,17 +35,17 @@ class DataHandler
     ~DataHandler();
     DataHandler();
 
+    // message handler used by LCM upon receipt of data
     void handleMessage(const lcm::ReceiveBuffer* rbuf,
            const std::string& chan,
            const sensor::sensor_data* msg);
 
-    int getID();
-    double getTime();
-    bool getStatus();
-
-    int checkSmokeTox();
-    int checkBurnThreat();
-    int checkFireStatus();
+    // getter functions to return sensor data members
+    int getID() const;
+    double getTime() const;
+    bool getStatus() const;
+    void getPosition(double *x, int n);
+    double getDataValue(int index);
 };
 
 #endif // DATAHANDLER_H_INCLUDED

@@ -3,7 +3,8 @@
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
 
-DataHandler::DataHandler() 
+
+DataHandler::DataHandler()
 {
   // initialize the position and data arrays with zeros
   position = new double [DIM];
@@ -47,35 +48,52 @@ void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
 
 }
 
-int DataHandler::getID()
+int DataHandler::getID() const
 {
   return sensorID;
 }
 
-double DataHandler::getTime()            
+double DataHandler::getTime() const
 {   
   return sendTime;
 }
 
-bool DataHandler::getStatus()
+bool DataHandler::getStatus() const
 {
   return sensorStatus;
 }
 
-// SMOKE TOXICITY
-int DataHandler::checkSmokeTox()
+void DataHandler::getPosition(double *x, int n)
 {
-  return 0;
+  // This fucntion expects x to have dimension of n:
+  //   double x[n];
+  if (n != DIM)
+  {
+    printf("***Warning: DIM=%d does not match input n=%d in DataHandler \n", DIM, n);
+  }
+  if (n <= DIM)
+  {    
+    for (int i = 0; i < n; i++)
+    {
+      x[i] = position[i];
+    }
+  }
+  else
+  {
+    printf("***Error: n=%d is out of bounds for DIM=%d in DataHandler \n", n, DIM); 
+  }
 }
 
-// BURN THREATS
-int DataHandler::checkBurnThreat()
+double DataHandler::getDataValue(int index)
 {
-  return 0;
-}
-
-// FIRE STATUS
-int DataHandler::checkFireStatus()
-{
-  return 0;
+  // This function will check if the requested index is in bounds
+  if (0 <= index && index < NDATA)
+  {
+    return data[index];
+  }
+  else
+  {
+    printf("***Error: tried to access index %d in DataHandler (NDATA = %d)\n", index, NDATA);
+    return -1.0;
+  }
 }

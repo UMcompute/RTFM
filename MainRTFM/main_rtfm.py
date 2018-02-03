@@ -31,13 +31,14 @@ def sensor_handler(channel, data):
 
 
 # INPUT ===================================================
-NUM_SENSORS = 4
-timeout = 0.01  # amount of time to wait, in seconds
+NUM_SENSORS = 4         # todo: read this from input file
+timeout = 0.01          # amount of time to wait, in [sec]
+smallDelay = 1.0        # [sec]
+killEDMtime = 100000.0  # [sec]
 channelPrefix = "SENSOR"
 inputFile = "../input.txt"
 execEventDetection = "exec ../EventDetection/MainEDM.ex " + inputFile
 execSensor = "exec ../Sensors/SimSensors.ex " + inputFile
-smallDelay = 1.0
 # =========================================================
 
 
@@ -98,9 +99,13 @@ while (checkPoll == None):
 
 # try to close event detection model if it is still running
 if 'edmProcess' in locals():
+  newSensorData.sendTime = killEDMtime
+  lc.publish("EDM_CHANNEL", newSensorData.encode())
+  time.sleep(smallDelay)
   checkPoll = edmProcess.poll()
   if (checkPoll == None):
-    edmProcess.kill()
+    print("(***warning: EDM is still running***")
+    # you can kill it with this Python command: edmProcess.kill()
 
 # end of the main script
 print("\n[END MAIN RTFM]\n")

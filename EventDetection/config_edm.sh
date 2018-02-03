@@ -11,8 +11,5 @@
 # LCMPATH="$COMMDIR/$LCMFILE"
 # lcm-gen -x $LCMPATH
 
-lcm-gen -x ../sensor_data.lcm
-make clean
+lcm-gen -x ../Sensors/sensor_data.lcm
 make -f Makefile
-
-#./main_edm.exe

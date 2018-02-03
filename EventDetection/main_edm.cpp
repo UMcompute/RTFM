@@ -2,10 +2,13 @@
 #include <stdio.h>
 #include <fstream>
 
-// directives needed for LCM work
+// directives needed for LCM
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
+
+// new classes
 #include "DataHandler.h"
+#include "SensorEDM.h"
 
 
 // This function checks if a new LCM message is available 
@@ -83,6 +86,14 @@ int main(int argc, char** argv)
   int *fireStatus;
   fireStatus = new int [numSensors];
 
+  // create an array of SensorEDM class objects to store data over time
+  SensorEDM *sensorArray;
+  sensorArray = new SensorEDM [numSensors];
+  for (int i = 0; i < numSensors; i++)
+  {
+    sensorArray[i].setID(i);
+  }
+
   // main time loop
   int sid;
   double currentTime = 0.0;
@@ -97,18 +108,22 @@ int main(int argc, char** argv)
       sid = currentData.getID();
       currentTime = currentData.getTime();
 
-      // SMOKE TOXICITY
-      smokeToxicity[sid] = currentData.checkSmokeTox();
+      if (currentTime < tmax)
+      {
+        // FIRE STATUS
+        fireStatus[sid] = sensorArray[sid].checkFireStatus(currentData);
+        
+        // BURN THREATS
+        //burnThreat[sid] = sensorArray[sid].checkBurnThreat()currentData;
 
-      // BURN THREATS
-      burnThreat[sid] = currentData.checkBurnThreat();
-
-      // FIRE STATUS
-      fireStatus[sid] = currentData.checkFireStatus();
+        // SMOKE TOXICITY
+        // smokeToxicity[sid] = currentData.checkSmokeTox();
+      }
     }
   }  // end main time loop
 
   // release dynamic memory
+  delete [] sensorArray;
   delete [] burnThreat;
   delete [] smokeToxicity;
   delete [] fireStatus;
@@ -117,6 +132,12 @@ int main(int argc, char** argv)
   printf("\n\n\t{End of Event Detection Model}\n");
   return 0;
 }
+
+
+
+
+
+
 
 
   /*    OLD STUFF 
@@ -132,7 +153,6 @@ int main(int argc, char** argv)
 #include <fstream>
 #include <string>
 
-#include "Sensor.h"
 
 ====================================
     DATA KEY: sensorData[i]
@@ -176,13 +196,7 @@ int main(int argc, char** argv)
 
 
 
-  // create new Sensor class objects based on the number of rooms
-  Sensor sensorArray[NUM_ROOMS];
-  for (i = 0; i < NUM_ROOMS; i++)
-  {
-    sensorArray[i].setID(i);
-    msgFromEachSensor[i] = 0;
-  }
+
 
   // official start time
   std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
