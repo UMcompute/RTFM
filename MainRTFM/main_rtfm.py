@@ -130,8 +130,13 @@ for count in numMsgRecvPerSensor:
     maxRecv = [count, sid]
   totalRecv += count
   sid += 1
+
+# aggregate stats
 avgRecv = float(totalRecv) / float(NUM_SENSORS)
-msgPerSec = float(totalRecv) / maxTime
+if (maxTime > 0.0):
+  msgPerSec = float(totalRecv) / maxTime
+else:
+  msgPerSec = 0.0
 
 # end of the main script
 print("\n\tMessages received from all %d sensors:" % NUM_SENSORS)

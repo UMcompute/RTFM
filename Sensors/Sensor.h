@@ -20,7 +20,7 @@ class Sensor
     int getNDATA() const;
     void setID(int inID);
     void setData(int index, double value);
-    double getData(int index) const;
+    double getData(int index);
     void setActive(bool newStatus);
     bool getActive() const;
     

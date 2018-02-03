@@ -116,7 +116,7 @@ int main(int argc, char** argv)
   int sid;
   double currentTime = 0.0;
   bool active = true;
-  while (currentTime < tmax)
+  while (currentTime <= tmax)
   {
     if ( checkForNewMsg(lcm) )
     {
@@ -129,7 +129,7 @@ int main(int argc, char** argv)
       active = currentData.getStatus();
 
       // assess the hazards
-      if (currentTime < tmax)
+      if (currentTime <= tmax)
       {
         // healthy sensor:
         if (active)
@@ -143,10 +143,9 @@ int main(int argc, char** argv)
           // SMOKE TOXICITY
           smokeToxicity[sid] = sensorArray[sid].checkSmokeTox(currentData);
         }
-        // special case of damaged sensor:
         else
         {
-
+          // todo: handle damaged sensor data
         }
 
         // write output to propoer log file

@@ -1,7 +1,7 @@
 SimSensors.ex: SensorEvent.o Sensor.o SimSensors.o
 	g++ -O3 SensorEvent.o Sensor.o SimSensors.o -o SimSensors.ex -llcm -std=c++11
 
-SimSensors.o: SimSensors.cpp
+SimSensors.o: SimSensors.cpp Sensor.h SensorEvent.h
 	g++ -c SimSensors.cpp -o SimSensors.o -llcm -std=c++11
 
 Sensor.o: Sensor.cpp Sensor.h

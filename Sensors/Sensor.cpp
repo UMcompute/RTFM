@@ -5,10 +5,14 @@
 
 Sensor::Sensor()
 {
-  active = true;
+  // ==========================================
+  // Do not change values of DIM or NDATA
+  //   without changing the LCM data struct.
   DIM = 3;
   NDATA = 6;
+  // ==========================================
 
+  active = true;
   position = new double [DIM];
   data = new double [NDATA];
 
@@ -27,7 +31,7 @@ Sensor::~Sensor()
   delete [] position;
   delete [] data;
 }
-    
+
 int Sensor::getNDATA() const
 {
   return NDATA;
@@ -42,10 +46,17 @@ void Sensor::setData(
   int index, 
   double value)
 {
-  data[index] = value;
+  if (index >= 0 && index < NDATA)
+  {
+    data[index] = value;
+  }
+  else
+  {
+    printf("\n***error in Sensor::setData(index, value): index %d is out of bounds\n", index);
+  }  
 }
     
-double Sensor::getData(int index) const
+double Sensor::getData(int index)
 {
   if (index >= 0 && index < NDATA)
   {
@@ -53,7 +64,7 @@ double Sensor::getData(int index) const
   }
   else
   {
-    printf("\n***error in Sensor::getData(index): index %d is out of bounds\n", index);
+    printf("\n***error in Sensor::getData(index): index %d is out of bounds [%d] \n", index, NDATA);
     return -1.0;
   }
 }
