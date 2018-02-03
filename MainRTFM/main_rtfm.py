@@ -13,7 +13,7 @@ def sensor_handler(channel, data):
   timeStamp = time.strftime("%c")
   msg = sensor_data.decode(data)
   sid = msg.sensorID
-  print("\n --> MAIN RTFM recv %.3f from sensor #%d at %s" % (msg.sendTime, sid, timeStamp))
+  #print("\n --> MAIN RTFM recv %.3f from sensor #%d at %s" % (msg.sendTime, sid, timeStamp))
 
   # note: we are filling the globally scope newSensorData struct here
   newSensorData.sensorID = sid
@@ -32,7 +32,7 @@ def sensor_handler(channel, data):
 # INPUT ===================================================
 inputFile = "../input.txt"
 fr = open(inputFile, 'r')
-NUM_SENSORS = int( fr.readline(1) )
+NUM_SENSORS = int( fr.readline() )
 fr.close()
 execEventDetection = "exec ../EventDetection/MainEDM.ex " + inputFile
 execSensor = "exec ../Sensors/SimSensors.ex " + inputFile
@@ -50,9 +50,11 @@ print("\n[START MAIN RTFM]\n")
 lc = lcm.LCM()
 
 # subscribe to all the sensor channels to recv new data
+numMsgRecvPerSensor = []
 for i in range(0, NUM_SENSORS):
   channel = channelPrefix + str(i)
   lc.subscribe(channel, sensor_handler)
+  numMsgRecvPerSensor.append(0)
 
 # prompt user to start sub-models
 userMsg1 = 'Ready to launch Event Detection Model? (Enter 0 or 1) '
@@ -98,10 +100,15 @@ while (checkPoll == None):
     # send the new data to EDM if it is active
     if 'edmProcess' in locals():
       lc.publish("EDM_CHANNEL", newSensorData.encode())
+
+    # increment the data message counter
+    sid = newSensorData.sensorID
+    numMsgRecvPerSensor[sid] += 1
 # ---------------------------------------------------------
 
 
 # try to close event detection model if it is still running
+maxTime = newSensorData.sendTime
 if 'edmProcess' in locals():
   newSensorData.sendTime = killEDMtime
   lc.publish("EDM_CHANNEL", newSensorData.encode())
@@ -111,5 +118,28 @@ if 'edmProcess' in locals():
     print("(***warning: EDM is still running***")
     # you can kill it with this Python command: edmProcess.kill()
 
+# prepare some statistics about the data received from sensors
+totalRecv = 0
+sid = 0
+minRecv = [ numMsgRecvPerSensor[sid], sid ]
+maxRecv = [ numMsgRecvPerSensor[sid], sid ]
+for count in numMsgRecvPerSensor:
+  if (count < minRecv[0]):
+    minRecv = [count, sid]
+  if (count > maxRecv[0]):
+    maxRecv = [count, sid]
+  totalRecv += count
+  sid += 1
+avgRecv = float(totalRecv) / float(NUM_SENSORS)
+msgPerSec = float(totalRecv) / maxTime
+
 # end of the main script
+print("\n\tMessages received from all %d sensors:" % NUM_SENSORS)
+print("\t" + str(numMsgRecvPerSensor))
+print("\n\t[MAIN RTFM SUMMARY]")
+print("\t  %d total number of data messages received" % totalRecv)
+print("\t  %d minimum messages sent from sensor #%d" % (minRecv[0], minRecv[1]) )
+print("\t  %d maximum messages sent from sensor #%d" % (maxRecv[0], maxRecv[1]) )
+print("\t  %.2f average messages sent from all sensors" %  avgRecv)
+print("\t  %.2f average messages received per second" %  msgPerSec)
 print("\n[END MAIN RTFM]\n")

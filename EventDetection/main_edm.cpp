@@ -98,7 +98,7 @@ int main(int argc, char** argv)
   // preparation for output
   std::ofstream *outFiles;
   outFiles = new std::ofstream [numSensors];
-  std::string file_prefix = "SensorLog-";
+  std::string file_prefix = "../Output/SensorLog-";
   std::string file_suffix = ".csv";
   std::string file_name;
   if (writeLog == 1)

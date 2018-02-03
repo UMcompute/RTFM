@@ -69,11 +69,12 @@ int main(int argc, char* argv[])
 
   // initialize the sensor simulator
   printf("\n\t{Started Sensor Simulator}\n");
-  srand(1000);
+  srand(2);
   int sid; 
   int numFailed = 0;
   double sleepConversion = pow(10.0, 6.0);
   double time = 0.0;
+  double dtMin = 0.5;
   double dt, st, myTime, failCheck;
 
   // initialize the LCM data structures
@@ -142,7 +143,7 @@ int main(int argc, char* argv[])
     lcm.publish(channel, &dataToSend);
 
     // add a new event to the sensor queue
-    dt = (getRandDble() * tnom) + tnom;
+    dt = getRandDble() * tnom + dtMin;
     if ( (time + dt) < tmax)
     {
       eventQueue.push( SensorEvent(sid, time + dt) );
@@ -154,8 +155,7 @@ int main(int argc, char* argv[])
   printf("\t  %d sensors failed\n", numFailed);
   printf("\t  %d total sensors\n", numSensors);
   printf("\t  %.2f percent failure rate\n", ( (double)numFailed / (double)numSensors) * 100.0);
-  printf("\t  %.3f total time [sec]\n", time );
-  printf("\t  %.3f failed per sec\n\n", (double)numFailed / time );
+  printf("\t  %.3f total time [sec]\n\n", time );
 
   // free dynamic memory
   delete [] sensorArray;

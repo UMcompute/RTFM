@@ -30,7 +30,7 @@ void DataHandler::handleMessage(const lcm::ReceiveBuffer* rbuf,
        const std::string& chan,
        const sensor::sensor_data* msg)
 {
-  printf("      ==>> EDM recv %.3f from sensor #%d\n", msg->sendTime, msg->sensorID);
+  //printf("      ==>> EDM recv %.3f from sensor #%d\n", msg->sendTime, msg->sensorID);
   
   sensorID = msg->sensorID;
   sendTime = msg->sendTime;
