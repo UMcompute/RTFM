@@ -11,6 +11,8 @@ class SensorEDM
   private:
     // unique ID number for sensor
     int sensorID;
+    double dt;
+    double lastTime;
 
     // set the mapping to data array
     // (NDATA is 6 for the "data" array in DataHandler)
@@ -31,6 +33,7 @@ class SensorEDM
     double sumFEDheat2;
 
     // FIRE STATUS
+    int fireStatus;
     const int maxWarning = 2;
     const double tempLimits[2] = {57.0, 500.0};
     const double fluxLimits[2] = {0.6, 15.0};
@@ -47,6 +50,7 @@ class SensorEDM
         int smoke,
         int burn,
         int fire);
+    void updateTime(double time);
 
     // HAZARDS
     int checkFireStatus(DataHandler& inData);

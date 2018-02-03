@@ -131,6 +131,7 @@ int main(int argc, char** argv)
       // assess the hazards
       if (currentTime <= tmax)
       {
+        sensorArray[sid].updateTime(currentTime);
         // healthy sensor:
         if (active)
         {

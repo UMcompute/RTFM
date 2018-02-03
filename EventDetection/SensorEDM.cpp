@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <fstream>
 #include <math.h>
 
@@ -11,6 +12,9 @@ SensorEDM::SensorEDM()
   sumFEDsmoke = 0.0;
   sumFEDheat1 = 0.0;
   sumFEDheat2 = 0.0;
+  fireStatus = 0;
+  lastTime = 0.0;
+  dt = 0.0;
 }
 
 SensorEDM::~SensorEDM()
@@ -50,6 +54,16 @@ void SensorEDM::writeOutput(
   fileHandle << inData.getStatus() << "\n"; 
 }
 
+void SensorEDM::updateTime(double time)
+{
+  // update the time increment
+  dt = time - lastTime;
+  dt = dt / 60.0;  // convert [sec] to [min]
+
+  // store last time stamp
+  lastTime = time;
+}
+
 
 // SMOKE TOXICITY
 // use FED to check smoke toxicity
@@ -71,15 +85,10 @@ int SensorEDM::checkSmokeTox(DataHandler &inData)
   int warning = 0;
   int use_fds = 0;
   double FED_CO, FED_CN, FED_NOx, FLD_irr, HV_CO2, FED_O2;
-  
-  // update time increment
-  static double lastTime = 0.0;
-  double dt = (inData.getTime() - lastTime);
-  lastTime = inData.getTime();
-  dt = dt / 60.0;  // convert [sec] to [min]
 
   // FED for carbon monoxide
-  FED_CO = 2.764 * pow(10.0, -5) * pow(inData.getDataValue(iCO), 1.036) * dt;
+  double CO = inData.getDataValue(iCO);
+  FED_CO = 2.764 * pow(10.0, -5) * pow(CO, 1.036) * dt;
 
   // FED for CN which removes [NO2] and [NO] first
   // **note: we are not currently measuring [NO2] or [NO]
@@ -142,13 +151,7 @@ int SensorEDM::checkSmokeTox(DataHandler &inData)
 // BURN THREATS
 // use FED to check burn threats
 int SensorEDM::checkBurnThreat(DataHandler &inData)
-{   
-  // update the time increment
-  static double lastTime = 0.0;
-  double dt = (inData.getTime() - lastTime);
-  lastTime = inData.getTime();
-  dt = dt / 60.0;  // convert [sec] to [min]
-
+{
   // get new temperature and heat flux
   double temp = inData.getDataValue(itemp);
   double flux = inData.getDataValue(iflux);
@@ -212,7 +215,6 @@ int SensorEDM::checkFireStatus(DataHandler& inData)
   double heatFlux = inData.getDataValue(iflux);
 
   // perform hazard detection calculations
-  static int fireStatus = 0;
   int warning = 0;
   if (fireStatus < maxWarning)
   {

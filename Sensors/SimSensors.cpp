@@ -200,7 +200,7 @@ void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
   printf("\n\t{UNIT TEST USING %d SENSORS}\n", numSensors);
 
   // used for usleep function:
-  double sleepTime = 0.1 * pow(10.0, 6.0);
+  double sleepTime = 0.2 * pow(10.0, 6.0);
 
   // N is the number of sensor measurements taken over time
   const int N = 6;
@@ -272,7 +272,7 @@ void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
       sensorArray[i].fillDataContainer(time[n], dataToSend);
       channel = channelPrefix + std::to_string(i);
       lcmHandle.publish(channel, &dataToSend);
-      printf("\t*published message on %s*\n\n", channel.c_str() );
+      //printf("\t*published message on %s*\n\n", channel.c_str() );
     }
   }
 

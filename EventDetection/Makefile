@@ -1,7 +1,7 @@
 MainEDM.ex: DataHandler.o SensorEDM.o main_edm.o
 	g++ DataHandler.o SensorEDM.o main_edm.o -o MainEDM.ex -llcm -std=c++11
 
-main_edm.o: main_edm.cpp
+main_edm.o: main_edm.cpp SensorEDM.o DataHandler.o
 	g++ -c main_edm.cpp -o main_edm.o -llcm -std=c++11
 
 SensorEDM.o: SensorEDM.cpp SensorEDM.h DataHandler.o
