@@ -15,13 +15,13 @@ class SensorEDM
     double lastTime;
 
     // set the mapping to data array
-    // (NDATA is 6 for the "data" array in DataHandler)
+    //  (NDATA is 6 for the size of the "data" array in DataHandler)
     const int itemp = 0;
-    const int iflux = 1;
-    const int iO2   = 2;
-    const int iCO   = 3;
-    const int iCO2  = 4;
-    const int iHCN  = 5;
+    const int iO2   = 1;
+    const int iCO   = 2;
+    const int iCO2  = 3;
+    const int iHCN  = 4;
+    const int iflux = 5;
 
     // SMOKE TOXICITY
     double O2_limit = 7.0;            // [%] (Alarie 2002)

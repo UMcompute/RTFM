@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
   if (argc != 2)
   {
     printf("***Error: only supply one command line argument\n");
-    printf("   Expected usage:  $ ./SimSensors.ex <input_file>\n");
+    printf("   Expected usage:  $ SimSensors.ex <input_file>\n");
     return 1;
   }
   else
@@ -98,6 +98,13 @@ int main(int argc, char* argv[])
   Sensor *sensorArray;
   sensorArray = new Sensor [numSensors];
 
+  // file management
+  std::string filePrefix = "../Sensors/data/file";
+  std::string fileSuffix = ".csv";  
+  std::string dataFile;
+  std::ifstream *fileList;
+  fileList = new std::ifstream [numSensors];
+
   // declare the primary queue for sensorEvent events
   std::priority_queue< SensorEvent, std::vector<SensorEvent>, std::greater<SensorEvent> > eventQueue;
 
@@ -109,6 +116,10 @@ int main(int argc, char* argv[])
     {
       myTime = getRandDble() * tnom;
       eventQueue.push( SensorEvent(i, myTime) );
+
+      // open files to read sensor data from:
+      dataFile = filePrefix + std::to_string(i) + fileSuffix;
+      fileList[i].open(dataFile.c_str());
     }
   }
   // ... or perform unit test to assess system:
@@ -140,12 +151,14 @@ int main(int argc, char* argv[])
     time = st;
     eventQueue.pop();
 
-    // test if sensor has failed
+    // test if sensor has failed; update its data
     if ( sensorArray[sid].getActive() )
     {
       failCheck = getRandDble();
       if (failCheck < failureProb)
       {
+        // if the sensor has failed (signifying damage), 
+        //   then fill the data array with -1's
         printf("\n***sensor #%d FAILED at time = %f sec***\n", sid, time);
         sensorArray[sid].setActive(false);
         numFailed += 1;
@@ -156,11 +169,7 @@ int main(int argc, char* argv[])
       }
       else
       {
-        // sensor #sid records new data at time
-        for (int j = 0; j < NDATA; j++)
-        {
-          sensorArray[sid].setData(j, 1.0);
-        }
+        sensorArray[sid].recordNewData(fileList[sid]);
       }
     }
 
@@ -177,32 +186,50 @@ int main(int argc, char* argv[])
     }
   }
   //-------------------------------------------------------
-
+  
   
   // print summary statistics
-  printf("\n\t{Sensor Simulation Summary}\n");
+  printf("\n\t{Sensor Simulator Summary}\n");
   printf("\t  %d sensors failed\n", numFailed);
   printf("\t  %d total sensors\n", numSensors);
   printf("\t  %.2f percent failure rate\n", ( (double)numFailed / (double)numSensors) * 100.0);
-  printf("\t  %.3f total time [sec]\n\n", time );
+  printf("\t  %.3f total time [sec]\n", time );
 
   // free dynamic memory
   delete [] sensorArray;
+  if (unitTest == 0)
+  {
+    for (int i = 0; i < numSensors; i++)
+    {
+      fileList[i].close();
+    }
+    delete [] fileList;  
+  }
 
   // exit the main program
   return 0;
 }
 
 
+
 // A unit test using data from SFPE Handbook
 void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
 {
   printf("\n\t{UNIT TEST USING %d SENSORS}\n", numSensors);
+  bool verbose = true;
 
   // used for usleep function:
   double sleepTime = 0.2 * pow(10.0, 6.0);
+  
+  // data measurement mapping:
+  //    0 = temp
+  //    1 = flux
+  //    2 = O2
+  //    3 = CO
+  //    4 = CO2
+  //    5 = HCN  
 
-  // N is the number of sensor measurements taken over time
+  // N is the number of time steps in this test
   const int N = 6;
   // input time in sec
   double time[N] = {60.0, 120.0, 180.0, 240.0, 300.0, 360.0};
@@ -229,14 +256,6 @@ void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
     sensorArray[i].setID(i);
   }
 
-  // data measurement mapping:
-  //    0 = temp
-  //    1 = flux
-  //    2 = O2
-  //    3 = CO
-  //    4 = CO2
-  //    5 = HCN
-
   // simple time step loop
   std::string channel;
   sensor::sensor_data dataToSend;
@@ -257,22 +276,17 @@ void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
       sensorArray[i].setData(4, CO2[n] );
       sensorArray[i].setData(5, HCN[n] );
 
-      /*
-      // print sensorArray[i] data array:
-      int NDATA = sensorArray[i].getNDATA();
-      printf("\t");
-      for (int j = 0; j < NDATA; j++)
-      {
-        printf("%.2f\t", sensorArray[i].getData(j));
-      }
-      printf("\n");
-      */
-
       // send current data
       sensorArray[i].fillDataContainer(time[n], dataToSend);
       channel = channelPrefix + std::to_string(i);
       lcmHandle.publish(channel, &dataToSend);
-      //printf("\t*published message on %s*\n\n", channel.c_str() );
+
+      // print output
+      if (verbose)
+      {
+        sensorArray[i].printData(time[n]);
+        printf("\t*published message on %s*\n\n", channel.c_str() );
+      }
     }
   }
 

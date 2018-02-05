@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include "Sensor.h"
 
+#include <math.h>
+#include <fstream>
 #include "sensor/sensor_data.hpp"
 
 Sensor::Sensor()
@@ -15,6 +17,7 @@ Sensor::Sensor()
   active = true;
   position = new double [DIM];
   data = new double [NDATA];
+  units = new double [NDATA];
 
   for (int i = 0; i < DIM; i++)
   {
@@ -24,6 +27,15 @@ Sensor::Sensor()
   {
     data[j] = 0.0;
   }
+
+  // When using FDS data, we must convert the units 
+  //   of the species concentrations:
+  units[0] = 1.0;             // temp (degC  -->  degC)
+  units[1] = 100.0;           // O2   (fraction  -->  percentage)
+  units[2] = pow(10.0, 6);    // CO   (fraction  -->  ppm)
+  units[3] = 100.0;           // CO2  (fraction  -->  percentage)
+  units[4] = pow(10.0, 6);    // HCN  (fraction  -->  ppm)
+  units[5] = 1.0;             // flux (kW/m^2  -->  kW/m^2)
 }
 
 Sensor::~Sensor()
@@ -78,25 +90,73 @@ bool Sensor::getActive() const
 {
   return active;
 }
-    
+
+void Sensor::printData(double time) const
+{
+  // print sensorArray[i] data array:
+  printf("\n\tCurrent data array held by sensor #%d at %.2f:\n\t", ID, time);
+  for (int j = 0; j < NDATA; j++)
+  {
+    printf("%.6f\t", data[j]);
+  }
+  printf("\n");
+}
+
+// This function provides a way to simulate the 
+// collection of new data at the scene of the sensor
+// by reading from a file with, say, output generated
+// by a fire simulation in FDS.
+void Sensor::recordNewData(std::ifstream& inFile)
+{
+  // testing: fill all data values with a constant (1.0)
+  bool testing = false;
+  if (testing)
+  {
+    for (int i = 0; i < NDATA; i++)
+    {
+      this->setData(i, 1.0);
+    }
+  }
+  // normal: get new sensor data from a file
+  else
+  {
+    // read numerical data from FDS translated file
+    std::string readVal;
+    std::string::size_type sz;
+    double doubleVal; 
+    for (int i = 0; i < NDATA-1; i++)
+    {
+      if (getline(inFile, readVal, ','))
+      {
+        doubleVal = std::stod(readVal, &sz);
+        this->setData(i, doubleVal * units[i]);
+      }
+      else
+      {
+        printf("***error: end of data file (Sensor::recordNewData)\n");
+        this->setData(i, 0.0);
+      }
+    }
+    if (getline(inFile, readVal, '\n'))
+    {
+      doubleVal = std::stod(readVal, &sz);
+      this->setData(NDATA-1, doubleVal * units[NDATA-1]);
+    }
+    else
+    {
+      printf("***error: end of data file (Sensor::recordNewData)\n");
+      this->setData(NDATA-1, 0.0);
+    }
+  }
+}
+
+// This function filles the LCM data struct defined in 
+//  on our "sensor_data.lcm" data struct. Any changes in 
+//  this .lcm file must handled explicitly in the source. 
 void Sensor::fillDataContainer(
   double time, 
-  sensor::sensor_data &container)
+  sensor::sensor_data& container)
 {
-  /*
-  based on our "sensor_data.lcm" data struct:
-    struct sensor_data
-    {
-      int32_t sensorID;
-      double  sendTime;
-      boolean status;
-      int32_t dim;
-      double  position[dim];
-      int32_t ndata;
-      double  data[ndata];
-    }
-  */
-
   // set scalar values to be sent
   container.sensorID = ID;
   container.sendTime = time;

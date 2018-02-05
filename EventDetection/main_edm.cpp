@@ -16,7 +16,6 @@
 //   must be handled properly with "lcm.handle()").
 bool checkForNewMsg(lcm::LCM &lcm)
 {
-
   // setup the LCM file descriptor for waiting
   int lcm_fd = lcm.getFileno();
   fd_set fds;
@@ -31,14 +30,16 @@ bool checkForNewMsg(lcm::LCM &lcm)
   int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
 
   // interpret the file descriptor status
+  bool result;
   if (0 == status)
   {
-    return false;
+    result = false;
   }
   else if (FD_ISSET(lcm_fd, &fds))
   {
-    return true;
+    result = true;
   }
+  return result;
 }
 
 
