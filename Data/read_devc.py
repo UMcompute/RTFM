@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# A function to read data from the FDS-produced devc file
 def csvreadh_func(filename=None, numRowsHeader=0):
   my_data = np.genfromtxt(filename, delimiter=',')
   mrows = np.shape(my_data)[0] 
@@ -17,24 +18,25 @@ def csvreadh_func(filename=None, numRowsHeader=0):
   return dataMat
 
 
-
 '''
 Assumed DEVC file structure for n rooms:
 
 HEADER LINE ROW 0: s C mol/mol mol/mol mol/mol mol/mol kW/m2 kW  C ... kW/m2 kW
 HEADER LINE ROW 1: Time  T-1 O2-1  CO-1  CO2-1 HCN-1 Q-1 HRR-1 T-2 ... Q-n HRR-n
 FIRST DATA ROW 2:  0.0 0.0 .................
+
+(we do not write the Time column to our sensor files)
 '''
 
-devcFile = "./data/methane_four_room_devc.csv"
-devcFile = "./data/propane_two_fire_devc.csv"
+devcFile = "propane_two_fire_devc.csv"
+numRooms = 4
 
+# ASSUMPTIONS (SEE ABOVE FORMAT AND CHECK FDS DEVC FILE)
+numColsPerRoom = 7
 numRowsHeader = 2
+
 devcData = csvreadh_func(devcFile, numRowsHeader)
 numInc = np.shape(devcData)[0]
-
-numRooms = 4
-numColsPerRoom = 7
 
 fdsTime = devcData[:,0]
 for i in range(0, numRooms):

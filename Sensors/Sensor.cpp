@@ -133,7 +133,7 @@ void Sensor::recordNewData(std::ifstream& inFile)
       }
       else
       {
-        printf("***error: end of data file (Sensor::recordNewData)\n");
+        printf("***error: end of data file for sensor #%d\n", ID);
         this->setData(i, 0.0);
       }
     }
@@ -144,7 +144,7 @@ void Sensor::recordNewData(std::ifstream& inFile)
     }
     else
     {
-      printf("***error: end of data file (Sensor::recordNewData)\n");
+      printf("***error: end of data file for sensor #%d\n", ID);
       this->setData(NDATA-1, 0.0);
     }
   }

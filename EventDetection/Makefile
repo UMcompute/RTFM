@@ -11,4 +11,4 @@ DataHandler.o: DataHandler.cpp DataHandler.h
 	g++ -g -Wall -c DataHandler.cpp -o DataHandler.o -llcm -std=c++11
 
 clean:
-	rm -rf MainEDM.ex *.o *~ /sensor/
+	rm -rf MainEDM.ex *.o *~ ./sensor/

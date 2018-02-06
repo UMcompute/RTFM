@@ -86,7 +86,7 @@ int main(int argc, char* argv[])
   srand(2);
   int sid; 
   int numFailed = 0;
-  double sleepConversion = pow(10.0, 6.0);
+  double sleepConversion = pow(10.0, 5.0);
   double time = 0.0;
   double dtMin = 0.5;
   double dt, st, myTime, failCheck;

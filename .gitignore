@@ -4,10 +4,10 @@
 *.xml
 *.ex*
 
+Data/fil*
+
 */sensor/*
-*/out/*
 Output/
 
-Sensors/data/*
 Visualization/*.txt
 Visualization/*.csv

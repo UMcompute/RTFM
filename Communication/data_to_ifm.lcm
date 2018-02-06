@@ -1,9 +1,0 @@
-package send_to_ifm;
-
-struct data_to_ifm
-{
-  double time_stamp;
-  int32_t num_rooms;
-  double temperature[num_rooms];
-  double oxygen_conc[num_rooms];
-}
