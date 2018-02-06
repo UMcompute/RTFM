@@ -99,7 +99,7 @@ int main(int argc, char* argv[])
   sensorArray = new Sensor [numSensors];
 
   // file management
-  std::string filePrefix = "../Sensors/data/file";
+  std::string filePrefix = "../Data/file";
   std::string fileSuffix = ".csv";  
   std::string dataFile;
   std::ifstream *fileList;

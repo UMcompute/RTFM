@@ -30,7 +30,7 @@ def sensor_handler(channel, data):
 
 
 # INPUT ===================================================
-inputFile = "../input.txt"
+inputFile = "../Exec/input.txt"
 fr = open(inputFile, 'r')
 NUM_SENSORS = int( fr.readline() )
 fr.close()
@@ -100,6 +100,10 @@ while (checkPoll == None):
     # send the new data to EDM if it is active
     if 'edmProcess' in locals():
       lc.publish("EDM_CHANNEL", newSensorData.encode())
+
+    # print brief update to terminal
+    if (newSensorData.sensorID == 0):
+      print( "  time = %.3f sec" % newSensorData.sendTime )
 
     # increment the data message counter
     sid = newSensorData.sensorID

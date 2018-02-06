@@ -28,7 +28,8 @@ FIRST DATA ROW 2:  0.0 0.0 .................
 (we do not write the Time column to our sensor files)
 '''
 
-devcFile = "propane_two_fire_devc.csv"
+devcFile = "../Data/propane_two_fire_devc.csv"
+dataDir = "../Data/"
 numRooms = 4
 
 # ASSUMPTIONS (SEE ABOVE FORMAT AND CHECK FDS DEVC FILE)
@@ -43,7 +44,7 @@ for i in range(0, numRooms):
   j1 = i * numColsPerRoom + 1
   j2 = j1 + numColsPerRoom 
   roomData = devcData[:, j1:j2]
-  outFile = "file" + str(i) + ".csv"
+  outFile = dataDir + "file" + str(i) + ".csv"
   fw = open(outFile, 'w')
   for j in range(0, numInc):
     fw.write("%f" % roomData[j,0])

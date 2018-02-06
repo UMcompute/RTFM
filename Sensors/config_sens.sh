@@ -1,6 +1,6 @@
 #!/bin/bash
 
-BASEDIR="/home/pbeata/Desktop/RTFM"
+BASEDIR=".."
 SENSDIR="$BASEDIR/Sensors"
 LCMFILE="$SENSDIR/sensor_data.lcm"
 
