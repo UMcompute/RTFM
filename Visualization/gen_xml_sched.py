@@ -109,7 +109,6 @@ for i in range(0, NUM_SENSORS):
 # check event output before writing
 # for i in range(0, NUM_SENSORS):
   # print(startTime[i])
-  # print(numEvents[i])
 
 
 #==========================================================
