@@ -1,7 +1,8 @@
 import numpy as np
+from shutil import copyfile
 
 
-# A function to read data from the FDS-produced devc file
+# A function to read data from the FDS-produced devc file:
 def csvreadh_func(filename=None, numRowsHeader=0):
   my_data = np.genfromtxt(filename, delimiter=',')
   mrows = np.shape(my_data)[0] 
@@ -18,6 +19,23 @@ def csvreadh_func(filename=None, numRowsHeader=0):
   return dataMat
 
 
+# If NUM_SENSORS > (# of unique sensors), 
+# then copy the data files:
+def copy_data(uniqueSensors=0, targetSensors=0, dataDir=None):
+  key = 0
+  print(" ");
+  for i in range(0, targetSensors):
+    if (i >= uniqueSensors):
+      src = dataDir + "file" + str(key) + ".csv"
+      dst = dataDir + "file" + str(i) + ".csv"
+      copyfile(src, dst)
+      print( "copied %s to %s" % (src, dst) )
+    if (key < uniqueSensors-1):
+      key += 1
+    else:
+      key = 0
+
+
 '''
 Assumed DEVC file structure for n rooms:
 
@@ -28,19 +46,24 @@ FIRST DATA ROW 2:  0.0 0.0 .................
 (we do not write the Time column to our sensor files)
 '''
 
+
 devcFile = "../Data/propane_two_fire_devc.csv"
 dataDir = "../Data/"
-numRooms = 4
+inputFile = "../Exec/input.txt"
+fr = open(inputFile, 'r')
+NUM_SENSORS = int( fr.readline() )
+fr.close()
 
 # ASSUMPTIONS (SEE ABOVE FORMAT AND CHECK FDS DEVC FILE)
 numColsPerRoom = 7
+numRoomsOrig = 4
 numRowsHeader = 2
+
 
 devcData = csvreadh_func(devcFile, numRowsHeader)
 numInc = np.shape(devcData)[0]
-
 fdsTime = devcData[:,0]
-for i in range(0, numRooms):
+for i in range(0, numRoomsOrig):
   j1 = i * numColsPerRoom + 1
   j2 = j1 + numColsPerRoom 
   roomData = devcData[:, j1:j2]
@@ -53,3 +76,9 @@ for i in range(0, numRooms):
       fw.write(",%f" % roomData[j,k])
     fw.write("\n")
   fw.close()
+
+# IF WE ARE USING MORE THAN FOUR ROOMS, WE NEED TO COPY DATA:
+if (NUM_SENSORS > numRoomsOrig):
+  copy_data(numRoomsOrig, NUM_SENSORS, dataDir)
+print("\n[UNIQUE SENSOR DATA FILES: %d]" % numRoomsOrig)
+print("\n[TOTAL OF %d SENSOR FILES AVAILABLE]\n" % NUM_SENSORS)

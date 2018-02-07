@@ -1,13 +1,7 @@
 *~
-*.pyc
 *.o
-*.xml
 *.ex*
 
 Data/fil*
-
 */sensor/*
 Output/
-
-Visualization/*.txt
-Visualization/*.csv
