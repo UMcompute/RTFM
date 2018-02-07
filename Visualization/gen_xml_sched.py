@@ -1,20 +1,28 @@
 from lxml import etree
 import csv
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 
-#==============================================================================
 
-# input and setup
-NUM_ROOMS = 4
-minTime = 0.0     # seconds
-maxTime = 600.0   # seconds
+#=========================================================+
+# read from input file:
+inputFile = sys.argv[1]
+fr = open(inputFile, 'r')
+NUM_SENSORS = int( fr.readline() )
+maxTime = float( fr.readline() )
+fr.close()
+# -------------------------------------
 
-edmBaseFile = "edm_output"
-baseFileName = "example"
-pathToFile = "C:\\Users\\pbeata\\Desktop\\"
-taskFile = "task_template.csv"
+# general input: 
+minTime = 0.0
+edmBaseFile = "../Output/SensorLog"
+pathToFile = "../Output/"
+baseFileName = "OutSched"
+# -------------------------------------
 
+# fixed parameters: 
+taskFile = "../Visualization/task_template.csv"
 eventLabels = ['initial', 'warning', 'threat', 'severe']
 
 # starting color id #'s correspond to G-Y-O-R in ABD
@@ -34,81 +42,80 @@ preamleValues = ["Untitled", "s", baseFileName, "1", \
 firstLine = '<?xml version="1.0"?>\n'
 finalOption = "ExtendedAttributes"
 datePrefix = "2017-10-16T"
+#==========================================================
 
-#==============================================================================
+
 #	READ EDM OUTPUT FROM CSV FILES
-for i in range(0, NUM_ROOMS):
-  edmFile = edmBaseFile + "_" + str(i) + ".csv"
+edmTime = []
+smokeWarn = []
+burnWarn = []
+fireWarn = []
+for i in range(0, NUM_SENSORS):
+  edmFile = edmBaseFile + "-" + str(i) + ".csv"
   A = np.loadtxt(edmFile, delimiter=",")
-  if (i == 0):
-    numSteps = np.shape(A)[0]
-    numCols = np.shape(A)[1]
-    allData = np.zeros((numSteps, numCols, NUM_ROOMS))
-  allData[:,:,i] = A
-
-# get the time array
-edmTime = allData[:,0,0]
-
-# get all individual warning columns
-WARN = np.zeros((numSteps, NUM_ROOMS, 3))
-for i in range(0, NUM_ROOMS):
-  WARN[:,i,0] = allData[:,10,i]   # smoke toxicity
-  WARN[:,i,1] = allData[:,11,i]   # burn threats
-  WARN[:,i,2] = allData[:,12,i]   # fire status
+  edmTime.append(A[:,0])
+  smokeWarn.append(A[:,10])
+  burnWarn.append(A[:,11])
+  fireWarn.append(A[:,12])
 
 # compare all hazards for each time step to assess threat
-threatLevel = np.zeros((numSteps,NUM_ROOMS))
-for i in range(0, NUM_ROOMS):
+# threatLevel = np.zeros((numSteps,NUM_SENSORS))
+threatLevel = []
+for i in range(0, NUM_SENSORS):
+  numSteps = len(edmTime[i])
+  t = np.zeros(numSteps)
   for j in range(0, numSteps):
-    s = int(WARN[j, i, 0])    # smoke warning
-    b = int(WARN[j, i, 1])    # burn warning
-    f = int(WARN[j, i, 2])    # fire warning
+    s = smokeWarn[i][j]     # smoke warning
+    b = burnWarn[i][j]      # burn warning
+    f = fireWarn[i][j]      # fire warning
 
     if ((s==1) or (b==1) or (f==1)):
-      threatLevel[j,i] = 1
+      t[j] = 1
 
     if ((s==1 and b==1) or (b==1 and f==1) or (s==1 and f==1)):
-      threatLevel[j,i] = 2
+      t[j] = 2
 
     if ((s==1) and (b==1) and (f==1)):
-      threatLevel[j,i] = 3  
+      t[j] = 3  
     
     if ((s==2) or (b==2) or (f==2)):
-      threatLevel[j,i] = 3
+      t[j] = 3
+  threatLevel.append(t)
 
 # plot the threat level results to check
-fig1, ax = plt.subplots()
-for i in range(0, NUM_ROOMS):
-  ax.plot(edmTime, threatLevel[:,i])
-fig1.tight_layout()
-#plt.show()
+# fig1, ax = plt.subplots()
+# for i in range(0, NUM_SENSORS):
+#   ax.plot(edmTime[i], threatLevel[i])
+# fig1.tight_layout()
+# plt.show()
+
 
 # determine start time of each threat (per room) if it exists
-startTime = [[] for x in xrange(NUM_ROOMS)]
-numEvents = [[] for x in xrange(NUM_ROOMS)]
-for i in range(0, NUM_ROOMS):
+startTime = [[] for x in xrange(NUM_SENSORS)]
+numEvents = [[] for x in xrange(NUM_SENSORS)]
+for i in range(0, NUM_SENSORS):
   for j in range(0, numLevels):
     startTime[i].append(-1.0)
     numEvents[i].append(1)
     if (j == 0):
       startTime[i][j] = minTime
     else:
-      checkIndex = np.argmax(threatLevel[:,i] > j-1)
+      checkIndex = np.argmax(threatLevel[i] > j-1)
       if (checkIndex != 0):
-        startTime[i][j] = edmTime[checkIndex]
+        startTime[i][j] = edmTime[i][checkIndex]
       else:
         numEvents[i][j] = 0
 
 # check event output before writing
-for i in range(0, NUM_ROOMS):
-  print(startTime[i])
-  #print(numEvents[i])
+# for i in range(0, NUM_SENSORS):
+  # print(startTime[i])
+  # print(numEvents[i])
 
-#==============================================================================
 
+#==========================================================
 # WRITE THE XML FILE BASED ON THE TASK TIMES
 taskCounter = 0   # used to give unique UID to each task
-for room in range(0, NUM_ROOMS):
+for room in range(0, NUM_SENSORS):
   fileName = baseFileName + str(room+1) + ".xml"
   fullName = pathToFile + fileName
   root = None
@@ -132,7 +139,7 @@ for room in range(0, NUM_ROOMS):
   for i in range(0, numLevels):
     if (numEvents[room][i] != 0):
       taskList.append(etree.SubElement(taskTree, "Task"))
-  print("Room %d has %d events" % (room+1, len(taskList)) )
+  # print("Room %d has %d events" % (room+1, len(taskList)) )
 
   # get all the task attributes listed in the template file
   with open(taskFile, 'r') as f:
@@ -143,7 +150,7 @@ for room in range(0, NUM_ROOMS):
   i = 0
   for k in range(0, numLevels):
     if (numEvents[room][k] != 0):
-      #==============================================================
+      #====================================================
       # unique task details
       roomDetails = []
       roomDetails.append("0")                     # Flag
@@ -184,7 +191,7 @@ for room in range(0, NUM_ROOMS):
       roomDetails.append(datePrefix + realTime)   # Finish
       roomDetails.append(datePrefix + realTime)   # Early Finish
       roomDetails.append(datePrefix + realTime)   # Late Finish
-      #==============================================================
+      #====================================================
       taskList[i].append(etree.Element(taskAttrib[0][0]))
       # updated to give each task a unique UID just in case of conflict in ABD later
       #taskList[i][0].text = str(i+1)
@@ -250,8 +257,9 @@ for room in range(0, NUM_ROOMS):
   #print(etree.tostring(root, pretty_print=True))
 
   # write schedule to output file
-  fw = open(fileName, 'w')
+  fw = open(fullName, 'w')
   fw.write(firstLine)
   fw.write(etree.tostring(root, pretty_print=True))
   fw.close()
 
+print("\n\t{Finished Writing EDM Output to XML}\n")

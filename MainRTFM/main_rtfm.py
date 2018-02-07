@@ -36,6 +36,7 @@ NUM_SENSORS = int( fr.readline() )
 fr.close()
 execEventDetection = "exec ../EventDetection/EDM.ex " + inputFile
 execSensor = "exec ../Sensors/SensorSim.ex " + inputFile
+execGenXML = "exec python ../Visualization/gen_xml_sched.py " + inputFile
 # =========================================================
 
 
@@ -60,8 +61,11 @@ for i in range(0, NUM_SENSORS):
 # prompt user to start sub-models
 userMsg1 = 'Ready to launch Event Detection Model? (Enter 0 or 1) '
 startEDM = raw_input(userMsg1)
-userMsg2 = 'Ready to launch the Sensor Simulator? (Enter 0 or 1) '
+userMsg2 = 'Ready to launch the Sensor Simulator? (0 or 1) '
 startSENS = raw_input(userMsg2)
+if (startEDM == "1"):
+  userMsg3 = 'Do you want to convert EDM output to XML? (0 or 1) '
+  startXML = raw_input(userMsg3)
 
 # launch event detection model (EDM)
 if (startEDM == "1"):
@@ -97,6 +101,7 @@ while (checkPoll == None):
   if rfds:
     # a message was received from a sensor, get the new data
     lc.handle()
+    checkPoll = None
 
     # send the new data to EDM if it is active
     if 'edmProcess' in locals():
@@ -109,6 +114,7 @@ while (checkPoll == None):
     # increment the data message counter
     sid = newSensorData.sensorID
     numMsgRecvPerSensor[sid] += 1
+    checkPoll = None
 # ---------------------------------------------------------
 
 
@@ -121,7 +127,14 @@ if 'edmProcess' in locals():
   checkPoll = edmProcess.poll()
   if (checkPoll == None):
     print("(***warning: EDM is still running***")
-    # you can kill it with this Python command: edmProcess.kill()
+
+# write EDM output in XML format
+if ('startXML' in locals() and startXML == "1"):
+  XMLprocess = subprocess.Popen(execGenXML, shell=True)
+  checkPoll = None
+  while (checkPoll == None):
+    checkPoll = XMLprocess.poll()
+time.sleep(smallDelay)
 
 # prepare some statistics about the data received from sensors
 totalRecv = 0
@@ -152,4 +165,5 @@ print("\t  %d minimum messages sent from sensor #%d" % (minRecv[0], minRecv[1]) 
 print("\t  %d maximum messages sent from sensor #%d" % (maxRecv[0], maxRecv[1]) )
 print("\t  %.2f average messages sent from all sensors" %  avgRecv)
 print("\t  %.2f average messages received per second" %  msgPerSec)
+print("\t  %.3f total time in MAIN RTFM" %  maxTime)
 print("\n[END MAIN RTFM]\n")
