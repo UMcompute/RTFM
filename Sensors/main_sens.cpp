@@ -9,17 +9,17 @@
 #include <stdio.h>
 #include <fstream>
 
-// LCM directives
+// LCM header files
 #include <lcm/lcm-cpp.hpp>
 #include "sensor/sensor_data.hpp"
 
-// my new directives
+// user-defined classes
 #include "SensorEvent.h"
 #include "Sensor.h"
 
 
 // This overloaded operator is needed for the priority queue 
-// to sort events by ascending time.
+// to sort events by ascending time stamp.
 bool operator>(
   const SensorEvent& lhs, 
   const SensorEvent& rhs)
@@ -37,26 +37,23 @@ double getRandDble()
 }
 
 
-// A unit test using data from SFPE Handbook
-void runUnitTest(
-  lcm::LCM& lcmHandle,
-  const int numSensors);
+// A unit test using data from SFPE Handbook (defined below main)
+void runUnitTest(lcm::LCM& lcmHandle, const int numSensors);
 
 
+//===================================================================
 // MAIN SENSOR SIMULATOR PROGRAM
 int main(int argc, char* argv[])
 {
 
   // check if LCM is working
+  printf("\n\t{Started Sensor Simulator}\n");
   lcm::LCM lcm;
-  if(!lcm.good())
-  {
-    return 1;
-  }
+  if(!lcm.good()) return 1;
 
   // INPUT ================================================
   int numSensors, unitTest;
-  double tmax, tnom, failureProb;
+  double tmax, tnom, sleepScale, failureProb;
   // get input file from command line argument
   std::ifstream inFile;
   std::string inFileName;
@@ -69,7 +66,7 @@ int main(int argc, char* argv[])
   else
   {
     inFileName = argv[1];
-    printf("\n%s has input file: %s \n", argv[0], inFileName.c_str());
+    printf("\n%s has input file: %s \n\n", argv[0], inFileName.c_str());
   }
   // read the four input values needed
   inFile.open(inFileName.c_str());
@@ -77,35 +74,37 @@ int main(int argc, char* argv[])
   inFile >> tmax;
   inFile >> tnom;
   inFile >> failureProb;
+  inFile >> sleepScale;
   inFile >> unitTest;
   inFile.close();
-  // ======================================================
+// ======================================================  
 
-  // initialize the sensor simulator
-  printf("\n\t{Started Sensor Simulator}\n");
-  srand(2);
+  // fixed input for file management
+  std::string channelPrefix = "SENSOR";
+  std::string filePrefix = "../Data/file";
+  std::string fileSuffix = ".csv";
+
+  // initialize the sensor simulator variables  
+  srand(100);
   int sid; 
   int numFailed = 0;
-  double sleepConversion = pow(10.0, 5.0);
+  double sleepConversion = sleepScale * pow(10.0, 6.0);
   double time = 0.0;
   double dtMin = 0.5;
   double dt, st, myTime, failCheck;
 
   // initialize the LCM data structures
-  std::string channelPrefix = "SENSOR";
   std::string channel;
   sensor::sensor_data dataToSend;
   Sensor *sensorArray;
   sensorArray = new Sensor [numSensors];
 
-  // file management
-  std::string filePrefix = "../Data/file";
-  std::string fileSuffix = ".csv";  
+  // data file management
   std::string dataFile;
   std::ifstream *fileList;
   fileList = new std::ifstream [numSensors];
 
-  // declare the primary queue for sensorEvent events
+  // declare the priority queue for holding "sensorEvent" events
   std::priority_queue< SensorEvent, std::vector<SensorEvent>, std::greater<SensorEvent> > eventQueue;
 
   // Initialize the queue with the first data measurement events
@@ -114,6 +113,7 @@ int main(int argc, char* argv[])
   {
     for (int i = 0; i < numSensors; i++)
     {
+      // add initial event to the queue for each sensor
       myTime = getRandDble() * tnom;
       eventQueue.push( SensorEvent(i, myTime) );
 
@@ -127,9 +127,10 @@ int main(int argc, char* argv[])
   {
     runUnitTest(lcm, numSensors);
   }
+  // ... or there is an error in the runUnitTest in ../Exec/inputs.h
   else
   {
-    printf("(there was likely an error reading the last line of the input file)\n");
+    printf("***Error: invalid value for int unitTest (must be 0 or 1)\n");
     return 2;
   }
 
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
     sensorArray[i].setID(i);
   }
   int NDATA = sensorArray[0].getNDATA();
+
 
   //-------------------------------------------------------
   // handle the event queue to send messages
@@ -155,6 +157,7 @@ int main(int argc, char* argv[])
     if ( sensorArray[sid].getActive() )
     {
       failCheck = getRandDble();
+      // sensor has failed:
       if (failCheck < failureProb)
       {
         // if the sensor has failed (signifying damage), 
@@ -167,13 +170,15 @@ int main(int argc, char* argv[])
           sensorArray[sid].setData(j, -1.0);
         }
       }
+      // sensor has not failed:
       else
       {
+        // active sensors record new data from file
         sensorArray[sid].recordNewData(fileList[sid]);
       }
     }
 
-    // send current data
+    // send current data to the main RTFM program
     sensorArray[sid].fillDataContainer(time, dataToSend);
     channel = channelPrefix + std::to_string(sid);
     lcm.publish(channel, &dataToSend);
@@ -189,6 +194,7 @@ int main(int argc, char* argv[])
   
   
   // print summary statistics
+  usleep(sleepConversion);
   printf("\n\t{Sensor Simulator Summary}\n");
   printf("\t  %d sensors failed\n", numFailed);
   printf("\t  %d total sensors\n", numSensors);
@@ -209,13 +215,13 @@ int main(int argc, char* argv[])
   // exit the main program
   return 0;
 }
-
+//===================================================================
 
 
 // A unit test using data from SFPE Handbook
 void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
 {
-  printf("\n\t{UNIT TEST USING %d SENSORS}\n", numSensors);
+  printf("\n\t{UNIT TEST USING %d SENSORS}\n\n", numSensors);
   bool verbose = true;
 
   // used for usleep function:

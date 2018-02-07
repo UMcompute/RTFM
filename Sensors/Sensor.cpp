@@ -97,7 +97,7 @@ void Sensor::printData(double time) const
   printf("\n\tCurrent data array held by sensor #%d at %.2f:\n\t", ID, time);
   for (int j = 0; j < NDATA; j++)
   {
-    printf("%.6f\t", data[j]);
+    printf("%f\t", data[j]);
   }
   printf("\n");
 }

@@ -34,13 +34,14 @@ inputFile = "../Exec/input.txt"
 fr = open(inputFile, 'r')
 NUM_SENSORS = int( fr.readline() )
 fr.close()
-execEventDetection = "exec ../EventDetection/MainEDM.ex " + inputFile
-execSensor = "exec ../Sensors/SimSensors.ex " + inputFile
+execEventDetection = "exec ../EventDetection/EDM.ex " + inputFile
+execSensor = "exec ../Sensors/SensorSim.ex " + inputFile
 # =========================================================
 
 
 # fixed parameters
 channelPrefix = "SENSOR"
+channelEDM = "EDM_CHANNEL"
 timeout = 0.01          # amount of time to wait, in [sec]
 smallDelay = 1.0        # [sec]
 killEDMtime = 100000.0  # [sec]
@@ -99,7 +100,7 @@ while (checkPoll == None):
 
     # send the new data to EDM if it is active
     if 'edmProcess' in locals():
-      lc.publish("EDM_CHANNEL", newSensorData.encode())
+      lc.publish(channelEDM, newSensorData.encode())
 
     # print brief update to terminal
     if (newSensorData.sensorID == 0):
@@ -115,7 +116,7 @@ while (checkPoll == None):
 maxTime = newSensorData.sendTime
 if 'edmProcess' in locals():
   newSensorData.sendTime = killEDMtime
-  lc.publish("EDM_CHANNEL", newSensorData.encode())
+  lc.publish(channelEDM, newSensorData.encode())
   time.sleep(smallDelay)
   checkPoll = edmProcess.poll()
   if (checkPoll == None):

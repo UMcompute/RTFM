@@ -1,8 +1,8 @@
-SimSensors.ex: SensorEvent.o Sensor.o SimSensors.o
-	g++ -g -Wall -O3 SensorEvent.o Sensor.o SimSensors.o -o SimSensors.ex -llcm -std=c++11
+SensorSim.ex: SensorEvent.o Sensor.o main_sens.o
+	g++ -g -Wall -O3 SensorEvent.o Sensor.o main_sens.o -o SensorSim.ex -llcm -std=c++11
 
-SimSensors.o: SimSensors.cpp Sensor.o SensorEvent.o
-	g++ -g -Wall -c SimSensors.cpp -o SimSensors.o -llcm -std=c++11
+main_sens.o: main_sens.cpp Sensor.o SensorEvent.o
+	g++ -g -Wall -c main_sens.cpp -o main_sens.o -llcm -std=c++11
 
 Sensor.o: Sensor.cpp Sensor.h
 	g++ -g -Wall -c Sensor.cpp -o Sensor.o -std=c++11

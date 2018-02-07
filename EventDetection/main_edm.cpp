@@ -46,6 +46,11 @@ bool checkForNewMsg(lcm::LCM &lcm)
 // MAIN EVENT DETECTION MODEL
 int main(int argc, char** argv) 
 {
+  // initiate LCM and check if it is working
+  printf("\n\t{Started Event Detection Model}\n");
+  lcm::LCM lcm;
+  if(!lcm.good()) return 1;
+
   // INPUT ============================
   int numSensors;
   double tmax;
@@ -71,10 +76,6 @@ int main(int argc, char** argv)
   int writeLog = 1;
   // ==================================
 
-  // initiate LCM and check if it is working
-  printf("\n\t{Started Event Detection Model}\n");
-  lcm::LCM lcm;
-  if(!lcm.good()) return 1;
 
   // construct a Handler and subsribe to receive messages from main RTFM
   DataHandler currentData;
@@ -150,7 +151,7 @@ int main(int argc, char** argv)
           // todo: handle damaged sensor data
         }
 
-        // write output to propoer log file
+        // write output to proper log file
         if (writeLog == 1)
         {
           sensorArray[sid].writeOutput(
