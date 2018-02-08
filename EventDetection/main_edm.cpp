@@ -30,7 +30,7 @@ bool checkForNewMsg(lcm::LCM &lcm)
   int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
 
   // interpret the file descriptor status
-  bool result;
+  bool result = false;
   if (0 == status)
   {
     result = false;

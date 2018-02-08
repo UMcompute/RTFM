@@ -23,9 +23,16 @@ $ which make
 
 This project requires Lightweight Communications and Marshalling (LCM) for message-passing between applications written in dissimilar programming languages. While the build instructions for LCM are provided on their own website (https://lcm-proj.github.io/build_instructions.html), they have been reproduced here for completeness. Use these instructions to install LCM in Ubuntu:
 
-1. LCM requires two packages: "build-essential" and "libglib2.0-dev". You can get these via the "sudo apt-get install [package-name]" command.
+1. LCM requires two packages: "build-essential" and "libglib2.0-dev". You can get these via the "sudo apt-get install [package-name]" command:
+	```
+	$ sudo apt-get install build-essential
+	$ sudo apt-get install libglib2.0-dev
+	```
 
-2. LCM recommends you also have these two packages for certain features (you can likely skip this step for using LCM with RTFM though): "openjdk-6-jdk" and "python-dev".
+2. LCM recommends you also have these two packages for certain features: "openjdk-6-jdk" and "python-dev". For RTFM, it is good to add python-dev as well:
+	```
+	$ sudo apt-get install python-dev
+	```
 
 3. Download the LCM zip file from their website (https://github.com/lcm-proj/lcm/releases). This guide was made when LCM was in version 1.3.1, so I downloaded "lcm-1.3.1.zip" in the present. Save it to your $HOME directory or somewhere you can find it. Note that it will "build in source" with these default instructions, so make sure the unpacked files in the next step are in a stable location.
 
@@ -52,6 +59,14 @@ This project requires Lightweight Communications and Marshalling (LCM) for messa
 
 ### Configure and Run RTFM
 
+There are two more requirements for specific Python packages needed to run RTFM. They are the widely used "numpy" module and a tool for building XML files called "lxml". You can add them from the terminal using the following commands:
+
+```
+$ sudo apt-get install python-pip
+$ sudo -H pip install numpy
+$ sudo apt-get install python-lxml
+```
+
 Clone this repository to a stable location. This project builds in its source with based on a few simple scripts: while not employing a robust build system, this approach is sufficient for getting set up quickly and easily. Keep this cloned repository because it will be used for running RTFM simulations:
 
 ```
@@ -68,6 +83,8 @@ Assuming there were no major errors in the configure step, you are now ready to 
 ```
 $ ./run.sh
 ```
+
+Some errors that you could see are related to Python packages numpy and lxml, which are both used by RTFM. 
 
 By default, it will use the input values stored in "input.txt" of this same directory. Now you will be prompted with 2-3 questions. 
 

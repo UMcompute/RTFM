@@ -2,7 +2,6 @@ from lxml import etree
 import csv
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 #=========================================================+
@@ -59,7 +58,6 @@ for i in range(0, NUM_SENSORS):
   fireWarn.append(A[:,12])
 
 # compare all hazards for each time step to assess threat
-# threatLevel = np.zeros((numSteps,NUM_SENSORS))
 threatLevel = []
 for i in range(0, NUM_SENSORS):
   numSteps = len(edmTime[i])
@@ -82,14 +80,6 @@ for i in range(0, NUM_SENSORS):
       t[j] = 3
   threatLevel.append(t)
 
-# plot the threat level results to check
-# fig1, ax = plt.subplots()
-# for i in range(0, NUM_SENSORS):
-#   ax.plot(edmTime[i], threatLevel[i])
-# fig1.tight_layout()
-# plt.show()
-
-
 # determine start time of each threat (per room) if it exists
 startTime = [[] for x in xrange(NUM_SENSORS)]
 numEvents = [[] for x in xrange(NUM_SENSORS)]
@@ -105,10 +95,6 @@ for i in range(0, NUM_SENSORS):
         startTime[i][j] = edmTime[i][checkIndex]
       else:
         numEvents[i][j] = 0
-
-# check event output before writing
-# for i in range(0, NUM_SENSORS):
-  # print(startTime[i])
 
 
 #==========================================================
@@ -164,7 +150,6 @@ for room in range(0, NUM_SENSORS):
       if (S < 10):
         S = "0" + str(S)
       realTime = "07" + ":" + str(M) + ":" + str(S)
-      #print(realTime)
       roomDetails.append(datePrefix + realTime)   # Start
       roomDetails.append(datePrefix + realTime)   # Early Start
       roomDetails.append(datePrefix + realTime)   # Late Start
@@ -186,14 +171,12 @@ for room in range(0, NUM_SENSORS):
       if (S < 10):
         S = "0" + str(S)
       realTime = "07" + ":" + str(M) + ":" + str(S)
-      #print(realTime)
       roomDetails.append(datePrefix + realTime)   # Finish
       roomDetails.append(datePrefix + realTime)   # Early Finish
       roomDetails.append(datePrefix + realTime)   # Late Finish
       #====================================================
       taskList[i].append(etree.Element(taskAttrib[0][0]))
       # updated to give each task a unique UID just in case of conflict in ABD later
-      #taskList[i][0].text = str(i+1)
       taskCounter += 1
       taskList[i][0].text = str(taskCounter)
       for j in range(1, len(taskAttrib)):
