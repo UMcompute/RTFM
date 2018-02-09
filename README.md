@@ -84,9 +84,9 @@ Assuming there were no major errors in the configure step, you are now ready to 
 $ ./run.sh
 ```
 
-Some errors that you could see are related to Python packages numpy and lxml, which are both used by RTFM. 
+Some errors that you could see are related to Python packages numpy and lxml, which are both used by RTFM. If errors related to the absence of these packages arise, then go back and make sure they are installed properly (see above).
 
-By default, it will use the input values stored in "input.txt" of this same directory. Now you will be prompted with 2-3 questions. 
+By default, this test will use the input values stored in "input.txt" of this same directory. Now you will be prompted with 2-3 questions:
 
 1. Do you want to launch the event detection model? (0 is no, 1 is yes)
 2. Do you want to launch the sensor simulator? (0 or 1)
@@ -161,7 +161,7 @@ Do you want to convert EDM output to XML? (0 or 1) 1
 
 ## Authors
 
-* **Paul A. Beata** - *Ph.D. Student* - [pbeata [at] umich [dot] edu](https://github.com/pbeata)
+* **Paul A. Beata** - *Ph.D. Student* - [pbeata on GitHub](https://github.com/pbeata)
 
 
 ## Acknowledgments
