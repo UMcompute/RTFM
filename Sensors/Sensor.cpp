@@ -90,10 +90,10 @@ bool Sensor::getActive() const
 {
   return active;
 }
-
+  
+// Print the data array owned by sensorArray[i].
 void Sensor::printData(double time) const
 {
-  // print sensorArray[i] data array:
   printf("\n\tCurrent data array held by sensor #%d at %.2f:\n\t", ID, time);
   for (int j = 0; j < NDATA; j++)
   {

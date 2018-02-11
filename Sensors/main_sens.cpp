@@ -1,4 +1,5 @@
 // C++ directives
+#include <stdio.h>
 #include <math.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -8,6 +9,13 @@
 #include <string>
 #include <stdio.h>
 #include <fstream>
+
+// microsecond timer
+#include <sys/time.h>
+#include <chrono>
+#include <stdint.h>
+#include <inttypes.h>
+#include <iomanip>
 
 // LCM header files
 #include <lcm/lcm-cpp.hpp>
@@ -41,6 +49,10 @@ double getRandDble()
 void runUnitTest(lcm::LCM& lcmHandle, const int numSensors);
 
 
+// Function to record time with microsecond accuracy
+void timer(std::ofstream& timerFile);
+
+
 //===================================================================
 // MAIN SENSOR SIMULATOR PROGRAM
 int main(int argc, char* argv[])
@@ -59,8 +71,8 @@ int main(int argc, char* argv[])
   std::string inFileName;
   if (argc != 2)
   {
-    printf("***Error: only supply one command line argument\n");
-    printf("   Expected usage:  $ SimSensors.ex <input_file>\n");
+    printf("***Error: please provide exactly one command line argument\n");
+    printf("   Expected usage:  $ ./SimSensors.ex [input_file.txt]\n");
     return 1;
   }
   else
@@ -83,6 +95,7 @@ int main(int argc, char* argv[])
   std::string channelPrefix = "SENSOR";
   std::string filePrefix = "../Data/file";
   std::string fileSuffix = ".csv";
+  std::string timerOutput = "../Output/send_time.csv";
 
   // initialize the sensor simulator variables  
   srand(100);
@@ -103,6 +116,7 @@ int main(int argc, char* argv[])
   std::string dataFile;
   std::ifstream *fileList;
   fileList = new std::ifstream [numSensors];
+  std::ofstream timerFile;
 
   // declare the priority queue for holding "sensorEvent" events
   std::priority_queue< SensorEvent, std::vector<SensorEvent>, std::greater<SensorEvent> > eventQueue;
@@ -121,6 +135,8 @@ int main(int argc, char* argv[])
       dataFile = filePrefix + std::to_string(i) + fileSuffix;
       fileList[i].open(dataFile.c_str());
     }
+    // output file for timer
+    timerFile.open(timerOutput.c_str());  
   }
   // ... or perform unit test to assess system:
   else if (unitTest == 1)
@@ -178,9 +194,14 @@ int main(int argc, char* argv[])
       }
     }
 
-    // send current data to the main RTFM program
+    // prepare data to send to the main RTFM program
     sensorArray[sid].fillDataContainer(time, dataToSend);
     channel = channelPrefix + std::to_string(sid);
+
+    // record the publish time
+    if (sid == 0) timer(timerFile);
+
+    // publish the data using LCM
     lcm.publish(channel, &dataToSend);
 
     // add a new event to the sensor queue
@@ -191,8 +212,27 @@ int main(int argc, char* argv[])
     }
   }
   //-------------------------------------------------------
-  
-  
+ 
+
+  // send final message at time = tmax
+  time = tmax;
+  for (sid = 0; sid < numSensors; sid++)
+  {
+    // prepare data to send
+    if ( sensorArray[sid].getActive() )
+    {
+      sensorArray[sid].recordNewData(fileList[sid]);
+    }
+    sensorArray[sid].fillDataContainer(time, dataToSend);
+    channel = channelPrefix + std::to_string(sid);
+
+    // record the publish time
+    if (sid == 0) timer(timerFile);
+
+    // publish the data using LCM
+    lcm.publish(channel, &dataToSend);
+  } 
+ 
   // print summary statistics
   usleep(sleepConversion);
   printf("\n\t{Sensor Simulator Summary}\n");
@@ -209,7 +249,8 @@ int main(int argc, char* argv[])
     {
       fileList[i].close();
     }
-    delete [] fileList;  
+    delete [] fileList;
+    timerFile.close();
   }
 
   // exit the main program
@@ -302,3 +343,28 @@ void runUnitTest(lcm::LCM& lcmHandle, const int numSensors)
   // exit unit test
   printf("\t{END UNIT TEST}\n");
 }
+
+
+// timer function
+void timer(std::ofstream& timerFile)
+{
+  static char buffer[29];
+  static int64_t usec;
+  static struct tm* tm_info;
+  static struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  usec = tv.tv_usec;
+  if (usec >= 1000000)
+  {
+    usec -= 1000000;
+    tv.tv_sec++;
+  }
+  tm_info = localtime(&tv.tv_sec);
+  strftime(buffer, 29, "%H,%M,%S", tm_info);
+  
+  // output
+  timerFile << buffer << ".";
+  timerFile << std::setw(6) << std::setfill('0') << usec << "\n";
+}
+

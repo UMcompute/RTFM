@@ -162,6 +162,7 @@ Do you want to convert EDM output to XML? (0 or 1) 1
 ## Authors
 
 * **Paul A. Beata** - *Ph.D. Student* - [pbeata [at] umich [dot] edu](https://github.com/pbeata)
+* This work was described in our Fire Technology journal paper from 2018.
 
 
 ## Acknowledgments

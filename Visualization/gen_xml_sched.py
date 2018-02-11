@@ -101,7 +101,7 @@ for i in range(0, NUM_SENSORS):
 # WRITE THE XML FILE BASED ON THE TASK TIMES
 taskCounter = 0   # used to give unique UID to each task
 for room in range(0, NUM_SENSORS):
-  fileName = baseFileName + str(room+1) + ".xml"
+  fileName = baseFileName + str(room) + ".xml"
   fullName = pathToFile + fileName
   root = None
 
@@ -154,6 +154,7 @@ for room in range(0, NUM_SENSORS):
       roomDetails.append(datePrefix + realTime)   # Early Start
       roomDetails.append(datePrefix + realTime)   # Late Start
       # end times 
+      myEnd = edmTime[room][-1]
       try:
         endTime = startTime[room][k+1]
         if (endTime != -1.0):
@@ -163,7 +164,7 @@ for room in range(0, NUM_SENSORS):
           if (checkIndex > k):
             myEnd = startTime[room][checkIndex]
       except IndexError:
-        myEnd = maxTime
+        myEnd = edmTime[room][-1]
       S = int(myEnd%60)
       M = int((myEnd - S) / 60)
       if (M < 10):

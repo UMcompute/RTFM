@@ -7,6 +7,7 @@ SENSDIR="$BASEDIR/Sensors"
 EDMDIR="$BASEDIR/EventDetection"
 MAINDIR="$BASEDIR/MainRTFM"
 
+rm -rf $DATADIR/file*
 python $DATADIR/read_devc.py
 $SENSDIR/config_sens.sh
 $EDMDIR/config_edm.sh

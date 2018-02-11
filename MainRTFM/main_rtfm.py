@@ -33,6 +33,7 @@ def sensor_handler(channel, data):
 inputFile = "../Exec/input.txt"
 fr = open(inputFile, 'r')
 NUM_SENSORS = int( fr.readline() )
+MAX_TIME = float( fr.readline() )
 fr.close()
 execEventDetection = "exec ../EventDetection/EDM.ex " + inputFile
 execSensor = "exec ../Sensors/SensorSim.ex " + inputFile
@@ -43,7 +44,7 @@ execGenXML = "exec python ../Visualization/gen_xml_sched.py " + inputFile
 # fixed parameters
 channelPrefix = "SENSOR"
 channelEDM = "EDM_CHANNEL"
-timeout = 0.01          # amount of time to wait, in [sec]
+timeout = 0.0001        # amount of time to wait, in [sec]
 smallDelay = 1.0        # [sec]
 killEDMtime = 100000.0  # [sec]
 
@@ -77,7 +78,6 @@ else:
 # launch sensor simulator
 if (startSENS == "1"):
   sensorProcess = subprocess.Popen(execSensor, shell=True)
-  time.sleep(smallDelay)
 else:
   print("***Sensor Simulator was not started***")
 
@@ -88,13 +88,16 @@ else:
 #   2. forward that data to sub-models (e.g. EDM)
 newSensorData = sensor_data()
 checkPoll = None
-while (checkPoll == None):
+currTime = 0.0
+numComplete = 0
+while ( checkPoll == None or numComplete < NUM_SENSORS ):
 
   # check if the sensors are still active
   if 'sensorProcess' in locals():
     checkPoll = sensorProcess.poll()
   else:
     checkPoll = False
+    numComplete = NUM_SENSORS
 
   # try to receive new data from a sensor
   rfds, wfds, efds = select.select([lc.fileno()], [], [], timeout)
@@ -107,14 +110,16 @@ while (checkPoll == None):
     if 'edmProcess' in locals():
       lc.publish(channelEDM, newSensorData.encode())
 
-    # print brief update to terminal
+    # print a brief update to terminal
+    currTime = newSensorData.sendTime
     if (newSensorData.sensorID == 0):
-      print( "  time = %.3f sec" % newSensorData.sendTime )
+      print( "  time = %.3f sec" % currTime )
 
     # increment the data message counter
     sid = newSensorData.sensorID
     numMsgRecvPerSensor[sid] += 1
-    checkPoll = None
+    if (currTime == MAX_TIME): 
+      numComplete += 1
 # ---------------------------------------------------------
 
 
@@ -167,3 +172,4 @@ print("\t  %.2f average messages sent from all sensors" %  avgRecv)
 print("\t  %.2f average messages received per second" %  msgPerSec)
 print("\t  %.3f total time in MAIN RTFM" %  maxTime)
 print("\n[END MAIN RTFM]\n")
+

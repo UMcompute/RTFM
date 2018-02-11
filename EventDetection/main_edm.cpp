@@ -10,39 +10,25 @@
 #include "DataHandler.h"
 #include "SensorEDM.h"
 
+// microsecond timer
+#include <sys/time.h>
+#include <chrono>
+#include <stdint.h>
+#include <inttypes.h>
+#include <iomanip>
+
 
 // This function checks if a new LCM message is available 
 //   (it returns TRUE if there IS a new message, which then
 //   must be handled properly with "lcm.handle()").
-bool checkForNewMsg(lcm::LCM &lcm)
-{
-  // setup the LCM file descriptor for waiting
-  int lcm_fd = lcm.getFileno();
-  fd_set fds;
-  FD_ZERO(&fds);
-  FD_SET(lcm_fd, &fds);
-
-  // wait a limited amount of time for an incoming msg
-  struct timeval timeout = {
-    1,  // seconds
-    0   // microseconds
-  };
-  int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
-
-  // interpret the file descriptor status
-  bool result = false;
-  if (0 == status)
-  {
-    result = false;
-  }
-  else if (FD_ISSET(lcm_fd, &fds))
-  {
-    result = true;
-  }
-  return result;
-}
+bool checkForNewMsg(lcm::LCM &lcm);
 
 
+// Function to record time with microsecond accuracy
+void timer(std::ofstream& timerFile);
+
+
+//=========================================================
 // MAIN EVENT DETECTION MODEL
 int main(int argc, char** argv) 
 {
@@ -103,6 +89,8 @@ int main(int argc, char** argv)
   std::string file_prefix = "../Output/SensorLog-";
   std::string file_suffix = ".csv";
   std::string file_name;
+  std::ofstream timerFile;
+  std::string timerOutput = "../Output/recv_time.csv";
   if (writeLog == 1)
   {
     for (int i = 0; i < numSensors; i++)
@@ -110,6 +98,7 @@ int main(int argc, char** argv)
       file_name = file_prefix + std::to_string(i) + file_suffix;
       outFiles[i].open(file_name.c_str(), std::ios::out);
     }
+    timerFile.open(timerOutput.c_str());
   }
 
 
@@ -160,6 +149,7 @@ int main(int argc, char** argv)
             smokeToxicity[sid],
             burnThreat[sid],
             fireStatus[sid]);
+	  if (sid == 0) timer(timerFile);
         }
       }
     }
@@ -174,6 +164,7 @@ int main(int argc, char** argv)
     {
       outFiles[i].close();
     }
+    timerFile.close();
   }
 
   // release dynamic memory
@@ -187,3 +178,63 @@ int main(int argc, char** argv)
   printf("\n\n\t{End of Event Detection Model}\n");
   return 0;
 }
+//=========================================================
+
+
+// This function checks if a new LCM message is available 
+//   (it returns TRUE if there IS a new message, which then
+//   must be handled properly with "lcm.handle()").
+bool checkForNewMsg(lcm::LCM &lcm)
+{
+  // setup the LCM file descriptor for waiting
+  int lcm_fd = lcm.getFileno();
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(lcm_fd, &fds);
+
+  // wait a limited amount of time for an incoming msg
+  struct timeval timeout = {
+    1,  // seconds
+    0   // microseconds
+  };
+  int status = select(lcm_fd + 1, &fds, 0, 0, &timeout);
+
+  // interpret the file descriptor status
+  bool result = false;
+  if (0 == status)
+  {
+    result = false;
+  }
+  else if (FD_ISSET(lcm_fd, &fds))
+  {
+    result = true;
+  }
+  return result;
+}
+
+
+// timer function
+void timer(std::ofstream& timerFile)
+{
+  static char buffer[29];
+  static int64_t usec;
+  static struct tm* tm_info;
+  static struct timeval tv;
+
+  gettimeofday(&tv, NULL);
+  usec = tv.tv_usec;
+  if (usec >= 1000000)
+  {
+    usec -= 1000000;
+    tv.tv_sec++;
+  }
+  tm_info = localtime(&tv.tv_sec);
+  strftime(buffer, 29, "%H,%M,%S", tm_info);
+  
+  // output
+  timerFile << buffer << ".";
+  timerFile << std::setw(6) << std::setfill('0') << usec << "\n";
+}
+
+
+
