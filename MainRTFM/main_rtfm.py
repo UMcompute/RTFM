@@ -1,6 +1,7 @@
 # Python packages
 import subprocess
 import time
+import sys
 
 # LCM-related packages
 import lcm
@@ -38,6 +39,14 @@ fr.close()
 execEventDetection = "exec ../EventDetection/EDM.ex " + inputFile
 execSensor = "exec ../Sensors/SensorSim.ex " + inputFile
 execGenXML = "exec python ../Visualization/gen_xml_sched.py " + inputFile
+
+# check for command line arguments to do automatic testing
+numProcesses = 4
+numArgs = len(sys.argv)
+if ( numArgs == numProcesses ):
+  startEDM = sys.argv[1]
+  startSENS = sys.argv[2]
+  startXML = sys.argv[3]
 # =========================================================
 
 
@@ -60,13 +69,14 @@ for i in range(0, NUM_SENSORS):
   numMsgRecvPerSensor.append(0)
 
 # prompt user to start sub-models
-userMsg1 = 'Ready to launch Event Detection Model? (Enter 0 or 1) '
-startEDM = raw_input(userMsg1)
-userMsg2 = 'Ready to launch the Sensor Simulator? (0 or 1) '
-startSENS = raw_input(userMsg2)
-if (startEDM == "1"):
-  userMsg3 = 'Do you want to convert EDM output to XML? (0 or 1) '
-  startXML = raw_input(userMsg3)
+if ( numArgs != numProcesses ):
+  userMsg1 = 'Ready to launch Event Detection Model? (Enter 0 or 1) '
+  startEDM = raw_input(userMsg1)
+  userMsg2 = 'Ready to launch the Sensor Simulator? (0 or 1) '
+  startSENS = raw_input(userMsg2)
+  if (startEDM == "1"):
+    userMsg3 = 'Do you want to convert EDM output to XML? (0 or 1) '
+    startXML = raw_input(userMsg3)
 
 # launch event detection model (EDM)
 if (startEDM == "1"):

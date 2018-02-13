@@ -29,7 +29,7 @@ def copy_data(uniqueSensors=0, targetSensors=0, dataDir=None):
       src = dataDir + "file" + str(key) + ".csv"
       dst = dataDir + "file" + str(i) + ".csv"
       copyfile(src, dst)
-      print( "copied %s to %s" % (src, dst) )
+      # print( "copied %s to %s" % (src, dst) )
     if (key < uniqueSensors-1):
       key += 1
     else:
