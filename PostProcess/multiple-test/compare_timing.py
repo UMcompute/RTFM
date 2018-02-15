@@ -7,15 +7,18 @@ sensorList = [4, 8, 16, 32, 64, 128, 256, 512]
 
 fig, ax = plt.subplots(1, 1)
 
+maxVals = []
 avgVals = []
+minVals = []
+
+fileA = "send_time.csv"
+fileB = "recv_time.csv"
 
 for s in sensorList:
 
   dataDir = "../../Testing/out-" + str(s) + "/"
   # dataDir = "../../../out-60SEC-test/out-" + str(s) + "/"
-
-  fileA = "send_time.csv"
-  fileB = "recv_time.csv"
+  print(dataDir)
 
   A = np.loadtxt(dataDir + fileA, delimiter=",")
   B = np.loadtxt(dataDir + fileB, delimiter=",")
@@ -40,7 +43,12 @@ for s in sensorList:
   a = np.mean(e, dtype=np.float64)
   f = a * np.ones(N)
 
+  b = np.max(e)
+  c = np.min(e)
+
   avgVals.append(a * 1000.0)  # convert to ms
+  maxVals.append(b * 1000.0)  # convert to ms
+  minVals.append(c * 1000.0)  # convert to ms
 
   # the error "e"  is in [sec]
   e_ms = 1000.0 * e
@@ -55,8 +63,19 @@ fig.legend(loc=2)
 
 
 f2, ax2 = plt.subplots(1,1)
-ax2.semilogx(sensorList, avgVals, 'ko-')
+
+ax2.loglog(sensorList, avgVals, 'k-')
+ax2.loglog(sensorList, maxVals, 'bx--')
+ax2.loglog(sensorList, minVals, 'bo--')
+
+# ax2.semilogx(sensorList, avgVals, 'k-')
+# ax2.semilogx(sensorList, maxVals, 'bx--')
+# ax2.semilogx(sensorList, minVals, 'bo--')
+
+ax2.set_xlim([10**0,  10**3])
+ax2.set_ylim([10**-1, 10**1])
+
 ax2.set_xlabel("Number of Sensors")
-ax2.set_ylabel("Average Computing Time per Measurement [ms]")
+ax2.set_ylabel("Computing Time per Measurement [ms]")
 
 plt.show()

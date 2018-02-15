@@ -1,6 +1,7 @@
 #!/bin/bash
 
-sensors='4 8 16 32 64 128 256 512'
+# sensors='4 8 16 32 64 128 256 512'
+sensors='256'
 BASEDIR=".."
 
 DATADIR="$BASEDIR/Data"
