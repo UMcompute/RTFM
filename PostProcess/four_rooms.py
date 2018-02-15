@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 # room and file input
-baseFile = "../Output/SensorLog-"
+baseFile = "../Testing/out-4/SensorLog-"
 fileType = ".csv"
 out = "./"
 

@@ -16,7 +16,7 @@ fileB = "recv_time.csv"
 
 for s in sensorList:
 
-  dataDir = "../../Testing/out-" + str(s) + "/"
+  dataDir = "../Testing/out-" + str(s) + "/"
   # dataDir = "../../../out-60SEC-test/out-" + str(s) + "/"
   print(dataDir)
 
