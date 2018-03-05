@@ -24,25 +24,26 @@ class SensorEDM
     const int iflux = 5;
 
     // SMOKE TOXICITY
+    const int maxSmoke = 2;
     double O2_limit = 7.0;            // [%] (Alarie 2002)
     const double FED_limit = 1.0;     // FED sums to 1.0
     double sumFEDsmoke;
 
     // BURN THREATS
-    double sumFEDheat1;
-    double sumFEDheat2;
+    const int maxBurn = 3;
+    double sumFEDheat[3] = {0.0, 0.0, 0.0};
 
     // FIRE STATUS
-    int fireStatus;
-    const int maxWarning = 2;
-    const double tempLimits[2] = {57.0, 500.0};
-    const double fluxLimits[2] = {0.6, 15.0};
-   
     // From (Wills 2015), 50 deg C is the limit for 
     // requiring a breathing apparatus. We use 0.5 kW/m^2
     // to help filter out traveling smoke (this helps
     // to localize the sensing to the current room). 
-     
+    // 250 deg C causes damage to PPE
+    // 500 deg C + 15 kW/m^2 indicates flashover
+    int fireStatus;
+    const int maxFire = 3;
+    const double tempLimits[3] = {50.0, 250.0, 500.0};
+    const double fluxLimits[3] = { 0.5,   0.5,  15.0};
  
   public:
     SensorEDM();
@@ -62,6 +63,7 @@ class SensorEDM
     int checkFireStatus(DataHandler& inData);
     int checkBurnThreat(DataHandler& inData);
     int checkSmokeTox(DataHandler& inData);
+    int handleDamagedSensor(int flag);
 };
 
 #endif // SENSOREDM_H_INCLUDED

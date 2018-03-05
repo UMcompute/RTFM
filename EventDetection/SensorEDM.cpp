@@ -10,8 +10,6 @@ SensorEDM::SensorEDM()
 {
   // initialize the hazard variables:
   sumFEDsmoke = 0.0;
-  sumFEDheat1 = 0.0;
-  sumFEDheat2 = 0.0;
   fireStatus = 0;
   lastTime = 0.0;
   dt = 0.0;
@@ -34,8 +32,10 @@ void SensorEDM::writeOutput(
   int burn,
   int fire)
 {
+  // col 0
   fileHandle << inData.getTime() << ","; 
 
+  // col 1 - 6
   fileHandle << inData.getDataValue(itemp) << ","; 
   fileHandle << inData.getDataValue(iO2) << ","; 
   fileHandle << inData.getDataValue(iCO) << ","; 
@@ -43,14 +43,18 @@ void SensorEDM::writeOutput(
   fileHandle << inData.getDataValue(iHCN) << ","; 
   fileHandle << inData.getDataValue(iflux) << ","; 
 
+  // col 7 - 10
   fileHandle << sumFEDsmoke << ",";
-  fileHandle << sumFEDheat1 << ",";
-  fileHandle << sumFEDheat2 << ",";
+  fileHandle << sumFEDheat[0] << ",";
+  fileHandle << sumFEDheat[1] << ",";
+  fileHandle << sumFEDheat[2] << ",";
 
+  // col 11 - 13
   fileHandle << smoke << ",";
   fileHandle << burn << ",";
   fileHandle << fire << ",";
 
+  // col 14
   fileHandle << inData.getStatus() << "\n"; 
 }
 
@@ -156,51 +160,59 @@ int SensorEDM::checkBurnThreat(DataHandler &inData)
   double temp = inData.getDataValue(itemp);
   double flux = inData.getDataValue(iflux);
 
-  // convection contribution
-  double tc1, tc2, FED_c1, FED_c2;
-  double A1, B1, A2, B2;
-  A1 = 2.0 * pow(10.0, 31);
-  B1 = 4.0 * pow(10.0, 8);
-  A2 = 2.0 * pow(10.0, 18);
-  B2 = 1.0 * pow(10.0, 8);
-  tc1 = A1 * pow(temp, -16.963) + B1 * pow(temp, -3.7561);
-  tc2 = A2 * pow(temp, -9.0403) + B2 * pow(temp, -3.10898);
-  FED_c1 = dt / tc1;
-  FED_c2 = dt / tc2;
 
-  // radiation contribution
-  double tr1, tr2, FED_r1, FED_r2;
-  double r1 = 1.33;
-  double r2 = 16.7;
+  // 1. convection contribution
+  // SFPE Handbook Eqn 63.45 (pain tolerance)
+  double tconv1 = (2.0 * pow(10.0, 31) * pow(temp, -16.963)) + (4.0 * pow(10.0, 8) * pow(temp, -3.7561));
+  double FEDconv1 = dt / tconv1;
+
+  // SFPE Handbook Eqn 63.46
+  double tconv2 = (5.0 * pow(10.0, 22) * pow(temp, -11.783)) + (3.0 * pow(10.0, 7) * pow(temp, -2.9636));
+  double FEDconv2 = dt / tconv2;
+
+  // SFPE Handbook Eqn 63.47
+  double tconv3 = (2.0 * pow(10.0, 18) * pow(temp, -9.0403)) + (1.0 * pow(10.0, 8) * pow(temp, -3.10898));
+  double FEDconv3 = dt / tconv3;
+
+
+  // 2. radiation contribution 
   double minFlux = 2.5;
+  double FEDrad1, FEDrad2, FEDrad3;
   if (flux < minFlux)
   {
-    tr1 = 0.0;
-    tr2 = 0.0;
-    FED_r1 = 0.0;
-    FED_r2 = 0.0;
+    FEDrad1 = 0.0;
+    FEDrad2 = 0.0;
+    FEDrad3 = 0.0;
   }
   else
   {
-    tr1 = r1 / pow(flux, 1.33);
-    tr2 = tr1 * (r2 / r1);
-    FED_r1 = dt / tr1;
-    FED_r2 = dt / tr2;
-  }
+    // tolerance limit, pain, 1st-degree burns
+    double trad1 = 1.33 / pow(flux, 1.33);
+    FEDrad1 = dt / trad1;
+    
+    // severe incapacitation, 2nd-degree burns
+    double trad2 = 10.0 / pow(flux, 1.33);
+    FEDrad2 = dt / trad2;
 
-  // summation of FED
-  sumFEDheat1 += (FED_c1 + FED_r1);
-  sumFEDheat2 += (FED_c2 + FED_r2);
+    // fatal exposure, 3rd-degree burns
+    double trad3 = 16.7 / pow(flux, 1.33);      
+    FEDrad3 = dt / trad3;
+  }
+  
+
+  // cumulative FED
+  sumFEDheat[0] += (FEDconv1 + FEDrad1);
+  sumFEDheat[1] += (FEDconv2 + FEDrad2);
+  sumFEDheat[2] += (FEDconv3 + FEDrad3);
 
   // warning check
   int warning = 0;
-  if (sumFEDheat1 >= FED_limit)
+  for (int i = 0; i < maxBurn; i++)
   {
-    warning += 1;
-  }
-  if (sumFEDheat2 >= FED_limit)
-  {
-    warning += 1;
+    if (sumFEDheat[i] >= FED_limit)
+    {
+      warning += 1;
+    }
   }
   return warning;
 }
@@ -216,9 +228,9 @@ int SensorEDM::checkFireStatus(DataHandler& inData)
 
   // perform hazard detection calculations
   int warning = 0;
-  if (fireStatus < maxWarning)
+  if (fireStatus < maxFire)
   {
-    for (int i = 0; i < maxWarning; i++)
+    for (int i = 0; i < maxFire; i++)
     {
       if (temperature > tempLimits[i] && heatFlux > fluxLimits[i])
       {
@@ -229,3 +241,30 @@ int SensorEDM::checkFireStatus(DataHandler& inData)
   }
   return fireStatus;
 }
+
+
+// DAMAGED SENSOR
+int SensorEDM::handleDamagedSensor(int flag)
+{
+  // flag = 0 --> set fire status
+  // flag = 1 --> set burn threats
+  // flag = 2 --> set smoke toxicity
+  int warning = 0;
+  if (flag == 0)
+  {    
+    // fire status
+    warning = maxFire;
+  }
+  else if (flag == 1)
+  {
+    // burn threats
+    warning = maxBurn;
+  }
+  else if (flag == 2)
+  {
+    // smoke toxicity
+    warning = maxSmoke;
+  }
+  return warning;
+}
+

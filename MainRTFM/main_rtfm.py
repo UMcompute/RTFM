@@ -100,7 +100,8 @@ newSensorData = sensor_data()
 checkPoll = None
 currTime = 0.0
 numComplete = 0
-while ( checkPoll == None or numComplete < NUM_SENSORS ):
+# while ( checkPoll == None or numComplete < NUM_SENSORS ):
+while ( checkPoll == None or (currTime < MAX_TIME and numComplete < NUM_SENSORS) ):
 
   # check if the sensors are still active
   if 'sensorProcess' in locals():
@@ -128,7 +129,7 @@ while ( checkPoll == None or numComplete < NUM_SENSORS ):
     # increment the data message counter
     sid = newSensorData.sensorID
     numMsgRecvPerSensor[sid] += 1
-    if (currTime == MAX_TIME): 
+    if (currTime >= MAX_TIME):
       numComplete += 1
 # ---------------------------------------------------------
 

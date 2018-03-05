@@ -100,6 +100,8 @@ int main(int argc, char* argv[])
   // initialize the sensor simulator variables  
   srand(100);
   int sid; 
+  double temp;
+  const double tempFail = 50.0;
   int numFailed = 0;
   double sleepConversion = sleepScale * pow(10.0, 6.0);
   double time = 0.0;
@@ -172,7 +174,13 @@ int main(int argc, char* argv[])
     // test if sensor has failed; update its data
     if ( sensorArray[sid].getActive() )
     {
-      failCheck = getRandDble();
+      // potential sensor failure is linked to current temp
+      temp = sensorArray[sid].getData(0);
+      if (temp > tempFail)
+        failCheck = getRandDble() / temp;
+      else
+        failCheck = 1.0;
+
       // sensor has failed:
       if (failCheck < failureProb)
       {

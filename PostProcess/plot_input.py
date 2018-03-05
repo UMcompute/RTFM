@@ -12,13 +12,15 @@ out = "./"
 numSensors = 4
 # ps = ['--', 's-', 'x-', 'o:']
 ps = ['o', 's', 'x', '^']
+# ps = ['o--', 's-', 'x-', '^:']
 
 # expected csv column format:
-#         |     (raw measured data)     |      (computed FED values)        | (computed hazard levels)
-#   Time  | Temp  O2  CO  CO2 HCN Flux  | FED(Smoke)  FED(Pain)  FED(Fatal) | Smoke     Burns     Fire 
+#         |     (raw measured data)     |      (computed FED values)                | (computed hazard levels)  |
+#   Time  | Temp  O2  CO  CO2 HCN Flux  | FED(Smoke)  FED(1st)  FED(2nd)  FED(3rd)  | Smoke     Burns     Fire  |  status
 
 
 # Y axis limits
+xx = [0.0, 600.0]
 axisLimits = [ [0.0, 400.0],
 [0.0, 8.0],
 [14.0, 22.0],
@@ -62,30 +64,32 @@ ylab = ["Temperature", "Heat Flux", "Oxygen ($O_{2}$)", "Carbon Monoxide ($CO$)"
 
 numRow = 3
 numCol = 2
-fig, axes = plt.subplots(numRow, numCol, sharex=True, figsize=(6,8))
+fig, axes = plt.subplots(numRow, numCol, sharex=True, figsize=(5,7))
 
 
 # loop over all sensors
 count = 0
 for i in range(0, numRow):
-	for j in range(0, numCol):
-		axes[i, j].set_title(ylab[count])
-		axes[i, j].set_ylabel(axisLabels[count])
-		axes[i, j].set_ylim(axisLimits[count])
-		y = plotData[count]
-		count += 1
-		for k in range(0, numSensors):
-			roomLabel = "Room " + str(k+1)
-			axes[i, j].plot( time[k], y[k], ps[k], ms=3, markevery=5, label=roomLabel, markerfacecolor='None' )
+  for j in range(0, numCol):
+    axes[i, j].set_title(ylab[count])
+    axes[i, j].set_ylabel(axisLabels[count])
+    axes[i, j].set_xlim(xx)
+    axes[i, j].set_ylim(axisLimits[count])
+    y = plotData[count]
+    count += 1
+    for k in range(0, numSensors):
+      roomLabel = "Room " + str(k+1)
+      axes[i, j].plot( time[k], y[k], ps[k], ms=3, markevery=8, label=roomLabel, markerfacecolor='None' )
 
 
 axes[2, 0].set_xlabel('Time [s]')
 axes[2, 1].set_xlabel('Time [s]')
 axes[2, 1].legend(loc = 1)
-axes[2, 1].text(20, 1, '(all data points are zero)', style='italic')
+axes[2, 1].text(30, 1, '(zero HCN in test)', style='italic')
 
 plt.tight_layout()
-plt.savefig("example.pdf", dpi=600, format='pdf')
+
+plt.savefig("input.pdf", dpi=600, format='pdf')
 #plt.savefig("input.eps", dpi=1000, format='eps')
 
 plt.show()

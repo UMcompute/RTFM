@@ -22,12 +22,12 @@ baseFileName = "OutSched"
 
 # fixed parameters: 
 taskFile = "../Visualization/task_template.csv"
-eventLabels = ['initial', 'warning', 'threat', 'severe']
+eventLabels = ['initial', 'low', 'medium', 'high', 'extreme']
 
-# starting color id #'s correspond to G-Y-O-R in ABD
-# finishing color id #'s correspond to Y-O-R-R in ABD
-startColor =  ['65280', '65535', '32767', '255']
-finishColor = ['65535', '32767', '255',   '255']
+# starting color id #'s correspond to:  G-Y-O-R-K  (in ABD)
+# finishing color id #'s correspond to: Y-O-R-K-K  (in ABD)
+startColor =  ['65280', '65535', '32767', '255', '0']
+finishColor = ['65535', '32767', '255',   '0',   '0']
 numLevels = len(eventLabels)
 
 preamble = ["Name", "TimeFormat", "File", "FileFormat", \
@@ -53,9 +53,9 @@ for i in range(0, NUM_SENSORS):
   edmFile = edmBaseFile + "-" + str(i) + ".csv"
   A = np.loadtxt(edmFile, delimiter=",")
   edmTime.append(A[:,0])
-  smokeWarn.append(A[:,10])
-  burnWarn.append(A[:,11])
-  fireWarn.append(A[:,12])
+  smokeWarn.append(A[:,11])
+  burnWarn.append(A[:,12])
+  fireWarn.append(A[:,13])
 
 # compare all hazards for each time step to assess threat
 threatLevel = []
@@ -67,17 +67,20 @@ for i in range(0, NUM_SENSORS):
     b = burnWarn[i][j]      # burn warning
     f = fireWarn[i][j]      # fire warning
 
-    if ((s==1) or (b==1) or (f==1)):
+    if ( (s + b + f) == 1 ):
       t[j] = 1
 
-    if ((s==1 and b==1) or (b==1 and f==1) or (s==1 and f==1)):
+    if ( (s==1 and b==1) or (b==1 and f==1) or (s==1 and f==1)):
       t[j] = 2
 
-    if ((s==1) and (b==1) and (f==1)):
-      t[j] = 3  
+    if ( (s==1) and (b==1) and (f==1) ):
+      t[j] = 2
     
-    if ((s==2) or (b==2) or (f==2)):
+    if ( (b==2) or (f==2) ):
       t[j] = 3
+
+    if ( (s==2) or (b==3) or (f==3) ):
+      t[j] = 4
   threatLevel.append(t)
 
 # determine start time of each threat (per room) if it exists
@@ -95,6 +98,11 @@ for i in range(0, NUM_SENSORS):
         startTime[i][j] = edmTime[i][checkIndex]
       else:
         numEvents[i][j] = 0
+
+# print the start times of each event for each room: 
+print("\nEvent start times for each room: ")
+for starts in startTime:
+  print(starts)
 
 
 #==========================================================

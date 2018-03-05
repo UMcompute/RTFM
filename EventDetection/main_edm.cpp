@@ -135,9 +135,12 @@ int main(int argc, char** argv)
           // SMOKE TOXICITY
           smokeToxicity[sid] = sensorArray[sid].checkSmokeTox(currentData);
         }
+        // damaged sensor: 
         else
         {
-          // todo: handle damaged sensor data
+          fireStatus[sid] = sensorArray[sid].handleDamagedSensor(0);
+          burnThreat[sid] = sensorArray[sid].handleDamagedSensor(1);
+          smokeToxicity[sid] = sensorArray[sid].handleDamagedSensor(2);
         }
 
         // write output to proper log file
