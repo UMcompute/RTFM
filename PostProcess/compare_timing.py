@@ -14,10 +14,14 @@ minVals = []
 fileA = "send_time.csv"
 fileB = "recv_time.csv"
 
+outDir = "/mnt/c/Users/PaulA/Desktop/Journal-2/submission_02-01-18/data/OUT_600sec_error256/out-"
+
 for s in sensorList:
 
-  dataDir = "../Testing/out-" + str(s) + "/"
+  # dataDir = "../Testing/out-" + str(s) + "/"
   # dataDir = "../../../out-60SEC-test/out-" + str(s) + "/"
+
+  dataDir = outDir + str(s) + "/"
   print(dataDir)
 
   A = np.loadtxt(dataDir + fileA, delimiter=",")

@@ -150,9 +150,10 @@ void Sensor::recordNewData(std::ifstream& inFile)
   }
 }
 
-// This function filles the LCM data struct defined in 
-//  on our "sensor_data.lcm" data struct. Any changes in 
-//  this .lcm file must handled explicitly in the source. 
+// This function fills the LCM data struct defined in 
+//  on our "sensor_data.lcm" file. Any changes in 
+//  this .lcm file must be handled explicitly here 
+//  in this member function and any others that use it. 
 void Sensor::fillDataContainer(
   double time, 
   sensor::sensor_data& container)

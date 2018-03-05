@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 # room and file input
-baseFile = "../Testing/out-4/SensorLog-"
+baseFile = "../Output/SensorLog-"
 fileType = ".csv"
 out = "./"
 
@@ -23,7 +23,7 @@ ps = ['--', 's-', 'x-', 'o:']
 
 # axis limits
 tmin = 0.0
-tmax = 300.0
+tmax = 600.0
 
 tempMax = 400.0
 fluxMax = 8.0
@@ -172,15 +172,15 @@ b3.set_ylim([0.0, 3.0])
 # SAVE FIGURES TO PDF FORMAT
 
 f1.tight_layout()
-f1.savefig(out + 'temp-flux.pdf', format='pdf', dpi=600)
+#f1.savefig(out + 'temp-flux.pdf', format='pdf', dpi=600)
 
 f2.tight_layout()
-f2.savefig(out + 'FED.pdf', format='pdf', dpi=600)
+#f2.savefig(out + 'FED.pdf', format='pdf', dpi=600)
 
 f3.tight_layout()
-f3.savefig(out + 'concentrations.pdf', format='pdf', dpi=600)
+#f3.savefig(out + 'concentrations.pdf', format='pdf', dpi=600)
 
 f4.tight_layout()
-f4.savefig(out + 'warnings.pdf', format='pdf', dpi=600)
+#f4.savefig(out + 'warnings.pdf', format='pdf', dpi=600)
 
 plt.show()

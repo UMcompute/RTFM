@@ -47,7 +47,11 @@ FIRST DATA ROW 2:  0.0 0.0 .................
 '''
 
 
-devcFile = "../Data/propane_two_fire_devc.csv"
+#devcFile = "../Data/propane_two_fire_devc.csv"
+#devcFile = "../Data/propane_two_fire_200kW_devc.csv"
+devcFile = "../Data/propane_two_fire_90sec_devc.csv"
+
+
 dataDir = "../Data/"
 inputFile = "../Exec/input.txt"
 fr = open(inputFile, 'r')
