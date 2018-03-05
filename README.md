@@ -92,9 +92,9 @@ By default, this test will use the input values stored in "input.txt" of this sa
 2. Do you want to launch the sensor simulator? (0 or 1)
 3. (if you answered yes to #1, then...) Do you want to convert event detection output into XML format? (0 or 1)
 
-Answer yes (1) to all three questions. Watch as the time stamp from the simulated sensor module is printed to the terminal along with the summary statistics at the end of the run. Check in the RTFM/Output/ directory to see the output of the event detection model (SensorLog-*.txt) and the resulting XML files generated based on that output. 
+Answer yes (1) to all three questions. Watch as the time stamp from the simulated sensor module is printed to the terminal along with the summary statistics at the end of the run. Check in the RTFM/Output/ directory to see the output of the event detection model (SensorLog-*.txt) and the resulting XML files generated based on that output.   
 
-The schedules contained in the XML files are formatted for use with Bentley Systems' AECOsim Building Designer BIM platform to visualize the evolving hazards during a fire event. 
+The schedules contained in the XML files are formatted for use with Bentley Systems' AECOsim Building Designer (ABD) BIM platform to visualize the evolving hazards during a fire event. Specifically, the Animation Producer from ABD is used to playback the monitoring events at this stage of the research. 
 
 ## Results of the Test
 
@@ -105,6 +105,19 @@ When you run the simulation with the provided input parameters, the results are 
 * Sensor failure probability:  0.0  (*no sensors will "fail" in this test*)
 
 ```
+pbeata@Paul-Laptop:~/Desktop/RTFM/Exec$ ./config.sh 
+
+[UNIQUE SENSOR DATA FILES: 4]
+
+[TOTAL OF 4 SENSOR FILES AVAILABLE]
+
+g++ -g -Wall -O3 -c SensorEvent.cpp -o SensorEvent.o -llcm -std=c++11
+g++ -g -Wall -O3 -c Sensor.cpp -o Sensor.o -llcm -std=c++11
+
+  ...
+
+(attempted to delete old Output/ in base directory)
+
 pbeata@Paul-Laptop:~/Desktop/RTFM/Exec$ ./run.sh 
 
 [START MAIN RTFM]
@@ -122,41 +135,46 @@ Do you want to convert EDM output to XML? (0 or 1) 1
 ../Sensors/SensorSim.ex has input file: ../Exec/input.txt 
 
   time = 0.815 sec
-  time = 1.762 sec
-  time = 3.144 sec
-  time = 3.787 sec
+  time = 2.035 sec
+  
   ...
   ...
-  ...
-  time = 596.923 sec
-  time = 597.809 sec
-  time = 598.590 sec
-  time = 599.699 sec
+
+  time = 598.669 sec
+  time = 599.554 sec
+  time = 600.000 sec
 
   {Sensor Simulator Summary}
     0 sensors failed
     4 total sensors
     0.00 percent failure rate
-    599.867 total time [sec]
+    600.000 total time [sec]
 
 
   {End of Event Detection Model}
+
+  Event start times for each room (in XML schedules): 
+    [0.0, 198.682, 338.183, -1.0, -1.0]
+    [0.0, 159.26, 243.818, 243.818, 321.601]
+    [0.0, 541.319, -1.0, -1.0, -1.0]
+    [0.0, 481.251, -1.0, -1.0, -1.0]
 
   {Finished Writing EDM Output to XML}
 
 
   Messages received from all 4 sensors:
-  [561, 569, 559, 567]
+  [567, 574, 561, 583]
 
   [MAIN RTFM SUMMARY]
-    2256 total number of data messages received
-    559 minimum messages sent from sensor #2
-    569 maximum messages sent from sensor #1
-    564.00 average messages sent from all sensors
-    3.76 average messages received per second
-    599.867 total time in MAIN RTFM
+    2285 total number of data messages received
+    561 minimum messages sent from sensor #2
+    583 maximum messages sent from sensor #3
+    571.25 average messages sent from all sensors
+    3.81 average messages received per second
+    600.000 total time in MAIN RTFM
 
-[END MAIN RTFM]
+[END MAIN RTFM] 
+
 ```
 
 ## Authors

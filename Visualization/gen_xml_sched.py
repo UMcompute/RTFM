@@ -100,9 +100,9 @@ for i in range(0, NUM_SENSORS):
         numEvents[i][j] = 0
 
 # print the start times of each event for each room: 
-print("\nEvent start times for each room: ")
+print("\n\tEvent start times for each room (in XML schedules): ")
 for starts in startTime:
-  print(starts)
+  print("\t  " + str(starts))
 
 
 #==========================================================
