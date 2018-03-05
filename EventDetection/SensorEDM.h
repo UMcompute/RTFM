@@ -37,7 +37,13 @@ class SensorEDM
     const int maxWarning = 2;
     const double tempLimits[2] = {57.0, 500.0};
     const double fluxLimits[2] = {0.6, 15.0};
-    
+   
+    // From (Wills 2015), 50 deg C is the limit for 
+    // requiring a breathing apparatus. We use 0.5 kW/m^2
+    // to help filter out traveling smoke (this helps
+    // to localize the sensing to the current room). 
+     
+ 
   public:
     SensorEDM();
     ~SensorEDM();
