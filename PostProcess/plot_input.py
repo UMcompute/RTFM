@@ -90,6 +90,6 @@ axes[2, 1].text(30, 1, '(zero HCN in test)', style='italic')
 plt.tight_layout()
 
 plt.savefig("input.pdf", dpi=600, format='pdf')
-#plt.savefig("input.eps", dpi=1000, format='eps')
+plt.savefig("input.eps", dpi=600, format='eps')
 
 plt.show()

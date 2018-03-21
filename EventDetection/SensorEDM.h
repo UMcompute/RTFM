@@ -24,10 +24,11 @@ class SensorEDM
     const int iflux = 5;
 
     // SMOKE TOXICITY
-    const int maxSmoke = 2;
-    double O2_limit = 7.0;            // [%] (Alarie 2002)
-    const double FED_limit = 1.0;     // FED sums to 1.0
     double sumFEDsmoke;
+    int smokeStatus;
+    const int maxSmoke = 2;
+    double O2_limit = 10.0;           // percentage
+    const double FED_limit = 1.0;     // FED sums to 1.0
 
     // BURN THREATS
     const int maxBurn = 3;
@@ -43,7 +44,7 @@ class SensorEDM
     int fireStatus;
     const int maxFire = 3;
     const double tempLimits[3] = {50.0, 250.0, 500.0};
-    const double fluxLimits[3] = { 0.5,   0.5,  15.0};
+    const double fluxLimits[3] = { 0.0,   0.0,  15.0};
  
   public:
     SensorEDM();

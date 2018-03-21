@@ -30,7 +30,7 @@ startColor =  ['65280', '65535', '32767', '255', '0']
 finishColor = ['65535', '32767', '255',   '0',   '0']
 numLevels = len(eventLabels)
 
-preamble = ["Name", "TimeFormat", "File", "FileFormat", \
+preamble = ["Name", "TimeFormat", \
 "StartDate", "EarlyStartDate", "LateStartDate", "FinishDate", \
 "EarlyFinishDate", "LateFinishDate", "CreationDate" ]
 
@@ -63,24 +63,27 @@ for i in range(0, NUM_SENSORS):
   numSteps = len(edmTime[i])
   t = np.zeros(numSteps)
   for j in range(0, numSteps):
+    
     s = smokeWarn[i][j]     # smoke warning
     b = burnWarn[i][j]      # burn warning
     f = fireWarn[i][j]      # fire warning
 
-    if ( (s + b + f) == 1 ):
-      t[j] = 1
+    if ( (s==1) or (b==1) or (f==1) ):
+      t[j] = 1  # low
 
     if ( (s==1 and b==1) or (b==1 and f==1) or (s==1 and f==1)):
-      t[j] = 2
+      t[j] = 2  # medium
 
     if ( (s==1) and (b==1) and (f==1) ):
-      t[j] = 2
+      t[j] = 3  # high
     
     if ( (b==2) or (f==2) ):
-      t[j] = 3
+      t[j] = 3  # high
 
-    if ( (s==2) or (b==3) or (f==3) ):
-      t[j] = 4
+    if ( (b==3) or (f==3) or (s==2) ):
+      t[j] = 4  # extreme
+
+  # update the threat level list
   threatLevel.append(t)
 
 # determine start time of each threat (per room) if it exists
@@ -119,7 +122,7 @@ for room in range(0, NUM_SENSORS):
   # create an attribute for each of the preamble components
   counter = 0
   preamleValues[0] = "Room-" + str(room+1) + "-Events"
-  preamleValues[2] = fullName
+  #preamleValues[2] = fullName
   for option in preamble:
     root.append(etree.Element(option))
     root[counter].text = preamleValues[counter]

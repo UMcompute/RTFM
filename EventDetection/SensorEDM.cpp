@@ -11,6 +11,7 @@ SensorEDM::SensorEDM()
   // initialize the hazard variables:
   sumFEDsmoke = 0.0;
   fireStatus = 0;
+  smokeStatus = 0;
   lastTime = 0.0;
   dt = 0.0;
 }
@@ -140,14 +141,24 @@ int SensorEDM::checkSmokeTox(DataHandler &inData)
   sumFEDsmoke += ((FED_CO + FED_CN + FED_NOx + FLD_irr) * HV_CO2 + FED_O2);
 
   // check for 1.0 FED threshold and/or severe oxygen depletion
-  if (sumFEDsmoke >= FED_limit)
+  if (smokeStatus == maxSmoke)
   {
-    warning += 1;
+    // do nothing, smokeStatus remains as maxSmoke
+    warning = smokeStatus;
   }
-  if (inData.getDataValue(iO2) <= O2_limit)
+  else
   {
-    warning += 1;
+    if (sumFEDsmoke >= FED_limit)
+    {
+      warning = 1;
+    }
+    if (inData.getDataValue(iO2) <= O2_limit)
+    {
+      warning = maxSmoke;
+    }
+    smokeStatus = warning;
   }
+
   return warning;
 }
 

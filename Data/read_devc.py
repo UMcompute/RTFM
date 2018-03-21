@@ -2,6 +2,15 @@ import numpy as np
 from shutil import copyfile
 
 
+#==========================================================
+# two data files used in the journal paper:
+# CASE 1
+devcFile = "../Data/propane_two_fire_devc.csv"
+# CASE 2
+#devcFile = "../Data/propane_two_fire_90sec_devc.csv"
+#==========================================================
+
+
 # A function to read data from the FDS-produced devc file:
 def csvreadh_func(filename=None, numRowsHeader=0):
   my_data = np.genfromtxt(filename, delimiter=',')
@@ -46,12 +55,7 @@ FIRST DATA ROW 2:  0.0 0.0 .................
 (we do not write the Time column to our sensor files)
 '''
 
-
-devcFile = "../Data/propane_two_fire_devc.csv"
-#devcFile = "../Data/propane_two_fire_200kW_devc.csv"
-#devcFile = "../Data/propane_two_fire_90sec_devc.csv"
-
-
+# open the input file to read the number of rooms/sensors needed
 dataDir = "../Data/"
 inputFile = "../Exec/input.txt"
 fr = open(inputFile, 'r')
@@ -63,7 +67,7 @@ numColsPerRoom = 7
 numRoomsOrig = 4
 numRowsHeader = 2
 
-
+# read the FDS output to get time-series data for RTFM
 devcData = csvreadh_func(devcFile, numRowsHeader)
 numInc = np.shape(devcData)[0]
 fdsTime = devcData[:,0]

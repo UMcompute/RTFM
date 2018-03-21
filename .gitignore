@@ -5,5 +5,7 @@
 Data/fil*
 */sensor/*
 Output/
-Testing/out*
+
+PostProcess/*.pdf
+PostProcess/*.eps
 

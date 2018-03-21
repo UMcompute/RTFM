@@ -140,7 +140,6 @@ Do you want to convert EDM output to XML? (0 or 1) 1
   ...
   ...
 
-  time = 598.669 sec
   time = 599.554 sec
   time = 600.000 sec
 
