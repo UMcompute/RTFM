@@ -104,7 +104,7 @@ When you run the simulation with the provided input parameters, the results are 
 * Sensor failure probability:  0.0  (*no sensors will "fail" in this sample test*)
 
 ```
-**pbeata@pbeata:~/RTFM/Exec $ ./config.sh**
+pbeata@pbeata:~/RTFM/Exec $ ./config.sh
 
 [UNIQUE SENSOR DATA FILES: 4]
 
@@ -116,7 +116,7 @@ g++ -g -Wall -O3 -c SensorEvent.cpp -o SensorEvent.o -llcm -std=c++11
 g++ -g -Wall -O3 DataHandler.o SensorEDM.o main_edm.o -o EDM.ex -llcm -std=c++11
 (attempted to delete old Output/ in base directory)
 
-**pbeata@pbeata:~/RTFM/Exec $ ./run.sh**
+pbeata@pbeata:~/RTFM/Exec $ ./run.sh
 
 [START MAIN RTFM]
 
@@ -172,14 +172,14 @@ Do you want to convert EDM output to XML? (0 or 1) 1
 
 Finally, you can also plot the input/output shown in our journal paper by navigating to the PostProcess/ directory and typing these commands individually:
 ```
-python plot_input.py
-python plot_output.py
+$ python plot_input.py
+$ python plot_output.py
 ```
 
 ## Authors
 
 * **Paul A. Beata** - *Ph.D. Student* - [pbeata on GitHub](https://github.com/pbeata)
-* This work was presented in our Fire Technology journal paper from 2018 (TODO: ADD LINK TO JOURNAL HERE).
+* This work was presented in our Fire Technology journal paper from 2018 (TODO: ADD LINK TO JOURNAL HERE)
 * How to cite this work: (TODO: ADD CITATION INFO)
 
 ## Acknowledgments
