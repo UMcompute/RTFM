@@ -1,14 +1,38 @@
+'''
+This program converts an FDS-produced output file 
+containing n rooms into N-sensors worth of time
+series data for the RTFM sensor simulator. The 
+expected format of the FDS DEVC file is given below. 
+'''
+
+
+import sys
 import numpy as np
 from shutil import copyfile
 
 
 #==========================================================
-# two data files used in the journal paper:
-# CASE 1
-devcFile = "../Data/propane_two_fire_devc.csv"
-# CASE 2
-#devcFile = "../Data/propane_two_fire_90sec_devc.csv"
+# get path with data file from command line arguments:
+numArgs = len(sys.argv)
+if ( numArgs == 2 ):
+  devcFile = sys.argv[1]
+else:
+	print("\n***Error: make sure Data/read_devc.py file\n")
+	print("  is provided with an FDS-produced device\n")
+	print("  output file when it is called.\n")
+	print("  Usage:  python read_devc.py <fds_devc.csv>\n")
 #==========================================================
+
+
+'''
+Assumed DEVC file structure for n rooms:
+
+HEADER LINE ROW 0: s C mol/mol mol/mol mol/mol mol/mol kW/m2 kW  C ... kW/m2 kW
+HEADER LINE ROW 1: Time  T-1 O2-1  CO-1  CO2-1 HCN-1 Q-1 HRR-1 T-2 ... Q-n HRR-n
+FIRST DATA ROW 2:  0.0 0.0 .................
+
+(we do not write the Time column to our sensor files)
+'''
 
 
 # A function to read data from the FDS-produced devc file:
@@ -44,16 +68,6 @@ def copy_data(uniqueSensors=0, targetSensors=0, dataDir=None):
     else:
       key = 0
 
-
-'''
-Assumed DEVC file structure for n rooms:
-
-HEADER LINE ROW 0: s C mol/mol mol/mol mol/mol mol/mol kW/m2 kW  C ... kW/m2 kW
-HEADER LINE ROW 1: Time  T-1 O2-1  CO-1  CO2-1 HCN-1 Q-1 HRR-1 T-2 ... Q-n HRR-n
-FIRST DATA ROW 2:  0.0 0.0 .................
-
-(we do not write the Time column to our sensor files)
-'''
 
 # open the input file to read the number of rooms/sensors needed
 dataDir = "../Data/"

@@ -105,7 +105,7 @@ int main(int argc, char* argv[])
   int numFailed = 0;
   double sleepConversion = sleepScale * pow(10.0, 6.0);
   double time = 0.0;
-  double dtMin = 0.5;
+  double dtMin = 1.0;
   double dt, st, myTime, failCheck;
 
   // initialize the LCM data structures
